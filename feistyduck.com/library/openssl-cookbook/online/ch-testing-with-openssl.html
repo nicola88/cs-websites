@@ -1,0 +1,766 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>OpenSSL Cookbook: Chapter 2. Testing with OpenSSL</title><link type="text/css" rel="stylesheet" href="styles-generic-fd.css"></link><link type="text/css" rel="stylesheet" href="styles-online-fd.css"></link><link type="text/css" rel="stylesheet" href="styles-book.css"></link><meta content="Feisty Duck Digital Delivery Service" name="generator"></meta><link rel="home" href="index.html" title="OpenSSL Cookbook"/><link rel="up" href="index.html" title="OpenSSL Cookbook"/><link rel="prev" href="ch-openssl.html" title="OpenSSL Cookbook: Chapter 1. OpenSSL"/><link rel="next" href="apA-ssl-tls-deployment-best-practices.html" title="Appendix A. SSL/TLS Deployment Best Practices"/><meta content="text/html;charset=utf-8" http-equiv="Content-Type"></meta><script src="jquery.min.js"></script><script><!--
+		$(document).ready(function() {
+			setTimeout(function() {
+				showad();
+			}, 20000);
+			$(".closead").click(function(e) {
+				e.preventDefault;
+				hidead();
+			});
+			function showad() {
+				var w = $(".advert").outerWidth();
+				$(".advert").css("right", -w);
+				$(".advert").show();
+				$(".advert").animate({ right: 0 }, "slow", "swing");
+			}
+			function hidead() {
+				var w = $(".advert").outerWidth();
+				$(".advert").animate({ right: -w }, "slow", "swing");
+			}
+		});
+		--></script><!--FDMARKER:HEAD--><script type='text/javascript' src='../../../includes/jquery.min.js'></script>
+<script>
+jQuery.post('/store/recordEvent', { sku : 'OPENSSLCKBK-D', action: 'read' });
+</script>
+</head><body><div id="xheader"><table style="border: 0" border="0" cellspacing="0" cellpadding="0"><tr><td><div id="xheader_cover"><a href="https://www.feistyduck.com/library/openssl%2dcookbook/"><img style="border: 1px solid grey" height="32" width="26" src="book-icon.png"/></a></div><div id="xheader_title"><a href="https://www.feistyduck.com/library/openssl%2dcookbook/">OpenSSL Cookbook</a></div><div id="xheader_crumbs">&gt; OpenSSL Cookbook: Chapter 2. Testing with OpenSSL</div></td><td width="20" align="right"><a href="https://www.feistyduck.com/library/"><img style="margin-top: 4px; margin-right: 3px;" height="16" width="16" src="fd-favicon.png"/></a></td></tr></table></div><br clear="all"></br><script src="shortcut.js"><!--dummy--></script><script><!--
+
+function scrollback() {  
+  window.scrollBy(0, -60);  
+}
+
+window.onload = scrollback;
+window.onhashchange = scrollback;
+
+function navigate(direction) {
+	var links = document.getElementsByTagName("link");
+	
+	for (var i = 0; i < links.length; i++) {		
+		if (links[i].getAttribute("rel") == direction) {			
+			document.location = links[i].getAttribute("href");
+		}
+	}
+}
+
+shortcut.add("Ctrl+Home",function() {
+	navigate("home");
+});
+
+shortcut.add("Ctrl+Up",function() {
+	navigate("up");
+});
+
+shortcut.add("Ctrl+Left",function() {
+	navigate("prev");
+});
+
+shortcut.add("Ctrl+Right",function() {
+	navigate("next");
+});
+
+--></script><div style="top: 65px" class="xnav-icon"><a href="javascript:navigate('home')"><img alt="Contents" height="23" width="23" src="icon-toc.png"/></a></div><div style="top: 95px" class="xnav-icon"><a href="javascript:navigate('prev')"><img alt="Previous" height="23" width="23" src="icon-left.png"/></a></div><div style="top: 125px" class="xnav-icon"><a href="javascript:navigate('next')"><img alt="Next" height="23" width="23" src="icon-right.png"/></a></div><style>
+.advert {
+	font-family: Arial, sans-serif;
+	font-size: 0.85em;
+	width: 200px;
+	position: fixed;
+	right: 0;
+	top: 58px;
+	background: #fff;
+	border: 1px solid #b8b8ba;
+	border-right: 0;
+	padding: 20px;
+	text-align: left;
+	z-index: 1000;
+	display: none;
+}
+.advert h3, .advert h4, .advert p {
+	margin-top: 0;
+	margin-bottom: 10px;
+	text-align: left;
+}
+.advert h4 {
+	font-size: 1.2em;
+	font-weight: normal;
+}
+a.closead {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	font-size: 22px;
+	text-decoration: none;
+	color: #666;
+}
+.advert *:last-child {
+	margin-bottom: 0;
+}
+a.button {
+	display: block;
+	font-weight: bold;
+	padding: 8px 10px;
+	border: 1px solid  #b8b8ba;
+	text-align: center;
+	text-decoration: none;
+	color: #000;
+}
+a.button:hover {
+	background: #e2e2e2;
+}
+</style><div class="advert"><a href="ch-testing-with-openssl.html#" class="closead">×</a><a href="https://www.feistyduck.com/books/bulletproof-ssl-and-tls/"><img alt="" style="width:180px;height:auto;margin-bottom:10px;border:1px solid #b8b8ba;" src="../../../images/bulletproof-cover.png"/></a><h3>If you like this, you will love Bulletproof SSL and TLS</h3><script>
+		var quote = [
+			"<p><em>The most comprehensive book about deploying TLS in the real world!</em> - Nasko Oskov, Chrome Security developer and former SChannel developer</p>",
+			"<p><em>Meticulously researched.</em> - Eric Lawrence, Fiddler author and former Internet Explorer Program Manager</p>",
+			"<p><em>The most to the point and up to date book about SSL/TLS I've read.</em> - Jakob Schlyter, IT security advisor and DANE co-author</p>",
+		];
+		document.write(quote[Math.floor(Math.random()*quote.length)]);
+	</script><h4>Use code <strong>COOKBOOK5</strong> at checkout for <strong>£5 off</strong>.</h4><a href="https://www.feistyduck.com/books/bulletproof-ssl-and-tls/" class="button">Buy Now</a></div><div class="chapter" title="OpenSSL Cookbook: Chapter 2. Testing with OpenSSL"><div class="titlepage"><div><h1><span class="partLabel">2</span> Testing with OpenSSL</h1></div></div><p id="PN10A42">Due to the large number of protocol features and implementation quirks, it’s sometimes
+        difficult to determine the exact configuration and features of secure servers. Although many
+        tools exist for this purpose, it’s often difficult to know exactly how they’re implemented,
+        and that sometimes makes it difficult to fully trust their results. Even though I spent
+        years testing secure servers and have access to good tools, when I really want to understand
+        what is going on, I resort to using OpenSSL and Wireshark. I am not saying that you should
+        use OpenSSL for everyday testing; on the contrary, you should find an automated tool that
+        you trust. But, when you really need to be certain of something, the only way is to get your
+        hands dirty with OpenSSL.</p><div class="section" title="Connecting to SSL Services"><div class="titlepage"><div><div><h2 class="title"><a id="connecting-to-ssl-services"/><a class="heading-link" href="ch-testing-with-openssl.html#connecting-to-ssl-services">Connecting to SSL Services</a></h2></div></div></div><p id="PN10A48">OpenSSL comes with a client tool that you can use to connect to a secure server. The
+            tool is similar to <code class="command">telnet</code> or <code class="literal">nc</code>, in the sense that
+            it handles the SSL/TLS layer but allows you to fully control the layer that comes
+            next.</p><p id="PN10A50">To connect to a server, you need to supply a hostname and a port. For example:</p><pre class="programlisting" id="N10A52">$ openssl s_client -connect www.feistyduck.com:443</pre><p id="PN10A54">Once you type the command, you’re going to see a lot of diagnostic output (more about
+            that in a moment) followed by an opportunity to type whatever you want. Because we’re
+            talking to an HTTP server, the most sensible thing to do is to submit an HTTP request.
+            In the following example, I use a <code class="literal">HEAD</code> request because it instructs
+            the server not to send the response body:</p><pre class="programlisting" id="N10A59">HEAD / HTTP/1.0
+Host: www.feistyduck.com
+
+HTTP/1.1 200 OK
+Date: Tue, 10 Mar 2015 17:13:23 GMT
+Server: Apache
+Strict-Transport-Security: max-age=31536000
+Cache-control: no-cache, must-revalidate
+Content-Type: text/html;charset=UTF-8
+Transfer-Encoding: chunked
+Set-Cookie: JSESSIONID=7F3D840B9C2FDB1FF7E5731590BD9C99; Path=/; Secure; HttpOnly
+Connection: close
+
+read:errno=0</pre><p id="PN10A5B">Now we know that the TLS communication layer is working: we got through to the HTTP
+            server, submitted a request, and received a response back. Let’s go back to the
+            diagnostic output. The first couple of lines will show the information about the server
+            certificate:</p><pre class="programlisting" id="N10A5D">CONNECTED(00000003)
+depth=3 L = ValiCert Validation Network, O = "ValiCert, Inc.", OU = ValiCert Class 2 ↩
+Policy Validation Authority, CN = http://www.valicert.com/, emailAddress = ↩
+info@valicert.com
+verify error:num=19:self signed certificate in certificate chain
+verify return:0</pre><p id="PN10A5F">On my system (and possibly on yours), <code class="command">s_client</code> doesn’t pick up the
+            default trusted certificates; it complains that there is a self-signed certificate in
+            the certificate chain. In most cases, you won’t care about certificate validation; but
+            if you do, you will need to point <code class="command">s_client</code> to the trusted
+            certificates, like this:</p><pre class="programlisting" id="N10A67">$ openssl s_client -connect www.feistyduck.com:443 <strong>-CAfile /etc/ssl/certs↩
+/ca-certificates.crt</strong>
+CONNECTED(00000003)
+depth=3 L = ValiCert Validation Network, O = "ValiCert, Inc.", OU = ValiCert Class 2 &gt; ↩
+Policy Validation Authority, CN = http://www.valicert.com/, emailAddress = ↩
+info@valicert.com
+verify return:1
+depth=2 C = US, O = "Starfield Technologies, Inc.", OU = Starfield Class 2 ↩
+Certification Authority
+verify return:1
+depth=1 C = US, ST = Arizona, L = Scottsdale, O = "Starfield Technologies, Inc.", OU = ↩
+http://certificates.starfieldtech.com/repository, CN = Starfield Secure Certification ↩
+Authority, serialNumber = 10688435
+verify return:1
+depth=0 1.3.6.1.4.1.311.60.2.1.3 = GB, businessCategory = Private Organization, ↩
+serialNumber = 06694169, C = GB, ST = London, L = London, O = Feisty Duck Ltd, CN = ↩
+www.feistyduck.com
+verify return:1</pre><p id="PN10A6D">Instead of <code class="command">s_client</code> complaining, you now see it verifying each of
+            the certificates from the chain. For the verification to work, you must have access to a
+            good selection of CA certificates. The path I used in the example
+                (<code class="filename">/etc/ssl/certs/ca-certificates.crt</code>) is valid on Ubuntu 12.04
+            LTS but might not be valid on your system. If you don’t want to use the system-provided
+            CA certificates for this purpose, you can rely on those provided by Mozilla, as
+            discussed in <a class="xref" href="ch-openssl.html#openssl-building-a-trust-store" title="Building a Trust Store">the section called “Building a Trust Store”</a> in <a class="xref" href="ch-openssl.html" title="OpenSSL Cookbook: Chapter 1. OpenSSL">Chapter 1</a>.</p><div class="warning" title="Warning"><h3 class="title">Warning</h3><p id="PN10A7D">Apple’s operating system OS X ships with a modified version of OpenSSL that
+                sometimes overrides certificate validation. In other words, the
+                    <code class="literal">-CAfile</code> switch might not work as expected. You can fix this
+                by setting the <code class="literal">OPENSSL_X509_TEA_DISABLE</code> environment variable
+                before you invoke <code class="command">s_client</code>.<a href="ch-testing-with-openssl.html#ftn.N10A88" id="N10A88" class="footnote">15</a> Given that the default version of OpenSSL on OS X is from the 0.9.x
+                branch and thus obsolete, it’s best that you upgrade to the latest version—for
+                example, using Homebrew or MacPorts.</p></div><p id="PN10A8F">The next section in the output lists all the certificates presented by the server in
+            the order in which they were delivered:</p><pre class="programlisting" id="N10A91">Certificate chain
+ 0 s:/1.3.6.1.4.1.311.60.2.1.3=GB/businessCategory=Private Organization↩
+/serialNumber=06694169/C=GB/ST=London/L=London/O=Feisty Duck Ltd/CN=www.feistyduck.com
+   i:/C=US/ST=Arizona/L=Scottsdale/O=Starfield Technologies, Inc./OU=http:/↩
+/certificates.starfieldtech.com/repository/CN=Starfield Secure Certification Authority↩
+/serialNumber=10688435
+ 1 s:/C=US/ST=Arizona/L=Scottsdale/O=Starfield Technologies, Inc./OU=http:/↩
+/certificates.starfieldtech.com/repository/CN=Starfield Secure Certification Authority↩
+/serialNumber=10688435
+   i:/C=US/O=Starfield Technologies, Inc./OU=Starfield Class 2 Certification Authority
+ 2 s:/C=US/O=Starfield Technologies, Inc./OU=Starfield Class 2 Certification Authority
+   i:/L=ValiCert Validation Network/O=ValiCert, Inc./OU=ValiCert Class 2 Policy ↩
+Validation Authority/CN=http://www.valicert.com//emailAddress=info@valicert.com
+ 3 s:/L=ValiCert Validation Network/O=ValiCert, Inc./OU=ValiCert Class 2 Policy ↩
+Validation Authority/CN=http://www.valicert.com//emailAddress=info@valicert.com
+   i:/L=ValiCert Validation Network/O=ValiCert, Inc./OU=ValiCert Class 2 Policy ↩
+Validation Authority/CN=http://www.valicert.com//emailAddress=info@valicert.com</pre><p id="PN10A93">For each certificate, the first line shows the subject and the second line shows the
+            issuer information.</p><p id="PN10A95">This part is very useful when you need to see exactly what certificates are sent;
+            browser certificate viewers typically display reconstructed certificate chains that can
+            be almost completely different from the presented ones. To determine if the chain is
+            nominally correct, you might wish to verify that the subjects and issuers match. You
+            start with the leaf (web server) certificate at the top, and then you go down the list,
+            matching the issuer of the current certificate to the subject of the next. The last
+            issuer you see can point to some root certificate that is not in the chain, or—if the
+            self-signed root is included—it can point to itself.</p><p id="PN10A97">The next item in the output is the server certificate; it’s a lot of text, but I’m
+            going to remove most of it for brevity:</p><pre class="programlisting" id="N10A99">Server certificate
+-----BEGIN CERTIFICATE-----
+MIIF5zCCBM+gAwIBAgIHBG9JXlv9vTANBgkqhkiG9w0BAQUFADCB3DELMAkGA1UE
+[30 lines removed...]
+os5LW3PhHz8y9YFep2SV4c7+NrlZISHOZVzN
+-----END CERTIFICATE-----
+subject=/1.3.6.1.4.1.311.60.2.1.3=GB/businessCategory=Private Organization↩
+/serialNumber=06694169/C=GB/ST=London/L=London/O=Feisty Duck Ltd/CN=www.feistyduck.com
+issuer=/C=US/ST=Arizona/L=Scottsdale/O=Starfield Technologies, Inc./OU=http:/↩
+/certificates.starfieldtech.com/repository/CN=Starfield Secure Certification Authority↩
+/serialNumber=10688435</pre><div class="note" title="Note"><h3 class="title">Note</h3><p id="PN10A9C">Whenever you see a long string of numbers instead of a name in a subject, it means
+                that OpenSSL does not know the <em class="firstterm">object identifier</em> (OID) in
+                question. OIDs are globally unique and unambiguous identifiers that are used to
+                refer to “things.” For example, in the previous output, the OID
+                    <code class="literal">1.3.6.1.4.1.311.60.2.1.3</code> should have been replaced with
+                    <code class="literal">jurisdictionOfIncorporationCountryName</code>, which is used in
+                    <em class="firstterm">extended validation</em> (EV) certificates.</p></div><p id="PN10AAA">If you want to have a better look at the certificate, you’ll first need to copy it
+            from the output and store it in a separate file. I’ll discuss that in the next
+            section.</p><p id="PN10AAC">The following is a lot of information about the TLS connection, most of which is
+            self-explanatory:</p><pre class="programlisting" id="N10AAE">---
+No client certificate CA names sent
+---
+SSL handshake has read 3043 bytes and written 375 bytes
+---
+New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-SHA
+Server public key is 2048 bit
+Secure Renegotiation IS supported
+Compression: NONE
+Expansion: NONE
+SSL-Session:
+    Protocol  : TLSv1.1
+    Cipher    : ECDHE-RSA-AES256-SHA
+    Session-ID: 032554E059DB27BF8CD87EBC53E9FF29376265F0BBFDBBFB7773D2277E5559F5
+    Session-ID-ctx:
+    Master-Key: 1A55823368DB6EFC397DEE2DC3382B5BB416A061C19CEE162362158E90F1FB0846EEFDB2↩
+CCF564A18764F1A98F79A768
+    Key-Arg   : None
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    TLS session ticket lifetime hint: 300 (seconds)
+    TLS session ticket:
+    0000 - 77 c3 47 09 c4 45 e4 65-90 25 8b fd 77 4c 12 da   w.G..E.e.%..wL..
+    0010 - 38 f0 43 09 08 a1 ec f0-8d 86 f8 b1 f0 7e 4b a9   8.C..........~K.
+    0020 - fe 9f 14 8e 66 d7 5a dc-0f d0 0c 25 fc 99 b8 aa   ....f.Z....%....
+    0030 - 8f 93 56 5a ac cd f8 66-ac 94 00 8b d1 02 63 91   ..VZ...f......c.
+    0040 - 05 47 af 98 11 81 65 d9-48 5b 44 bb 41 d8 24 e8   .G....e.H[D.A.$.
+    0050 - 2e 08 2d bb 25 59 f0 8f-bf aa 5c b6 fa 9c 12 a6   ..-.%Y....\.....
+    0060 - a1 66 3f 84 2c f6 0f 06-51 c0 64 24 7a 9a 48 96   .f?.,...Q.d$z.H.
+    0070 - a7 f6 a9 6e 94 f2 71 10-ff 00 4d 7a 97 e3 f5 8b   ...n..q...Mz....
+    0080 - 2d 1a 19 9c 1a 8d e0 9c-e5 55 cd be d7 24 2e 24   -........U...$.$
+    0090 - fc 59 54 b0 f8 f1 0a 5f-03 08 52 0d 90 99 c4 78   .YT...._..R....x
+    00a0 - d2 93 61 d8 eb 76 15 27-03 5e a4 db 0c 05 bb 51   ..a..v.'.^.....Q
+    00b0 - 6c 65 76 9b 4e 6b 6c 19-69 33 2a bd 02 1f 71 14   lev.Nkl.i3*...q.
+
+    Start Time: 1390553737
+    Timeout   : 300 (sec)
+    Verify return code: 0 (ok)
+---</pre><p id="PN10AB0">The most important information here is the protocol version (TLS 1.1) and cipher suite
+            used (<code class="literal">ECDHE-RSA-AES256-SHA</code>). You can also determine that the server
+            has issued to you a session ID and a TLS session ticket (a way of resuming sessions
+            without having the server maintain state) and that secure renegotiation is supported.
+            Once you understand what all of this output contains, you will rarely look at it.</p><div class="warning" title="Warning"><h3 class="title">Warning</h3><p id="PN10AB6">Operating system distributions often ship tools that are different from the stock
+                versions. We have another example of that here: the previous command negotiated TLS
+                1.1, even though the server supports TLS 1.2. Why? As it turns out, some OpenSSL
+                versions shipped with Ubuntu 12.04 LTS disable TLS 1.2 for client connections in
+                order to avoid certain interoperability issues. To avoid problems like these, I
+                recommend that you always test with a version of OpenSSL that you configured and
+                compiled.</p></div></div><div class="section" title="Testing Protocols that Upgrade to SSL"><div class="titlepage"><div><div><h2 class="title"><a id="testing-protocols-that-upgrade-to-ssl"/><a class="heading-link" href="ch-testing-with-openssl.html#testing-protocols-that-upgrade-to-ssl">Testing Protocols that Upgrade to SSL</a></h2></div></div></div><p id="PN10ABC">When used with HTTP, TLS wraps the entire plain-text communication channel to form
+            HTTPS. Some other protocols start off as plaintext, but then they upgrade to encryption.
+            If you want to test such a protocol, you’ll have to tell OpenSSL which protocol it is so
+            that it can upgrade on your behalf. Provide the protocol information using the
+                -<code class="command">starttls</code> switch. For example:</p><pre class="programlisting" id="N10AC1">$ openssl s_client -connect gmail-smtp-in.l.google.com:25 <strong>-starttls smtp</strong></pre><p id="PN10AC6">At the time of writing, the supported protocols are <code class="literal">smtp</code>,
+                <code class="literal">pop3</code>, <code class="literal">imap</code>, <code class="literal">ftp</code>, and
+                <code class="literal">xmpp</code>.</p></div><div class="section" title="Using Different Handshake Formats"><div class="titlepage"><div><div><h2 class="title"><a id="using-different-handshake-formats"/><a class="heading-link" href="ch-testing-with-openssl.html#using-different-handshake-formats">Using Different Handshake Formats<a xmlns="http://www.w3.org/1999/xhtml" class="indexterm" id="N10ADB"></a></a></h2></div></div></div><p id="PN10ADE">Sometimes, when you are trying to test a server using OpenSSL, your attempts to
+            communicate with the server may fail even though you know the server supports TLS (e.g.,
+            you can see that TLS is working when you attempt to use a browser). One possible reason
+            this might occur is that the server does not support the older SSL 2 handshake.</p><p id="PN10AE0">Because OpenSSL attempts to negotiate all protocols it understands and because SSL 2
+            can be negotiated only using the old SSL 2 handshake, it uses this handshake as the
+            default. Even though it is associated with a very old and insecure protocol version, the
+            old handshake format is not technically insecure. It supports upgrades, which means that
+            a better protocol can be negotiated. However, this handshake format does not support
+            many connection negotiation features that were designed after SSL 2.</p><p id="PN10AE2">Therefore, if something is not working and you’re not sure what it is exactly, you can
+            try to force OpenSSL to use the newer handshake format. You can do that by disabling SSL
+            2:</p><pre class="programlisting" id="N10AE4">$ openssl s_client -connect www.feistyduck.com:443 -no_ssl2</pre><p id="PN10AE6">Another way to achieve the same effect is to specify the desired server name on the
+            command line:</p><pre class="programlisting" id="N10AE8">$ openssl s_client -connect www.feistyduck.com:443 -servername www.feistyduck.com</pre><p id="PN10AEA">In order to specify the server name, OpenSSL needs to use a feature of the newer
+            handshake format (the feature is called <em class="firstterm">Server Name Indication</em>
+            [SNI]), and that will force it to abandon the old format.</p></div><div class="section" title="Extracting Remote Certificates"><div class="titlepage"><div><div><h2 class="title"><a id="extracting-remote-certificates"/><a class="heading-link" href="ch-testing-with-openssl.html#extracting-remote-certificates">Extracting Remote Certificates</a></h2></div></div></div><p id="PN10AF3">When you connect to a remote secure server using <code class="command">s_client</code>, it will
+            dump the server’s PEM-encoded certificate to standard output. If you need the
+            certificate for any reason, you can copy it from the scroll-back buffer. If you know in
+            advance you only want to retrieve the certificate, you can use this command line as a
+            shortcut:</p><pre class="programlisting" id="N10AF8">$ echo | openssl s_client -connect www.feistyduck.com:443 2&gt;&amp;1 | sed --quiet '/-BEGIN ↩
+CERTIFICATE-/,/-END CERTIFICATE-/p' &gt; www.feistyduck.com.crt</pre><p id="PN10AFA">The purpose of the <code class="command">echo</code> command at the beginning is to separate
+            your shell from <code class="command">s_client</code>. If you don’t do that,
+                <code class="command">s_client</code> will wait for your input until the server times out
+            (which may potentially take a very long time).</p><p id="PN10B05">By default, <code class="command">s_client</code> will print only the leaf certificate; if you
+            want to print the entire chain, give it the <code class="literal">-showcerts</code> switch. With
+            that switch enabled, the previous command line will place all the certificates in the
+            same file.</p></div><div class="section" title="Testing Protocol Support"><div class="titlepage"><div><div><h2 class="title"><a id="testing-protocol-support"/><a class="heading-link" href="ch-testing-with-openssl.html#testing-protocol-support">Testing Protocol Support</a></h2></div></div></div><p id="PN10B11">By default, <code class="command">s_client</code> will try to use the best protocol to talk to
+            the remote server and report the negotiated version in output.</p><pre class="programlisting" id="N10B16">    Protocol  : TLSv1.1</pre><p id="PN10B18">If you need to test support for specific protocol versions, you have two options. You
+            can explicitly choose one protocol to test by supplying one of the
+                <code class="literal">-ssl2</code>, <code class="literal">-ssl3</code>, <code class="literal">-tls1</code>,
+                <code class="literal">-tls1_1</code>, or <code class="literal">-tls1_2</code> switches. Alternatively,
+            you can choose which protocols you don’t want to test by using one or many of the
+            following: <code class="literal">-no_ssl2</code>, <code class="literal">-no_ssl3</code>,
+                <code class="literal">-no_tls1</code>, <code class="literal">-no_tls1_1</code>, or
+                <code class="literal">-no_tls1_2</code>.</p><div class="note" title="Note"><h3 class="title">Note</h3><p id="PN10B39">Not all versions of OpenSSL support all protocol versions. For example, the older
+                versions of OpenSSL will not support TLS 1.1 and TLS 1.2, and the newer versions
+                might not support older protocols, such as SSL 2.</p></div><p id="PN10B3B">For example, here’s the output you might get when testing a server that doesn’t
+            support a certain protocol version: </p><pre class="programlisting" id="N10B3D">$ openssl s_client -connect www.example.com:443 -tls1_2
+CONNECTED(00000003)
+140455015261856:error:1408F10B:SSL routines:SSL3_GET_RECORD:wrong version number:s3↩
+_pkt.c:340:
+---
+no peer certificate available
+---
+No client certificate CA names sent
+---
+SSL handshake has read 5 bytes and written 7 bytes
+---
+New, (NONE), Cipher is (NONE)
+Secure Renegotiation IS NOT supported
+Compression: NONE
+Expansion: NONE
+SSL-Session:
+    Protocol  : TLSv1.2
+    Cipher    : 0000
+    Session-ID:
+    Session-ID-ctx:
+    Master-Key:
+    Key-Arg   : None
+    PSK identity: None
+    PSK identity hint: None
+    SRP username: None
+    Start Time: 1339231204
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+---</pre></div><div class="section" title="Testing Cipher Suite Support"><div class="titlepage"><div><div><h2 class="title"><a id="testing-cipher-suite-support"/><a class="heading-link" href="ch-testing-with-openssl.html#testing-cipher-suite-support">Testing Cipher Suite Support</a></h2></div></div></div><p id="PN10B43">A little trick is required if you wish to use OpenSSL to determine if a remote server
+            supports a particular cipher suite. The cipher configuration string is designed to
+            select which suites you wish to use, but if you specify only one suite and successfully
+            handshake with a server, then you know that the server supports the suite. If the
+            handshake fails, you know the support is not there.</p><p id="PN10B45">As an example, to test if a server supports <code class="literal">RC4-SHA</code>, type:</p><pre class="programlisting" id="N10B4A">$ openssl s_client -connect www.feistyduck.com:443 <strong>-cipher RC4-SHA</strong></pre><p id="PN10B4F">If you want to determine all suites supported by a particular server, start by
+            invoking <code class="command">openssl ciphers ALL</code> to obtain a list of all suites supported
+            by your version of OpenSSL. Then submit them to the server one by one to test them
+            individually. I am not suggesting that you do this manually; this is a situation in
+            which a little automation goes a long way. In fact, this is a situation in which looking
+            around for a good tool might be appropriate.</p><p id="PN10B54">There is a disadvantage to testing this way, however. You can only test the suites
+            that OpenSSL supports. This used to be a much bigger problem; before version 1.0,
+            OpenSSL supported a much smaller number of suites (e.g., 32 on my server with version
+            0.9.8k). With a version from the 1.0.1 branch, you can test over 100 suites and probably
+            most of the relevant ones.</p><p id="PN10B56">No single SSL/TLS library supports all cipher suites, and that makes comprehensive
+            testing difficult. For SSL Labs, I resorted to using partial handshakes for this
+            purpose, with a custom client that pretends to support arbitrary suites. It actually
+            can’t negotiate even a single suite, but just proposing to negotiate is enough for
+            servers to tell you if they support a suite or not. Not only can you test all the suites
+            this way, but you can also do it very efficiently.</p></div><div class="section" title="Testing Servers that Require SNI"><div class="titlepage"><div><div><h2 class="title"><a id="testing-servers-that-require-sni"/><a class="heading-link" href="ch-testing-with-openssl.html#testing-servers-that-require-sni">Testing Servers that Require SNI<a xmlns="http://www.w3.org/1999/xhtml" class="indexterm" id="N10B5C"></a></a></h2></div></div></div><p id="PN10B61">Initially, SSL and TLS were designed to support only one web site per IP endpoint
+            (address and port combination). SNI is a TLS extension that enables use of more than one
+            certificate on the same IP endpoint. TLS clients use the extension to send the desired
+            name, and TLS servers use it to select the correct certificate to respond with. In a
+            nutshell, SNI makes virtual secure hosting possible.</p><p id="PN10B63">Because SNI is not yet very widely used by servers, in most cases you won’t need to
+            specify it on the <code class="command">s_client</code> command line. But when you encounter an
+            SNI-enabled system, one of three things can happen:</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p id="PN10B6A">Most often, you will get the same certificate you would get as if SNI
+                    information had not been supplied.</p></li><li class="listitem"><p id="PN10B6D">The server might respond with the certificate for some site other than the one
+                    you wish to test.</p></li><li class="listitem"><p id="PN10B70">Very rarely, the server might abort the handshake and refuse the
+                    connection.</p></li></ul></div><p id="PN10B72">You can enable SNI in <code class="command">s_client</code> with the
+                <code class="literal">-servername</code> switch:</p><pre class="programlisting" id="N10B7A">$ openssl s_client -connect www.feistyduck.com:443 -servername www.feistyduck.com</pre><p id="PN10B7C">You can determine if a site requires SNI by testing with and without the SNI switch
+            and checking if the certificates are the same. If they are not, SNI is required.</p><p id="PN10B7E">Sometimes, if the requested server name is not available, the server says so with a
+            TLS warning. Even though this warning is not fatal as far as the server is concerned,
+            the client might decide to close the connection. For example, with an older OpenSSL
+            version (i.e., before 1.0.0), you will get the following error message:</p><pre class="programlisting" id="N10B80">$ /opt/openssl-0.9.8k/bin/openssl s_client -connect www.feistyduck.com:443 -servername ↩
+xyz.com
+CONNECTED(00000003)
+1255:error:14077458:SSL routines:SSL23_GET_SERVER_HELLO:reason(1112):s23_clnt.c:596:</pre></div><div class="section" title="Testing Session Reuse"><div class="titlepage"><div><div><h2 class="title"><a id="testing-session-reuse"/><a class="heading-link" href="ch-testing-with-openssl.html#testing-session-reuse">Testing Session Reuse<a xmlns="http://www.w3.org/1999/xhtml" class="indexterm" id="N10B86"></a></a></h2></div></div></div><p id="PN10B8B">When coupled with the <code class="literal">-reconnect</code> switch, the
+                <code class="command">s_client</code> command can be used to test session reuse. In this mode,
+                <code class="command">s_client</code> will connect to the target server six times; it will
+            create a new session on the first connection, then try to reuse the same session in the
+            subsequent five connections:</p><pre class="programlisting" id="N10B96">$ echo | openssl s_client -connect www.feistyduck.com:443 -reconnect</pre><p id="PN10B98">The previous command will produce a sea of output, most of which you won’t care about.
+            The key parts are the information about new and reused sessions. There should be only
+            one new session at the beginning, indicated by the following line:</p><pre class="programlisting" id="N10B9A">New, TLSv1/SSLv3, Cipher is RC4-SHA</pre><p id="PN10B9C">This is followed by five session reuses, indicated by lines like this:</p><pre class="programlisting" id="N10B9E">Reused, TLSv1/SSLv3, Cipher is RC4-SHA</pre><p id="PN10BA0">Most of the time, you don’t want to look at all that output and want an answer
+            quickly. You can get it using the following command line:</p><pre class="programlisting" id="N10BA2">$ echo | openssl s_client -connect www.feistyduck.com:443 -reconnect -no_ssl2 2&gt; /dev↩
+/null | grep 'New\|Reuse'
+New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+Reused, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+Reused, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+Reused, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+Reused, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-GCM-SHA384
+Reused, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-GCM-SHA384</pre><p id="PN10BA4">Here’s what the command does:</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p id="PN10BA8">The <code class="literal">-reconnect</code> switch activates the session reuse
+                    mode.</p></li><li class="listitem"><p id="PN10BAE">The <code class="literal">-no_ssl2</code> switch indicates that we do not wish to
+                    attempt an SSL 2 connection, which changes the handshake of the first connection
+                    to that of SSL 3 and better. The older, SSL 2 handshake format doesn’t support
+                    TLS extensions and interferes with the session-reuse mechanism on servers that
+                    support session tickets. </p></li><li class="listitem"><p id="PN10BB4">The <code class="literal">2&gt; /dev/null</code> part hides <code class="literal">stderr</code>
+                    output, which you don’t care about.</p></li><li class="listitem"><p id="PN10BBD">Finally, the piped <code class="command">grep</code> command filters out the rest of the
+                    fluff and lets through only the lines that you care about.</p></li></ul></div><div class="note" title="Note"><h3 class="title">Note</h3><p id="PN10BC3">If you don’t want to include session tickets in the test—for example, because not
+                all clients support this feature yet—you can disable it with the
+                    <code class="literal">-no_ticket</code> switch.</p></div></div><div class="section" title="Checking OCSP Revocation"><div class="titlepage"><div><div><h2 class="title"><a id="testing-ocsp-revocation"/><a class="heading-link" href="ch-testing-with-openssl.html#testing-ocsp-revocation">Checking OCSP Revocation<a xmlns="http://www.w3.org/1999/xhtml" class="indexterm" id="N10BCC"></a></a></h2></div></div></div><p id="PN10BD1">If an OCSP responder is malfunctioning, sometimes it’s difficult to understand exactly
+            why. Checking certificate revocation status from the command line is possible, but it’s
+            not quite straightforward. You need to perform the following steps:</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p id="PN10BD5">Obtain the certificate that you wish to check for revocation.</p></li><li class="listitem"><p id="PN10BD8">Obtain the issuing certificate.</p></li><li class="listitem"><p id="PN10BDB">Determine the URL of the OCSP responder.</p></li><li class="listitem"><p id="PN10BDE">Submit an OCSP request and observe the response.</p></li></ol></div><p id="PN10BE0">For the first two steps, connect to the server with the <code class="literal">-showcerts</code>
+            switch specified:</p><pre class="programlisting" id="N10BE5">$ openssl s_client -connect www.feistyduck.com:443 -showcerts</pre><p id="PN10BE7">The first certificate in the output will be the one belonging to the server. If the
+            certificate chain is properly configured, the second certificate will be that of the
+            issuer. To confirm, check that the issuer of the first certificate and the subject of
+            the second match:</p><pre class="programlisting" id="N10BE9">---
+Certificate chain
+ 0 s:/1.3.6.1.4.1.311.60.2.1.3=GB/businessCategory=Private Organization↩
+/serialNumber=06694169/C=GB/ST=London/L=London/O=Feisty Duck Ltd/CN=www.feistyduck.com
+   i:/C=US/ST=Arizona/L=Scottsdale/O=Starfield Technologies, Inc./OU=http:/↩
+/certificates.starfieldtech.com/repository/CN=Starfield Secure Certification Authority↩
+/serialNumber=10688435
+-----BEGIN CERTIFICATE-----
+MIIF5zCCBM+gAwIBAgIHBG9JXlv9vTANBgkqhkiG9w0BAQUFADCB3DELMAkGA1UE
+[30 lines of text removed]
+os5LW3PhHz8y9YFep2SV4c7+NrlZISHOZVzN
+-----END CERTIFICATE-----
+ 1 s:/C=US/ST=Arizona/L=Scottsdale/O=Starfield Technologies, Inc./OU=http:/↩
+/certificates.starfieldtech.com/repository/CN=Starfield Secure Certification Authority↩
+/serialNumber=10688435
+   i:/C=US/O=Starfield Technologies, Inc./OU=Starfield Class 2 Certification Authority
+-----BEGIN CERTIFICATE-----
+MIIFBzCCA++gAwIBAgICAgEwDQYJKoZIhvcNAQEFBQAwaDELMAkGA1UEBhMCVVMx
+[...]</pre><p id="PN10BEB">If the second certificate isn’t the right one, check the rest of the chain; some
+            servers don’t serve the chain in the correct order. If you can’t find the issuer
+            certificate in the chain, you’ll have to find it somewhere else. One way to do that is
+            to look for the <em>Authority Information Access</em> extension in the leaf
+            certificate:</p><pre class="programlisting" id="N10BF0">$ openssl x509 -in fd.crt -noout -text
+[...]
+    Authority Information Access:
+        OCSP - URI:http://ocsp.starfieldtech.com/
+        CA Issuers - URI:http://certificates.starfieldtech.com/repository/sf↩
+_intermediate.crt
+[...]</pre><p id="PN10BF2">If the <em>CA Issuers</em> information is present, it should contain the
+            URL of the issuer certificate. If the issuer certificate information isn’t available,
+            you can try to open the site in a browser, let it reconstruct the chain, and download
+            the issuing certificate from its certificate viewer. If all that fails, you can look for
+            the certificate in your trust store or visit the CA’s web site.</p><p id="PN10BF7">If you already have the certificates and just need to know the address of the OCSP
+            responder, use the <code class="literal"> -ocsp_uri</code> switch with the <code class="literal">x509</code>
+            command as a shortcut:</p><pre class="programlisting" id="N10BFF">$ openssl x509 -in fd.crt -noout -ocsp_uri
+http://ocsp.starfieldtech.com/</pre><p id="PN10C01">Now you can submit the OCSP request:</p><pre class="programlisting" id="N10C03">$ openssl ocsp -issuer issuer.crt -cert fd.crt -url http://ocsp.starfieldtech.com/ ↩
+-CAfile issuer.crt
+WARNING: no nonce in response
+<strong>Response verify OK</strong>
+<strong>fd.crt: good</strong>
+        This Update: Feb 18 17:59:10 2013 GMT
+        Next Update: Feb 18 23:59:10 2013 GMT</pre><p id="PN10C0D">You want to look for two things in the response. First, check that the response itself
+            is valid (<code class="literal">Response verify OK</code> in the previous example), and second,
+            check what the response said. When you see <code class="literal">good</code> as the status, that
+            means that the certificate hasn’t been revoked. The status will be
+                <code class="literal">revoked</code> for revoked certificates.</p><div class="note" title="Note"><h3 class="title">Note</h3><p id="PN10C19">The warning message about the missing nonce is telling you that OpenSSL wanted to
+                use a nonce as a protection against replay attacks, but the server in question did
+                not reply with one. This generally happens because CAs want to improve the
+                performance of their OCSP responders. When they disable the nonce protection (the
+                standard allows it), OCSP responses can be produced (usually in batch), cached, and
+                reused for a period of time.</p></div><p id="PN10C1B">You may encounter OCSP responders that do not respond successfully to the previous
+            command line. The following suggestions may help in such situations.</p><div class="variablelist"><dl><dt><span class="term">Do not request a nonce</span></dt><dd><p id="PN10C22">Some servers cannot handle nonce requests and respond with errors. OpenSSL
+                        will request a nonce by default. To disable nonces, use the
+                            <code class="literal">-no_nonce</code> command-line switch.</p></dd><dt><span class="term">Supply a Host request header</span></dt><dd><p id="PN10C2B">Although most OCSP servers respond to HTTP requests that don’t specify the
+                        correct hostname in the <code class="literal">Host</code> header, some don’t. If you
+                        encounter an error message that includes an HTTP error code (e.g., 404), try
+                        adding the hostname to your OCSP request. You can do this if you are using
+                        OpenSSL 1.0.0 or later by using the undocumented <code class="literal">-header</code>
+                        switch. </p></dd></dl></div><p id="PN10C33">With the previous two points in mind, the final command to use is the
+            following:</p><pre class="programlisting" id="N10C35">$ openssl ocsp -issuer issuer.crt -cert fd.crt -url http://ocsp.starfieldtech.com/ ↩
+-CAfile issuer.crt -no_nonce -header Host ocsp.starfieldtech.com</pre></div><div class="section" title="Testing OCSP Stapling"><div class="titlepage"><div><div><h2 class="title"><a id="testing-ocsp-stapling"/><a class="heading-link" href="ch-testing-with-openssl.html#testing-ocsp-stapling">Testing OCSP Stapling<a xmlns="http://www.w3.org/1999/xhtml" class="indexterm" id="N10C3B"></a></a></h2></div></div></div><p id="PN10C42">OCSP stapling is an optional feature that allows a server certificate to be
+            accompanied by an OCSP response that proves its validity. Because the OCSP response is
+            delivered over an already existing connection, the client does not have to fetch it
+            separately.</p><p id="PN10C44">OCSP stapling is used only if requested by a client, which submits the
+                <code class="literal">status_request</code> extension in the handshake request. A server that
+            supports OCSP stapling will respond by including an OCSP response as part of the
+            handshake.</p><p id="PN10C49">When using the <code class="literal">s_client tool</code>, OCSP stapling is requested with the
+                <code class="literal">-status</code> switch:</p><pre class="programlisting" id="N10C51">$ echo | openssl s_client -connect www.feistyduck.com:443 -status</pre><p id="PN10C53">The OCSP-related information will be displayed at the very beginning of the connection
+            output. For example, with a server that does not support stapling you will see this line
+            near the top of the output:</p><pre class="programlisting" id="N10C55">CONNECTED(00000003)
+OCSP response: no response sent</pre><p id="PN10C57">With a server that does support stapling, you will see the entire OCSP response in the
+            output:</p><pre class="programlisting" id="N10C59">OCSP Response Data:
+    OCSP Response Status: successful (0x0)
+    Response Type: Basic OCSP Response
+    Version: 1 (0x0)
+    Responder Id: C = US, O = "GeoTrust, Inc.", CN = RapidSSL OCSP-TGV Responder
+    Produced At: Jan 22 17:48:55 2014 GMT
+    Responses:
+    Certificate ID:
+      Hash Algorithm: sha1
+      Issuer Name Hash: 834F7C75EAC6542FED58B2BD2B15802865301E0E
+      Issuer Key Hash: 6B693D6A18424ADD8F026539FD35248678911630
+      Serial Number: 0FE760
+    Cert Status: good
+    This Update: Jan 22 17:48:55 2014 GMT
+    Next Update: Jan 29 17:48:55 2014 GMT
+[...]</pre><p id="PN10C5B">The certificate status <code class="literal">good</code> means that the certificate has not been
+            revoked.</p></div><div class="section" title="Checking CRL Revocation"><div class="titlepage"><div><div><h2 class="title"><a id="checking-crl-revocation"/><a class="heading-link" href="ch-testing-with-openssl.html#checking-crl-revocation">Checking CRL Revocation<a xmlns="http://www.w3.org/1999/xhtml" class="indexterm" id="N10C64"></a></a></h2></div></div></div><p id="PN10C69">Checking certificate verification with a <em class="firstterm">Certificate Revocation
+                List</em> (CRL) is even more involved than doing the same via OCSP. The
+            process is as follows:</p><div class="orderedlist"><ol class="orderedlist"><li class="listitem"><p id="PN10C70">Obtain the certificate you wish to check for revocation.</p></li><li class="listitem"><p id="PN10C73">Obtain the issuing certificate.</p></li><li class="listitem"><p id="PN10C76">Download and verify the CRL.</p></li><li class="listitem"><p id="PN10C79">Look for the certificate serial number in the CRL.</p></li></ol></div><p id="PN10C7B">The first steps overlap with OCSP checking; to complete them follow the instructions
+            in <a class="xref" href="ch-testing-with-openssl.html#testing-ocsp-revocation" title="Checking OCSP Revocation">the section called “Checking OCSP Revocation”</a>.</p><p id="PN10C80">The location of the CRL is encoded in the server certificate;
+            look for the “X509v3
+            CRL Distribution Points” section in the text output. For
+            example:</p><pre class="programlisting" id="N10C86">$ openssl x509 -in fd.crt -noout -text | grep -A 5 CRL
+[...]
+                  URI:http://rapidssl-crl.geotrust.com/crls/rapidssl.crl</pre><p id="PN10C91">Then fetch the CRL from the CA:</p><pre class="programlisting" id="N10C93">$ wget http://rapidssl-crl.geotrust.com/crls/rapidssl.crl</pre><p id="PN10C95">Verify that the CRL is valid (i.e., signed by the issuer certificate):</p><pre class="programlisting" id="N10C97">$ openssl crl -in rapidssl.crl -inform DER -CAfile issuer.crt -noout
+verify OK</pre><p id="PN10C99">Now, determine the serial number of the certificate you wish to check:</p><pre class="programlisting" id="N10C9B">$ openssl x509 -in fd.crt -noout -serial
+serial=0FE760</pre><p id="PN10C9D">At this point, you can convert the CRL into a human-readable format and inspect it
+            manually:</p><pre class="programlisting" id="N10C9F">$ openssl crl -in rapidssl.crl -inform DER -text -noout
+Certificate Revocation List (CRL):
+        Version 2 (0x1)
+    Signature Algorithm: sha1WithRSAEncryption
+        Issuer: /C=US/O=GeoTrust, Inc./CN=RapidSSL CA
+        Last Update: Jan 25 11:03:00 2014 GMT
+        Next Update: Feb  4 11:03:00 2014 GMT
+        CRL extensions:
+            X509v3 Authority Key Identifier:
+                keyid:6B:69:3D:6A:18:42:4A:DD:8F:02:65:39:FD:35:24:86:78:91:16:30
+
+            X509v3 CRL Number:
+                92103
+Revoked Certificates:
+    Serial Number: 0F38D7
+        Revocation Date: Nov 26 20:07:51 2013 GMT
+    Serial Number: 6F29
+        Revocation Date: Aug 15 20:48:57 2011 GMT
+[...]
+    Serial Number: 0C184E
+        Revocation Date: Jun 13 23:00:12 2013 GMT
+    Signature Algorithm: sha1WithRSAEncryption
+         95:df:e5:59:bc:95:e8:2f:bb:0a:4f:20:ad:ca:8f:78:16:54:
+         35:32:55:b0:c9:be:5b:89:da:ba:ae:67:19:6e:07:23:4d:5f:
+         16:18:5c:f3:91:15:da:9e:68:b0:81:da:68:26:a0:33:9d:34:
+         2d:5c:84:4b:70:fa:76:27:3a:fc:15:27:e8:4b:3a:6e:2e:1c:
+         2c:71:58:15:8e:c2:7a:ac:9f:04:c0:f6:3c:f5:ee:e5:77:10:
+         e7:88:83:00:44:c4:75:c4:2b:d3:09:55:b9:46:bf:fd:09:22:
+         de:ab:07:64:3b:82:c0:4c:2e:10:9b:ab:dd:d2:cb:0c:a9:b0:
+         51:7b:46:98:15:83:97:e5:ed:3d:ea:b9:65:d4:10:05:10:66:
+         09:5c:c9:d3:88:c6:fb:28:0e:92:1e:35:b0:e0:25:35:65:b9:
+         98:92:c7:fd:e2:c7:cc:e3:b5:48:08:27:1c:e5:fc:7f:31:8f:
+         0a:be:b2:62:dd:45:3b:fb:4f:25:62:66:45:34:eb:63:44:43:
+         cb:3b:40:77:b3:7f:6c:83:5c:99:4b:93:d9:39:62:48:5d:8c:
+         63:e2:a8:26:64:5d:08:e5:c3:08:e2:09:b0:d1:44:7b:92:96:
+         aa:45:9f:ed:36:f8:62:60:66:42:1c:ea:e9:9a:06:25:c4:85:
+         fc:77:f2:71</pre><p id="PN10CA1">The CRL starts with some metadata, which is followed by a list of revoked
+            certificates, and it ends with a signature (which we verified in the previous step). If
+            the serial number of the server certificate is on the list, that means it had been
+            revoked.</p><p id="PN10CA3">If you don’t want to look for the serial number visually (some CRLs can be quite
+            long), grep for it, but be careful that your formatting is correct (e.g., if necessary,
+            remove the <code class="literal">0x</code> prefix, omit any leading zeros, and convert all letters
+            to uppercase). For example:</p><pre class="programlisting" id="N10CA8">$ openssl crl -in rapidssl.crl -inform DER -text -noout | grep FE760</pre></div><div class="section" title="Testing Renegotiation"><div class="titlepage"><div><div><h2 class="title"><a id="testing-renegotiation"/><a class="heading-link" href="ch-testing-with-openssl.html#testing-renegotiation">Testing Renegotiation<a xmlns="http://www.w3.org/1999/xhtml" class="indexterm" id="N10CAE"></a></a></h2></div></div></div><p id="PN10CB3">The <code class="command">s_client</code> tool has a couple of features that can assist you with
+            manual testing of renegotiation. First of all, when you connect, the tool will report if
+            the remote server supports secure renegotiation. This is because a server that supports
+            secure renegotiation indicates its support for it via a special TLS extension that is
+            exchanged during the handshake phase. When support is available, the output may look
+            like this (emphasis mine):</p><pre class="programlisting" id="N10CB8">New, TLSv1/SSLv3, Cipher is AES256-SHA
+Server public key is 2048 bit
+<strong>Secure Renegotiation IS supported</strong>
+Compression: NONE
+Expansion: NONE
+SSL-Session:
+    [...]</pre><p id="PN10CBE">If secure renegotiation is not supported, the output will be slightly
+            different:</p><pre class="programlisting" id="N10CC0">Secure Renegotiation IS NOT supported</pre><p id="PN10CC2">Even if the server indicates support for secure renegotiation, you may wish to test
+            whether it also allows clients to initiate renegotiation. <em class="firstterm">Client-initiated
+                renegotiation</em> is a protocol feature that is not needed in practice
+            (because the server can always initiate renegotiation when it is needed) and makes the
+            server more susceptible to denial of service attacks.</p><p id="PN10CC7">To initiate renegotiation, you type an <code class="literal">R</code> character on a line by
+            itself. For example, assuming we’re talking to an HTTP server, you can type the first
+            line of a request, initiate renegotiation, and then finish the request. Here’s what that
+            looks like when talking to a web server that supports client-initiated
+            renegotiation:</p><pre class="programlisting" id="N10CCC">HEAD / HTTP/1.0
+R
+RENEGOTIATING
+depth=3 C = US, O = "VeriSign, Inc.", OU = Class 3 Public Primary Certification ↩
+Authority
+verify return:1
+depth=2 C = US, O = "VeriSign, Inc.", OU = VeriSign Trust Network, OU = "(c) 2006 ↩
+VeriSign, Inc. - For authorized use only", CN = VeriSign Class 3 Public Primary ↩
+Certification Authority - G5
+verify return:1
+depth=1 C = US, O = "VeriSign, Inc.", OU = VeriSign Trust Network, OU = Terms of use at ↩
+https://www.verisign.com/rpa (c)06, CN = VeriSign Class 3 Extended Validation SSL CA
+verify return:1
+depth=0 1.3.6.1.4.1.311.60.2.1.3 = US, 1.3.6.1.4.1.311.60.2.1.2 = California, ↩
+businessCategory = Private Organization, serialNumber = C2759208, C = US, ST = ↩
+California, L = Mountain View, O = Mozilla Corporation, OU = Terms of use at ↩
+www.verisign.com/rpa (c)05, OU = Terms of use at www.verisign.com/rpa (c)05, CN = ↩
+addons.mozilla.org
+verify return:1
+Host: addons.mozilla.org
+
+HTTP/1.1 301 MOVED PERMANENTLY
+Content-Type: text/html; charset=utf-8
+Date: Tue, 05 Jun 2012 16:42:51 GMT
+Location: https://addons.mozilla.org/en-US/firefox/
+Keep-Alive: timeout=5, max=998
+Transfer-Encoding: chunked
+Connection: close
+
+read:errno=0</pre><p id="PN10CCE">When renegotiation is taking place, the server will send its certificates to the
+            client again. You can see the verification of the certificate chain in the output. The
+            next line after that continues with the <code class="literal">Host</code> request header. Seeing
+            the web server’s response is the proof that renegotiation is supported. Because of the
+            various ways the renegotiation issue was addressed in various versions of SSL/TLS
+            libraries, servers that do not support renegotiation may break the connection or may
+            keep it open but refuse to continue to talk over it (which usually results in a
+            timeout).</p><p id="PN10CD3">A server that does not support renegotiation will flatly refuse the second handshake
+            on the connection:</p><pre class="programlisting" id="N10CD5">HEAD / HTTP/1.0
+R
+RENEGOTIATING
+140003560109728:error:1409E0E5:SSL routines:SSL3_WRITE_BYTES:ssl handshake failure:s3↩
+_pkt.c:592:</pre><p id="PN10CD7">At the time of writing, the default behavior for OpenSSL is to connect to servers that
+            don’t support secure renegotiation; it will also accept both secure and insecure
+            renegotiation, opting for whatever the server is able to do. If renegotiation is
+            successful with a server that doesn’t support secure renegotiation, you will know that
+            the server supports insecure client-initiated renegotiation.</p><div class="note" title="Note"><h3 class="title">Note</h3><p id="PN10CDA">The most reliable way to test for insecure renegotiation is to use the method
+                described in this section, but with a version of OpenSSL that was released before
+                the discovery of insecure renegotiation (e.g., 0.9.8k). I mention this because there
+                is a small number of servers that support both secure and insecure renegotiation.
+                This vulnerability is difficult to detect with modern versions of OpenSSL, which
+                prefer the secure option.</p></div></div><div class="section" title="Testing for the BEAST Vulnerability"><div class="titlepage"><div><div><h2 class="title"><a id="testing-for-beast"/><a class="heading-link" href="ch-testing-with-openssl.html#testing-for-beast">Testing for the BEAST Vulnerability<a xmlns="http://www.w3.org/1999/xhtml" class="indexterm" id="N10CE0"></a></a></h2></div></div></div><p id="PN10CE5">The BEAST attack exploits a weakness that exists in all versions of SSL, and TLS
+            protocols before TLS 1.1. The weakness affects all CBC suites and both client and server
+            data streams; however, the BEAST attack works only against the client side. Most modern
+            browsers use the so-called 1/n-1 split as a workaround to prevent exploitation, but some
+            servers continue to deploy mitigations on their end, especially if they have a user base
+            that relies on older (and unpatched) browsers.</p><p id="PN10CE7">The ideal mitigation approach is to rely only on TLS 1.1 and better, but these newer
+            protocols are not yet sufficiently widely supported. The situation is complicated by the
+            fact that RC4 itself is now considered insecure. If you think BEAST is more dangerous
+            than RC4 weaknesses, you might deploy TLS 1.2 for use with up-to-date clients, but force
+            RC4 with everyone else.</p><div class="variablelist"><dl><dt><span class="term">Strict mitigation</span></dt><dd><p id="PN10CEE">Do not support any CBC suites when protocols TLS 1.0 and earlier are used,
+                        leaving only RC4 suites enabled. Clients that don’t support RC4 won’t be
+                        able to negotiate a secure connection. This mode excludes some potential web
+                        site users, but it’s required by some PCI assessors.</p></dd><dt><span class="term">RC4 prioritization</span></dt><dd><p id="PN10CF4">Because only a very small number of clients do not support RC4, the second
+                        approach is to leave CBC suites enabled, but enforce RC4 with all clients
+                        that support it. This approach provides protection to all but a very small
+                        number of visitors.</p></dd></dl></div><p id="PN10CF6">How you are going to test depends on what behavior you expect of the server. With both
+            approaches, we want to ensure that only insecure protocols are used by using the
+                <code class="literal">-no_ssl2</code>, <code class="literal">-no_tls_1_1</code>, and
+                <code class="literal">-no_tls_1_2</code> switches.</p><p id="PN10D01">To test for strict mitigation, attempt to connect while disabling all RC4 suites on
+            your end:</p><pre class="programlisting" id="N10D03">$  echo | openssl s_client -connect www.feistyduck.com:443 \
+<strong>-cipher 'ALL:!RC4'</strong> -no_ssl2 -no_tls1_1 -no_tls1_2</pre><p id="PN10D09">If the connection is successful (which is possible only if a vulnerable CBC suite is
+            used), you know that strict mitigation is not in place.</p><p id="PN10D0B">To test for RC4 prioritization, attempt to connect with all RC4 suites moved to the
+            end of the cipher suite list:</p><pre class="programlisting" id="N10D0D">$ echo | openssl s_client -connect www.feistyduck.com:443 \
+<strong>-cipher 'ALL:+RC4'</strong> -no_ssl2 -no_tls1_1 -no_tls1_2</pre><p id="PN10D13">A server that prioritizes RC4 will choose one of RC4 suites for the connection,
+            ignoring all the CBC suites that were also offered. If you see anything else, you know
+            that the server does not have any BEAST mitigations in place.</p></div><div class="section" title="Testing for Heartbleed"><div class="titlepage"><div><div><h2 class="title"><a id="testing-heartbleed"/><a class="heading-link" href="ch-testing-with-openssl.html#testing-heartbleed">Testing for Heartbleed<a xmlns="http://www.w3.org/1999/xhtml" class="indexterm" id="N10D19"></a><a xmlns="http://www.w3.org/1999/xhtml" class="indexterm" id="N10D1E"></a></a></h2></div></div></div><p id="PN10D21">You can test for Heartbleed manually or by using one of the available tools. (There
+            are many tools, because Heartbleed is very easy to exploit.) But, as usual with such
+            tools, there is a question of their accuracy. There is evidence that some tools fail to
+            detect vulnerable servers.<a href="ch-testing-with-openssl.html#ftn.N10D23" id="N10D23" class="footnote">16</a> Given the seriousness of Heartbleed, it’s best to either test manually or by
+            using a tool that gives you full visibility of the process. I am going to describe an
+            approach you can use with only a modified version of OpenSSL.</p><p id="PN10D2A">Some parts of the test don’t require modifications to OpenSSL, assuming you have a
+            version that supports the Heartbeat protocol (version 1.0.1 and newer). For example, to
+            determine if the remote server supports the Heartbeat protocol, use the
+                <code class="literal">-tlsextdebug</code> switch to display server extensions when
+            connecting:</p><pre class="programlisting" id="N10D2F">$ openssl s_client -connect www.feistyduck.com:443 -tlsextdebug
+CONNECTED(00000003)
+TLS server extension "renegotiation info" (id=65281), len=1
+0001 - &lt;SPACES/NULS&gt;
+TLS server extension "EC point formats" (id=11), len=4
+0000 - 03 00 01 02                                       ....
+TLS server extension "session ticket" (id=35), len=0
+<strong>TLS server extension "heartbeat" (id=15), len=1</strong>
+0000 - 01
+[...]</pre><p id="PN10D35">A server that does not return the heartbeat extension is not vulnerable to Heartbleed.
+            To test if a server responds to heartbeat requests, use the <code class="literal">-msg</code>
+            switch to request that protocol messages are shown, then connect to the server, type
+                <code class="literal">B</code> and press return:</p><pre class="programlisting" id="N10D3D">$ openssl s_client -connect www.feistyduck.com:443 -tlsextdebug -msg
+[...]
+---
+B
+HEARTBEATING
+&gt;&gt;&gt; TLS 1.2  [length 0025], HeartbeatRequest
+    01 00 12 00 00 3c 83 1a 9f 1a 5c 84 aa 86 9e 20
+    c7 a2 ac d7 6f f0 c9 63 9b d5 85 bf 9a 47 61 27
+    d5 22 4c 70 75
+&lt;&lt;&lt; TLS 1.2  [length 0025], HeartbeatResponse
+    02 00 12 00 00 3c 83 1a 9f 1a 5c 84 aa 86 9e 20
+    c7 a2 ac d7 6f 52 4c ee b3 d8 a1 75 9a 6b bd 74
+    f8 60 32 99 1c
+read R BLOCK</pre><p id="PN10D3F">This output shows a complete heartbeat request and response pair. The second and third
+            bytes in both heartbeat messages specify payload length. We submitted a payload of 18
+            bytes (12 hexadecimal) and the server responded with a payload of the same size. In both
+            cases there were also additional 16 bytes of padding. The first two bytes in the payload
+            make the sequence number, which OpenSSL uses to match responses to requests. The
+            remaining payload bytes and the padding are just random data.</p><p id="PN10D41">To detect a vulnerable server, you’ll have to prepare a special version of OpenSSL
+            that sends incorrect payload length. Vulnerable servers take the declared payload length
+            and respond with that many bytes irrespective of the length of the actual payload
+            provided.</p><p id="PN10D43">At this point, you have to decide if you want to build an invasive test (which
+            exploits the server by retrieving some data from the process) or a noninvasive test.
+            This will depend on your circumstances. If you have permission for your testing
+            activities, use the invasive test. With it, you’ll be able to see exactly what is
+            returned, and there won’t be room for errors. For example, some versions of GnuTLS
+            support Heartbeat and will respond to requests with incorrect payload length, but they
+            will not actually return server data. A noninvasive test can’t reliably diagnose that
+            situation.</p><p id="PN10D45">The following patch against OpenSSL 1.0.1h creates a noninvasive version of the
+            test:</p><pre class="programlisting" id="N10D47">--- t1_lib.c.original   2014-07-04 17:29:35.092000000 +0100
++++ t1_lib.c    2014-07-04 17:31:44.528000000 +0100
+@@ -2583,6 +2583,7 @@
+ #endif
+
+ #ifndef OPENSSL_NO_HEARTBEATS
++#define PAYLOAD_EXTRA 16
+ int
+ tls1_process_heartbeat(SSL *s)
+        {
+@@ -2646,7 +2647,7 @@
+                 * sequence number */
+                n2s(pl, seq);
+
+-               if (payload == 18 &amp;&amp; seq == s-&gt;tlsext_hb_seq)
++               if ((payload == (18 + PAYLOAD_EXTRA)) &amp;&amp; seq == s-&gt;tlsext_hb_seq)
+                        {
+                        s-&gt;tlsext_hb_seq++;
+                        s-&gt;tlsext_hb_pending = 0;
+@@ -2705,7 +2706,7 @@
+        /* Message Type */
+        *p++ = TLS1_HB_REQUEST;
+        /* Payload length (18 bytes here) */
+-       s2n(payload, p);
++       s2n(payload + PAYLOAD_EXTRA, p);
+        /* Sequence number */
+        s2n(s-&gt;tlsext_hb_seq, p);
+        /* 16 random bytes */</pre><p id="PN10D49">To build a noninvasive test, increase payload length by up to 16 bytes, or the length
+            of the padding. When a vulnerable server responds to such a request, it will return the
+            padding but nothing else. To build an invasive test, increase the payload length by,
+            say, 32 bytes. A vulnerable server will respond with a payload of 50 bytes (18 bytes
+            sent by OpenSSL by default, plus your 32 bytes) and send 16 bytes of padding. By
+            increasing the declared length of the payload in this way, a vulnerable server will
+            return up to 64 KB of data. A server not vulnerable to Heartbleed will not
+            respond.</p><p id="PN10D4B">To produce your own Heartbleed testing tool, unpack a fresh copy of OpenSSL source
+            code, edit <code class="filename">ssl/t1_lib.c</code> to make the change as in the patch, compile
+            as usual, but don’t install. The resulting <code class="command">openssl</code> binary will be
+            placed in the <code class="command">apps/</code> subdirectory. Because it is statically compiled,
+            you can rename it to something like <code class="command">openssl-heartbleed</code> and move it to
+            its permanent location.</p><p id="PN10D59">Here’s an example of the output you’d get with a vulnerable server that returns 16
+            bytes of server data (in bold):</p><pre class="programlisting" id="N10D5B">B
+HEARTBEATING
+&gt;&gt;&gt; TLS 1.2  [length 0025], HeartbeatRequest
+    01 00 32 00 00 7c e8 f5 62 35 03 bb 00 34 19 4d
+    57 7e f1 e5 90 6e 71 a9 26 85 96 1c c4 2b eb d5
+    93 e2 d7 bb 5f
+&lt;&lt;&lt; TLS 1.2  [length 0045], HeartbeatResponse
+    02 00 32 00 00 7c e8 f5 62 35 03 bb 00 34 19 4d
+    57 7e f1 e5 90 6e 71 a9 26 85 96 1c c4 2b eb d5
+    93 e2 d7 bb 5f <strong>6f 81 0f aa dc e0 47 62 3f 7e dc
+    60 95 c6 ba df</strong> c9 f6 9d 2b c8 66 f8 a5 45 64 0b
+    d2 f5 3d a9 ad
+read R BLOCK</pre><p id="PN10D61">If you want to see more data retrieved in a single response, increase the payload
+            length, recompile, and test again. Alternatively, to retrieve another batch of the same
+            size, enter the <code class="literal">B</code> command again.</p></div><div class="section" title="Determining the Strength of Diffie-Hellman Parameters"><div class="titlepage"><div><div><h2 class="title"><a id="determing-the-strength-of-dh-parameters"/><a class="heading-link" href="ch-testing-with-openssl.html#determing-the-strength-of-dh-parameters">Determining the Strength of Diffie-Hellman Parameters</a></h2></div></div></div><p id="PN10D6A">In OpenSSL 1.0.2 and newer, when you connect to a server, the
+                <code class="literal">s_client</code> command prints the strength of the ephemeral
+            Diffie-Hellman key if one is used. Thus, to determine the strength of some server’s DH
+            parameters, all you need to do is connect to it while offering only suites that use the
+            DH key exchange. For example:</p><pre class="programlisting" id="N10D6F">$ openssl-1.0.2 s_client -connnect www.feistyduck.com:443 -cipher kEDH
+[...]
+---
+No client certificate CA names sent
+Peer signing digest: SHA512
+<strong>Server Temp Key: DH, 2048 bits</strong>
+---
+[...]</pre><p id="PN10D75">Servers that support export suites might actually offer even weaker DH parameters. To
+            check for that possibility, connect while offering only export DHE suites:</p><pre class="programlisting" id="N10D77">$ openssl-1.0.2 s_client -connnect www.feistyduck.com:443 -cipher kEDH+EXPORT</pre><p id="PN10D79">This command should fail with well-configured servers. Otherwise, you’ll probably see
+            the server offering to negotiate insecure 512-bit DH parameters.</p></div><div id="footnotes"><div class="footnote-line"> </div><div xmlns="http://www.w3.org/1999/xhtml" class="footnote"><p>[<a href="ch-testing-with-openssl.html#N10A88" id="ftn.N10A88" class="para">15</a>] <a xmlns="http://www.w3.org/1999/xhtml" class="link" href="https://hynek.me/articles/apple-openssl-verification-surprises/">Apple OpenSSL Verification Surprises</a> (Hynek Schlawack, 3 March
+                        2014)</p></div><div xmlns="http://www.w3.org/1999/xhtml" class="footnote"><p>[<a href="ch-testing-with-openssl.html#N10D23" id="ftn.N10D23" class="para">16</a>] <a xmlns="http://www.w3.org/1999/xhtml" class="link" href="https://www.hut3.net/blog/cns---networks-security/2014/04/14/bugs-in-heartbleed-detection-scripts-">Bugs in Heartbleed detection scripts</a> (Shannon Simpson and Adrian
+                    Hayter, 14 April 2014)</p></div></div></div><div style="padding-left: 50px; font-family: sans-serif; font-size: 12px; color: #444444; margin-bottom: 15px"><div style="float: left; height: 16px"><a href="https://www.feistyduck.com"><img style="margin-top: 4px; margin-right: 4px; border: 1px solid white" height="15" width="15" src="fd-favicon.png"/></a></div><div style="float: left; height: 16px; padding-top: 6px">Copyright © 2018 <a style="color: #444444" href="https://www.feistyduck.com">Feisty Duck</a>. All rights reserved.</div><div> </div></div><!--FDMARKER:BODY--></body></html>

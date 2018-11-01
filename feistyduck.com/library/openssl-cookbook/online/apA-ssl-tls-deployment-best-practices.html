@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Appendix A. SSL/TLS Deployment Best Practices</title><link type="text/css" rel="stylesheet" href="styles-generic-fd.css"></link><link type="text/css" rel="stylesheet" href="styles-online-fd.css"></link><link type="text/css" rel="stylesheet" href="styles-book.css"></link><meta content="Feisty Duck Digital Delivery Service" name="generator"></meta><link rel="home" href="index.html" title="OpenSSL Cookbook"/><link rel="up" href="index.html" title="OpenSSL Cookbook"/><link rel="prev" href="ch-testing-with-openssl.html" title="OpenSSL Cookbook: Chapter 2. Testing with OpenSSL"/><link rel="next" href="apB-changes.html" title="Appendix B. Changes"/><meta content="text/html;charset=utf-8" http-equiv="Content-Type"></meta><script src="jquery.min.js"></script><script><!--
+		$(document).ready(function() {
+			setTimeout(function() {
+				showad();
+			}, 20000);
+			$(".closead").click(function(e) {
+				e.preventDefault;
+				hidead();
+			});
+			function showad() {
+				var w = $(".advert").outerWidth();
+				$(".advert").css("right", -w);
+				$(".advert").show();
+				$(".advert").animate({ right: 0 }, "slow", "swing");
+			}
+			function hidead() {
+				var w = $(".advert").outerWidth();
+				$(".advert").animate({ right: -w }, "slow", "swing");
+			}
+		});
+		--></script><!--FDMARKER:HEAD--><script type='text/javascript' src='../../../includes/jquery.min.js'></script>
+<script>
+jQuery.post('/store/recordEvent', { sku : 'OPENSSLCKBK-D', action: 'read' });
+</script>
+</head><body><div id="xheader"><table style="border: 0" border="0" cellspacing="0" cellpadding="0"><tr><td><div id="xheader_cover"><a href="https://www.feistyduck.com/library/openssl%2dcookbook/"><img style="border: 1px solid grey" height="32" width="26" src="book-icon.png"/></a></div><div id="xheader_title"><a href="https://www.feistyduck.com/library/openssl%2dcookbook/">OpenSSL Cookbook</a></div><div id="xheader_crumbs">&gt; Appendix A. SSL/TLS Deployment Best Practices</div></td><td width="20" align="right"><a href="https://www.feistyduck.com/library/"><img style="margin-top: 4px; margin-right: 3px;" height="16" width="16" src="fd-favicon.png"/></a></td></tr></table></div><br clear="all"></br><script src="shortcut.js"><!--dummy--></script><script><!--
+
+function scrollback() {  
+  window.scrollBy(0, -60);  
+}
+
+window.onload = scrollback;
+window.onhashchange = scrollback;
+
+function navigate(direction) {
+	var links = document.getElementsByTagName("link");
+	
+	for (var i = 0; i < links.length; i++) {		
+		if (links[i].getAttribute("rel") == direction) {			
+			document.location = links[i].getAttribute("href");
+		}
+	}
+}
+
+shortcut.add("Ctrl+Home",function() {
+	navigate("home");
+});
+
+shortcut.add("Ctrl+Up",function() {
+	navigate("up");
+});
+
+shortcut.add("Ctrl+Left",function() {
+	navigate("prev");
+});
+
+shortcut.add("Ctrl+Right",function() {
+	navigate("next");
+});
+
+--></script><div style="top: 65px" class="xnav-icon"><a href="javascript:navigate('home')"><img alt="Contents" height="23" width="23" src="icon-toc.png"/></a></div><div style="top: 95px" class="xnav-icon"><a href="javascript:navigate('prev')"><img alt="Previous" height="23" width="23" src="icon-left.png"/></a></div><div style="top: 125px" class="xnav-icon"><a href="javascript:navigate('next')"><img alt="Next" height="23" width="23" src="icon-right.png"/></a></div><style>
+.advert {
+	font-family: Arial, sans-serif;
+	font-size: 0.85em;
+	width: 200px;
+	position: fixed;
+	right: 0;
+	top: 58px;
+	background: #fff;
+	border: 1px solid #b8b8ba;
+	border-right: 0;
+	padding: 20px;
+	text-align: left;
+	z-index: 1000;
+	display: none;
+}
+.advert h3, .advert h4, .advert p {
+	margin-top: 0;
+	margin-bottom: 10px;
+	text-align: left;
+}
+.advert h4 {
+	font-size: 1.2em;
+	font-weight: normal;
+}
+a.closead {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	font-size: 22px;
+	text-decoration: none;
+	color: #666;
+}
+.advert *:last-child {
+	margin-bottom: 0;
+}
+a.button {
+	display: block;
+	font-weight: bold;
+	padding: 8px 10px;
+	border: 1px solid  #b8b8ba;
+	text-align: center;
+	text-decoration: none;
+	color: #000;
+}
+a.button:hover {
+	background: #e2e2e2;
+}
+</style><div class="advert"><a href="apA-ssl-tls-deployment-best-practices.html#" class="closead">×</a><a href="https://www.feistyduck.com/books/bulletproof-ssl-and-tls/"><img alt="" style="width:180px;height:auto;margin-bottom:10px;border:1px solid #b8b8ba;" src="../../../images/bulletproof-cover.png"/></a><h3>If you like this, you will love Bulletproof SSL and TLS</h3><script>
+		var quote = [
+			"<p><em>The most comprehensive book about deploying TLS in the real world!</em> - Nasko Oskov, Chrome Security developer and former SChannel developer</p>",
+			"<p><em>Meticulously researched.</em> - Eric Lawrence, Fiddler author and former Internet Explorer Program Manager</p>",
+			"<p><em>The most to the point and up to date book about SSL/TLS I've read.</em> - Jakob Schlyter, IT security advisor and DANE co-author</p>",
+		];
+		document.write(quote[Math.floor(Math.random()*quote.length)]);
+	</script><h4>Use code <strong>COOKBOOK5</strong> at checkout for <strong>£5 off</strong>.</h4><a href="https://www.feistyduck.com/books/bulletproof-ssl-and-tls/" class="button">Buy Now</a></div><div class="appendix" title="Appendix A. SSL/TLS Deployment Best Practices"><div class="titlepage"><div><h1><span class="partLabel">A</span> SSL/TLS Deployment Best Practices</h1></div></div><p id="PN10D8E"><em>This appendix contains SSL/TLS Deployment Best Practices, which is an SSL Labs
+			publication I began
+			to work on in 2012 and continue to maintain. It’s included here with
+			permission from Qualys, Inc.</em></p><p id="PN10D95">Obtaining a comprehensive understanding of the SSL/TLS and PKI landscape requires a lot of
+        time and dedication. In my experience, most people don’t need to know everything, but it’s
+        tricky to find the small bits that they do need to know. For these individuals, I maintain
+        this guide: the smallest possible document that could reasonably claim to give a complete
+        picture of the problems facing someone who wishes to deploy a secure SSL/TLS server.</p><div class="section" title="1 Private Key and Certificate"><div class="titlepage"><div><div><h3 class="title"><a id="N10D97"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10D97">1 Private Key and Certificate</a></h3></div></div></div><p id="PN10D9B">In TLS, all security starts with the server’s cryptographic identity; a strong private
+		            key is needed to prevent attackers from carrying out impersonation attacks. Equally
+		            important is to have a valid and strong certificate, which grants the private key the
+		            right to represent a particular hostname. Without these two fundamental building blocks,
+		            nothing else can be secure.</p><div class="section" title="1.1 Use 2048-Bit Private Keys"><div class="titlepage"><div><div><h4 class="title"><a id="N10D9D"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10D9D">1.1 Use 2048-Bit Private Keys</a></h4></div></div></div><p id="PN10DA1">For most web sites, security provided by 2,048-bit RSA keys is sufficient. The RSA
+		                public key algorithm is  widely supported, which makes keys of this type a safe
+		                default choice. At 2,048 bits, such keys provide about 112 bits of security. If you
+		                want more security than this, note that RSA keys don’t scale very well. To get 128
+		                bits of security, you need 3,072-bit RSA keys, which are noticeably slower. ECDSA
+		                keys provide an alternative that offers better security and better performance. At
+		                256 bits, ECDSA keys provide 128 bits of security. A small number of older clients
+		                don’t support ECDSA, but modern clients do. It’s possible to get the best of both
+		                worlds and deploy with RSA and ECDSA keys simultaneously if you don’t mind the
+		                overhead of managing such a setup.</p></div><div class="section" title="1.2 Protect Private Keys"><div class="titlepage"><div><div><h4 class="title"><a id="N10DA3"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10DA3">1.2 Protect Private Keys</a></h4></div></div></div><p id="PN10DA7">Treat your private keys as an important asset, restricting access to the smallest
+		                possible group of employees while still keeping your arrangements practical.
+		                Recommended policies include the following:</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p id="PN10DAB">Generate private keys on a trusted computer with sufficient entropy. Some
+		                        CAs offer to generate private keys for you; run away from them.</p></li><li class="listitem"><p id="PN10DAE">Password-protect keys from the start to prevent compromise when they are
+		                        stored in backup systems. Private key passwords don’t help much in
+		                        production because a knowledgeable attacker can always retrieve the keys
+		                        from process memory. There are hardware devices (called <em class="firstterm">Hardware
+		                            Security Modules</em>, or HSMs) that can protect private keys
+		                        even in the case of server compromise, but they are expensive and thus
+		                        justifiable only for organizations with strict security requirements.</p></li><li class="listitem"><p id="PN10DB4">After compromise, revoke old certificates and generate new keys.</p></li><li class="listitem"><p id="PN10DB7">Renew certificates yearly, and more often if you can automate the process.
+		                        Most sites should assume that a compromised certificate will be impossible
+		                        to revoke reliably; certificates with shorter lifespans are therefore more
+		                        secure in practice.</p></li><li class="listitem"><p id="PN10DBA">Unless keeping the same keys is important for public key pinning, you
+		                        should also generate new private keys whenever you’re getting a new
+		                        certificate.</p></li></ul></div></div><div class="section" title="1.3 Ensure Sufficient Hostname Coverage"><div class="titlepage"><div><div><h4 class="title"><a id="N10DBC"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10DBC">1.3 Ensure Sufficient Hostname Coverage</a></h4></div></div></div><p id="PN10DC0">Ensure that your certificates cover all the names you wish to use with a site.
+		                Your goal is to avoid invalid certificate warnings, which confuse users and weaken
+		                their confidence.</p><p id="PN10DC2">Even when you expect to use only one domain name, remember that you cannot control
+		                how your users arrive at the site or how others link to it. In most cases, you
+		                should ensure that the certificate works with and without the
+		                    <em>www</em> prefix (e.g., that it works for both
+		                    <em>example.com</em> and <em>www.example.com</em>). The
+		                rule of thumb is that a secure web server should have a certificate that is valid
+		                for every DNS name configured to point to it.</p><p id="PN10DCD">Wildcard certificates have their uses, but avoid using them if it means exposing
+		                the underlying keys to a much larger group of people, and especially if doing so
+		                crosses team or department boundaries. In other words, the fewer people there are
+		                with access to the private keys, the better. Also be aware that certificate sharing
+		                creates a bond that can be abused to transfer vulnerabilities from one web site or
+		                server to all other sites and servers that use the same certificate (even when the
+		                underlying private keys are different).</p></div><div class="section" title="1.4 Obtain Certificates from a Reliable CA"><div class="titlepage"><div><div><h4 class="title"><a id="N10DCF"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10DCF">1.4 Obtain Certificates from a Reliable CA</a></h4></div></div></div><p id="PN10DD3">Select a <em class="firstterm">Certification Authority</em> (CA) that is reliable and
+		                serious about its certificate business and security. Consider the following criteria
+		                when selecting your CA:</p><div class="variablelist"><dl><dt><span class="term">Security posture</span></dt><dd><p id="PN10DDD">All CAs undergo regular audits, but some are more serious about
+		                            security than others. Figuring out which ones are better in this respect
+		                            is not easy, but one option is to examine their security history, and,
+		                            more important, how they have reacted to compromises and if they have
+		                            learned from their mistakes.</p></dd><dt><span class="term">Business focus</span></dt><dd><p id="PN10DE3">CAs whose activities constitute a substantial part of their business
+		                            have everything to lose if something goes terribly wrong, and they
+		                            probably won’t neglect their certificate division by chasing
+		                            potentially more lucrative opportunities elsewhere.</p></dd><dt><span class="term">Services offered</span></dt><dd><p id="PN10DE9">At a minimum, your selected CA should provide support for both
+		                                <em class="firstterm">Certificate Revocation List</em> (CRL) and
+		                                <em class="firstterm">Online Certificate Status Protocol</em> (OCSP)
+		                            revocation methods, with rock-solid network availability and
+		                            performance. Many sites are happy with domain-validated certificates,
+		                            but you also should consider if you’ll ever require <em class="firstterm">Extended
+		                                Validation</em> (EV) certificates. In either case, you should
+		                            have a choice of public key algorithm. Most web sites use RSA today, but
+		                            ECDSA may become important in the future because of its performance
+		                            advantages.</p></dd><dt><span class="term">Certificate management options</span></dt><dd><p id="PN10DF8">If you need a large number of certificates and operate in a complex
+		                            environment, choose a CA that will give you good tools to manage
+		                            them.</p></dd><dt><span class="term">Support</span></dt><dd><p id="PN10DFE">Choose a CA that will give you good support if and when you need
+		                            it.</p></dd></dl></div><div class="note" title="Note"><h3 class="title">Note</h3><p id="PN10E01">For best results, deploy new certificates to production about one week after
+		                    getting them from your CA. This practice (1) helps avoid certificate warnings for some users who don’t
+		                    have the correct time on their computers and (2) helps avoid failed revocation checks with CAs who need extra
+		                    time to propagate new certificates to their OCSP responders.</p></div></div><div class="section" title="1.5 Use Strong Certificate Signature Algorithms"><div class="titlepage"><div><div><h4 class="title"><a id="N10E0B"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10E0B">1.5 Use Strong Certificate Signature Algorithms</a></h4></div></div></div><p id="PN10E0F">Certificate security depends (1) on the
+		                strength of the private key that was used to sign the certificate and (2) the strength of the hashing function used
+		                in the signature. Until recently, most certificates relied on the SHA1 hashing
+		                function, which is now considered insecure. As a result, we’re currently in
+		                transition to SHA256. As of January 2016, you shouldn’t be able to get a SHA1
+		                certificate from a public CA. The existing SHA1 certificates will continue to work
+		                (with warnings in some browsers), but only until the end of 2016.</p></div></div><div class="section" title="2 Configuration"><div class="titlepage"><div><div><h3 class="title"><a id="N10E19"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10E19">2 Configuration</a></h3></div></div></div><p id="PN10E1D">With correct TLS server configuration, you ensure that your credentials are properly
+		            presented to the site’s visitors, that only secure cryptographic primitives are used,
+		            and that all known weaknesses are mitigated.</p><div class="section" title="2.1 Use Complete Certificate Chains"><div class="titlepage"><div><div><h4 class="title"><a id="N10E1F"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10E1F">2.1 Use Complete Certificate Chains</a></h4></div></div></div><p id="PN10E23">In most deployments, the server certificate alone is insufficient; two or more
+		                certificates are needed to build a complete chain of trust. A common configuration
+		                problem occurs when deploying a server with a valid certificate, but without all the
+		                necessary intermediate certificates. To avoid this situation, simply use all the
+		                certificates provided to you by your CA.</p><p id="PN10E25">An invalid certificate chain effectively renders the server certificate invalid
+		                and results in browser warnings. In practice, this problem is sometimes difficult to
+		                diagnose because some browsers can reconstruct incomplete chains and some can’t. All
+		                browsers tend to cache and reuse intermediate certificates.</p></div><div class="section" title="2.2 Use Secure Protocols"><div class="titlepage"><div><div><h4 class="title"><a id="N10E27"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10E27">2.2 Use Secure Protocols</a></h4></div></div></div><p id="PN10E2B">There are five protocols in the SSL/TLS family: SSL v2, SSL v3, TLS v1.0, TLS
+		                v1.1, and TLS v1.2:</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p id="PN10E2F">SSL v2 is insecure and must not be used. This protocol version is so bad
+		                        that it can be used to attack RSA keys and sites with the same name even if
+		                        they are on an entirely different servers (the DROWN attack).</p></li><li class="listitem"><p id="PN10E32">SSL v3 is insecure when used with HTTP (the POODLE attack) and weak when
+		                        used with other protocols. It’s also obsolete and shouldn’t be used.</p></li><li class="listitem"><p id="PN10E35">TLS v1.0 is also a legacy protocol that shouldn’t be used, but it’s
+		                        typically still necessary in practice. Its major weakness (BEAST) has been
+		                        mitigated in modern browsers, but other problems remain.</p></li><li class="listitem"><p id="PN10E38">TLS v1.1 and v1.2 are both without known security issues, but only v1.2
+		                        provides modern cryptographic algorithms.</p></li></ul></div><p id="PN10E3A">TLS v1.2 should be your main protocol because it’s the only version that offers
+		                modern <em class="firstterm">authenticated encryption</em> (also known as AEAD). If you
+		                don’t support TLS v1.2 today, your security is lacking.</p><p id="PN10E3F">In order to support older clients, you may need to continue to support TLS v1.0
+		                and TLS v1.1 for now. However, you should plan to retire TLS v1.0 in the near
+		                future. For example, the PCI DSS standard will require all sites that accept credit
+		                card payments to remove support for TLS v1.0 by June 2018.</p><p id="PN10E41">Work is currently under way to design TLS v1.3, with the aims to remove all
+		                obsolete and insecure features and to make improvements that will keep our
+		                communication secure in the following decades.</p></div><div class="section" title="2.3 Use Secure Cipher Suites"><div class="titlepage"><div><div><h4 class="title"><a id="N10E43"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10E43">2.3 Use Secure Cipher Suites</a></h4></div></div></div><p id="PN10E47">To communicate securely, you must first ascertain that you are communicating
+		                directly with the desired party (and not through someone else who will eavesdrop)
+		                and exchanging data securely. In SSL and TLS, cipher suites define how secure
+		                communication takes place. They are composed from varying building blocks with the
+		                idea of achieving security through diversity. If one of the building blocks is found
+		                to be weak or insecure, you should be able to switch to another.</p><p id="PN10E49">You should rely chiefly on the AEAD suites that provide strong authentication and
+		                key exchange, forward secrecy, and encryption of at least 128 bits. Some other,
+		                weaker suites may still be supported, provided they are negotiated only with older
+		                clients that don’t support anything better.</p><p id="PN10E4B">There are several obsolete cryptographic primitives that <em>must</em>
+		                be avoided:</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p id="PN10E52">Anonymous Diffie-Hellman (ADH) suites do not provide
+		                        authentication.</p></li><li class="listitem"><p id="PN10E55">NULL cipher suites provide no encryption.</p></li><li class="listitem"><p id="PN10E58">Export cipher suites are insecure when negotiated in a connection, but
+		                        they can also be used against a server that prefers stronger suites (the
+		                        FREAK attack).</p></li><li class="listitem"><p id="PN10E5B">Suites with weak ciphers (typically of 40 and 56 bits) use encryption that
+		                        can easily be broken.</p></li><li class="listitem"><p id="PN10E5E">RC4 is insecure.</p></li><li class="listitem"><p id="PN10E61">3DES is slow and weak.</p></li></ul></div><p id="PN10E63">Use the following suite configuration, designed for both RSA and ECDSA keys, as
+				your starting
+				point:</p><pre class="programlisting" id="N10E65">ECDHE-ECDSA-AES128-GCM-SHA256
+ECDHE-ECDSA-AES256-GCM-SHA384
+ECDHE-ECDSA-AES128-SHA
+ECDHE-ECDSA-AES256-SHA
+ECDHE-ECDSA-AES128-SHA256
+ECDHE-ECDSA-AES256-SHA384
+ECDHE-RSA-AES128-GCM-SHA256
+ECDHE-RSA-AES256-GCM-SHA384
+ECDHE-RSA-AES128-SHA
+ECDHE-RSA-AES256-SHA
+ECDHE-RSA-AES128-SHA256
+ECDHE-RSA-AES256-SHA384
+DHE-RSA-AES128-GCM-SHA256
+DHE-RSA-AES256-GCM-SHA384
+DHE-RSA-AES128-SHA
+DHE-RSA-AES256-SHA
+DHE-RSA-AES128-SHA256
+DHE-RSA-AES256-SHA256
+EDH-RSA-DES-CBC3-SHA</pre><div class="note" title="Note"><h3 class="title">Note</h3><p id="PN10E68">This example configuration uses nonstandard suite names required by OpenSSL.
+		                    For deployment in other environments (e.g., IIS), you’ll need to use the
+		                    standard TLS suite names.<a href="apA-ssl-tls-deployment-best-practices.html#ftn.N10E6A" id="N10E6A" class="footnote">17</a></p></div></div><div class="section" title="2.4 Select Best Cipher Suites"><div class="titlepage"><div><div><h4 class="title"><a id="N10E70"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10E70">2.4 Select Best Cipher Suites</a></h4></div></div></div><p id="PN10E74">In SSL v3 and later protocol versions, clients submit a list of cipher suites that
+		                they support, and servers choose one suite from the list to use for the connection.
+		                Not all servers do this well, however; some will select the first supported suite
+		                from the client’s list. Having servers actively select the best available cipher
+		                suite is critical for achieving the best security.</p></div><div class="section" title="2.5 Use Forward Secrecy"><div class="titlepage"><div><div><h4 class="title"><a id="N10E76"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10E76">2.5 Use Forward Secrecy</a></h4></div></div></div><p id="PN10E7A"><em class="firstterm">Forward secrecy</em> (sometimes also called <em class="firstterm">perfect
+		                    forward secrecy</em>) is a protocol feature that enables secure
+		                conversations that are not dependent on the server’s private key. With cipher suites
+		                that do not provide forward secrecy, someone who can recover a server’s private key
+		                can decrypt <em>all</em> earlier recorded encrypted conversations. You
+		                need to support and prefer ECDHE suites in order to enable forward secrecy with
+		                modern web browsers. To support a wider range of clients, you should also use DHE
+		                suites as fallback after ECDHE. Avoid the RSA key exchange unless absolutely
+		                necessary. My proposed default configuration in Section 2.3 contains only suites
+		                that provide forward secrecy.</p></div><div class="section" title="2.6 Use Strong Key Exchange"><div class="titlepage"><div><div><h4 class="title"><a id="N10E84"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10E84">2.6 Use Strong Key Exchange</a></h4></div></div></div><p id="PN10E88">For the key exchange, public sites can typically choose between the classic
+		                    <em class="firstterm">ephemeral Diffie-Hellman</em> key exchange (DHE) and its
+		                elliptic curve variant, ECDHE. There are other key exchange algorithms, but they’re
+		                generally insecure in one way or another. The RSA key exchange is still very
+		                popular, but it doesn’t provide forward secrecy.</p><p id="PN10E8D">In 2015, a group of researchers published new attacks against DHE; their work is
+		                known as the Logjam attack.<a href="apA-ssl-tls-deployment-best-practices.html#ftn.N10E8F" id="N10E8F" class="footnote">18</a> The researchers discovered that lower-strength DH key exchanges (e.g.,
+		                768 bits) can easily be broken and that some well-known 1,024-bit DH groups can be
+		                broken by state agencies. To be on the safe side, if deploying DHE, configure it
+		                with at least 2,048 bits of security. Some older clients (e.g., Java 6) might not
+		                support this level of strength. For performance reasons, most servers should prefer
+		                ECDHE, which is both stronger and faster. The <code class="literal">secp256r1</code> named
+		                curve (also known as <code class="literal">P-256</code>) is a good choice in this case.</p></div><div class="section" title="2.7 Mitigate Known Problems"><div class="titlepage"><div><div><h4 class="title"><a id="N10E9C"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10E9C">2.7 Mitigate Known Problems</a></h4></div></div></div><p id="PN10EA0">There have been several serious attacks against SSL and TLS in recent years, but
+		                they should generally not concern you if you’re running up-to-date software and
+		                following the advice in this guide. (If you’re not, I’d advise testing your systems
+		                using SSL Labs and taking it from there.) However, nothing is perfectly secure,
+		                which is why it is a good practice to keep an eye on what happens in security.
+		                Promptly apply vendor patches if and when they become available; otherwise, rely on
+		                workarounds for mitigation.</p></div></div><div class="section" title="3 Performance"><div class="titlepage"><div><div><h3 class="title"><a id="N10EA2"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10EA2">3 Performance</a></h3></div></div></div><p id="PN10EA6">Security is our main focus in this guide, but we must also pay attention to
+		            performance; a secure service that does not satisfy performance criteria will no doubt
+		            be dropped. With proper configuration, TLS can be quite fast. With modern protocols—for
+		            example, HTTP/2—it might even be faster than plaintext communication.</p><div class="section" title="3.1 Avoid Too Much Security"><div class="titlepage"><div><div><h4 class="title"><a id="N10EA8"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10EA8">3.1 Avoid Too Much Security</a></h4></div></div></div><p id="PN10EAC">The cryptographic handshake, which is used to establish secure connections, is an
+		                operation for which the cost is highly influenced by private key size. Using a key
+		                that is too short is insecure, but using a key that is too long will result in
+		                “too much” security and slow operation. For most web sites, using RSA
+		                keys stronger than 2,048 bits and ECDSA keys stronger than 256 bits is a waste of
+		                CPU power and might impair user experience. Similarly, there is little benefit to
+		                increasing the strength of the ephemeral key exchange beyond 2,048 bits for DHE and
+		                256 bits for ECDHE. There are no clear benefits of using encryption above 128
+		                bits.</p></div><div class="section" title="3.2 Use Session Resumption"><div class="titlepage"><div><div><h4 class="title"><a id="N10EAE"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10EAE">3.2 Use Session Resumption</a></h4></div></div></div><p id="PN10EB2">Session resumption is a performance-optimization technique that makes it possible
+		                to save the results of costly cryptographic operations and to reuse them for a
+		                period of time. A disabled or nonfunctional session resumption mechanism may
+		                introduce a significant performance penalty.</p></div><div class="section" title="3.3 Use WAN Optimization and HTTP/2"><div class="titlepage"><div><div><h4 class="title"><a id="N10EB4"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10EB4">3.3 Use WAN Optimization and HTTP/2</a></h4></div></div></div><p id="PN10EB8">These days, TLS overhead doesn’t come from CPU-hungry cryptographic operations,
+		                but from network latency. A TLS handshake, which can start only after the TCP
+		                handshake completes, requires a further exchange of packets and is more expensive
+		                the further away you are from the server. The best way to minimize latency is to
+		                avoid creating new connections—in other words, to keep existing connections open for
+		                a long time (keep-alives). Other techniques that provide good results include
+		                supporting modern protocols such as HTTP/2 and using WAN optimization (usually via
+		                content delivery networks).</p></div><div class="section" title="3.4 Cache Public Content"><div class="titlepage"><div><div><h4 class="title"><a id="N10EBA"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10EBA">3.4 Cache Public Content</a></h4></div></div></div><p id="PN10EBE">When communicating over TLS, browsers might assume that all traffic is sensitive.
+		                They will typically use the memory to cache certain resources, but once you close
+		                the browser, all the content may be lost. To gain a performance boost and enable
+		                long-term caching of some resources, mark public resources (e.g., images) as
+		                public.</p></div><div class="section" title="3.5 Use OCSP Stapling"><div class="titlepage"><div><div><h4 class="title"><a id="N10EC0"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10EC0">3.5 Use OCSP Stapling</a></h4></div></div></div><p id="PN10EC4"><em class="firstterm">OCSP stapling</em> is an extension of the OCSP protocol that
+		                delivers revocation information as part of the TLS handshake, directly from the
+		                server. As a result, the client does not need to contact OCSP servers for
+		                out-of-band validation and the overall TLS connection time is significantly reduced.
+		                OCSP stapling is an important optimization technique, but you should be aware that
+		                not all web servers provide solid OCSP stapling implementations. Combined with a CA
+		                that has a slow or unreliable OCSP responder, such web servers might create
+		                performance issues. For best results, simulate failure conditions to see if they
+		                might impact your availability.</p></div><div class="section" title="3.6 Use Fast Cryptographic Primitives"><div class="titlepage"><div><div><h4 class="title"><a id="N10EC8"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10EC8">3.6 Use Fast Cryptographic Primitives</a></h4></div></div></div><p id="PN10ECC">In addition to providing the best security, my recommended cipher suite
+		                configuration also provides the best performance. Whenever possible, use CPUs that
+		                support hardware-accelerated AES. After that, if you really want a further
+		                performance edge (probably not needed for most sites), consider using ECDSA
+		                keys.</p></div></div><div class="section" title="4 HTTP and Application Security"><div class="titlepage"><div><div><h3 class="title"><a id="N10ECE"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10ECE">4 HTTP and Application Security</a></h3></div></div></div><p id="PN10ED2">The HTTP protocol and the surrounding platform for web application delivery continued
+		            to evolve rapidly after SSL was born. As a result of that evolution, the platform now
+		            contains features that can be used to defeat encryption. In this section, we list those
+		            features, along with ways to use them securely.</p><div class="section" title="4.1 Encrypt Everything"><div class="titlepage"><div><div><h4 class="title"><a id="N10ED4"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10ED4">4.1 Encrypt Everything</a></h4></div></div></div><p id="PN10ED8">The fact that encryption is optional is probably one of the biggest security
+		                problems today. We see the following problems:</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p id="PN10EDC">No TLS on sites that need it</p></li><li class="listitem"><p id="PN10EDF">Sites that have TLS but that do not enforce it</p></li><li class="listitem"><p id="PN10EE2">Sites that mix TLS and non-TLS content, sometimes even within the same
+		                        page</p></li><li class="listitem"><p id="PN10EE5">Sites with programming errors that subvert TLS</p></li></ul></div><p id="PN10EE7">Although many of these problems can be mitigated if you know exactly what you’re
+		                doing, the only way to reliably protect web site communication is to enforce
+		                encryption throughout—without exception.</p></div><div class="section" title="4.2 Eliminate Mixed Content"><div class="titlepage"><div><div><h4 class="title"><a id="N10EE9"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10EE9">4.2 Eliminate Mixed Content</a></h4></div></div></div><p id="PN10EED">Mixed-content pages are those that are transmitted over TLS but include resources
+		                (e.g., JavaScript files, images, CSS files) that are not transmitted over TLS. Such
+		                pages are not secure. An active man-in-the-middle (MITM) attacker can piggyback on a
+		                single unprotected JavaScript resource, for example, and hijack the entire user
+		                session. Even if you follow the advice from the previous section and encrypt your
+		                entire web site, you might still end up retrieving some resources unencrypted from
+		                third-party web sites.</p></div><div class="section" title="4.3 Understand and Acknowledge Third-Party Trust"><div class="titlepage"><div><div><h4 class="title"><a id="N10EEF"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10EEF">4.3 Understand and Acknowledge Third-Party Trust</a></h4></div></div></div><p id="PN10EF3">Web sites often use third-party services activated via JavaScript code downloaded
+		                from another server. A good example of such a service is Google Analytics, which is
+		                used on large parts of the Web. Such inclusion of third-party code creates an
+		                implicit trust connection that effectively gives the other party full control over
+		                your web site. The third party may not be malicious, but large providers of such
+		                services are increasingly seen as targets. The reasoning is simple: if a large
+		                provider is compromised, the attacker is automatically given access to all the sites
+		                that depend on the service.</p><p id="PN10EF5">If you follow the advice from Section 4.2, at least your third-party links will be
+		                encrypted and thus safe from MITM attacks. However, you should go a step further
+		                than that: learn what services you use and remove them, replace them with safer
+		                alternatives, or accept the risk of their continued use. A new technology called
+		                    <em class="firstterm">subresource integrity</em> (SRI) could be used to reduce the
+		                potential exposure via third-party resources.<a href="apA-ssl-tls-deployment-best-practices.html#ftn.N10EFA" id="N10EFA" class="footnote">19</a></p></div><div class="section" title="4.4 Secure Cookies"><div class="titlepage"><div><div><h4 class="title"><a id="N10F00"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10F00">4.4 Secure Cookies</a></h4></div></div></div><p id="PN10F04">To be properly secure, a web site requires TLS, but also that all its cookies are
+		                explicitly marked as secure when they are created. Failure to secure the cookies
+		                makes it possible for an active MITM attacker to tease some information out through
+		                clever tricks, even on web sites that are 100% encrypted. For best results, consider
+		                adding cryptographic integrity validation or even encryption to your cookies.</p></div><div class="section" title="4.5 Secure HTTP Compression"><div class="titlepage"><div><div><h3 class="title"><a id="N10F06"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10F06">4.5 Secure HTTP Compression</a></h3></div></div></div><p id="PN10F09">The 2012 CRIME attack showed that TLS compression can’t be implemented securely.
+		                The only solution was to disable TLS compression altogether. The following year, two
+		                further attack variations followed. TIME and BREACH focused on secrets in HTTP
+		                response bodies compressed using HTTP compression. Unlike TLS compression, HTTP
+		                compression is a necessity and can’t be turned off. Thus, to address these attacks,
+		                changes to application code need to be made.<a href="apA-ssl-tls-deployment-best-practices.html#ftn.N10F0B" id="N10F0B" class="footnote">20</a></p><p id="PN10F11">TIME and BREACH attacks are not easy to carry out, but if someone is motivated
+		                enough to use them, the impact is roughly equivalent to a successful
+		                    <em class="firstterm">Cross-Site Request Forgery</em> (CSRF) attack.</p></div><div class="section" title="4.6 Deploy HTTP Strict Transport Security"><div class="titlepage"><div><div><h4 class="title"><a id="N10F16"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10F16">4.6 Deploy HTTP Strict Transport Security</a></h4></div></div></div><p id="PN10F1A"><em class="firstterm">HTTP Strict Transport Security</em> (HSTS) is a safety net for
+		                TLS. It was designed to ensure that security remains intact even in the case of
+		                configuration problems and implementation errors. To activate HSTS protection, you
+		                add a new response header to your web sites. After that, browsers that support HSTS
+		                (all modern browsers at this time) enforce it.</p><p id="PN10F1E">The goal of HSTS is simple: after activation, it does not allow any insecure
+		                communication with the web site that uses it. It achieves this goal by automatically
+		                converting all plaintext links to secure ones. As a bonus, it also disables
+		                click-through certificate warnings. (Certificate warnings are an indicator of an
+		                active MITM attack. Studies have shown that most users click through these warnings,
+		                so it is in your best interest to never allow them.)</p><p id="PN10F20">Adding support for HSTS is the single most important improvement you can make for
+		                the TLS security of your web sites. New sites should always be designed with HSTS in
+		                mind and the old sites converted to support it wherever possible and as soon as
+		                possible. For best security, consider using <em class="firstterm">HSTS preloading</em>,<a href="apA-ssl-tls-deployment-best-practices.html#ftn.N10F25" id="N10F25" class="footnote">21</a> which embeds your HSTS configuration in modern browsers, making even the
+		                first connection to your site secure.</p><p id="PN10F2C">The following configuration example activates HSTS on the main hostname and all
+		                its subdomains for a period of one year, while also allowing preloading:</p><pre class="programlisting" id="N10F2E">Strict-Transport-Security: max-age=31536000; includeSubDomains; preload</pre></div><div class="section" title="4.7 Deploy Content Security Policy"><div class="titlepage"><div><div><h4 class="title"><a id="N10F30"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10F30">4.7 Deploy Content Security Policy</a></h4></div></div></div><p id="PN10F34"><em class="firstterm">Content Security Policy</em> (CSP) is a security mechanism that
+		                web sites can use to restrict browser operation. Although initially designed to
+		                address <em class="firstterm">Cross-Site Scripting</em> (XSS), CSP is constantly
+		                evolving and supports features that are useful for enhancing TLS security. In
+		                particular, it can be used to restrict mixed content when it comes to third-party
+		                web sites, for which HSTS doesn’t help.</p><p id="PN10F3B">To deploy CSP to prevent third-party mixed content, use the following
+		                configuration:</p><pre class="programlisting" id="N10F3D">Content-Security-Policy: default-src https: 'unsafe-inline' 'unsafe-eval';
+		            connect-src https: wss:</pre><div class="note" title="Note"><h3 class="title">Note</h3><p id="PN10F40">This is not the best way to deploy CSP. In order to provide an example that
+		                    doesn’t break anything except mixed content, I had to disable some of the
+		                    default security features. Over time, as you learn more about CSP, you should
+		                    change your policy to bring them back.</p></div></div><div class="section" title="4.8 Do Not Cache Sensitive Content"><div class="titlepage"><div><div><h4 class="title"><a id="N10F42"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10F42">4.8 Do Not Cache Sensitive Content</a></h4></div></div></div><p id="PN10F46">All sensitive content must be communicated only to the intended parties and
+		                treated accordingly by all devices. Although proxies do not see encrypted traffic
+		                and cannot share content among users, the use of cloud-based application delivery
+		                platforms is increasing, which is why you need to be very careful when specifying
+		                what is public and what is not.</p></div><div class="section" title="4.9 Consider Other Threats"><div class="titlepage"><div><div><h4 class="title"><a id="N10F48"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10F48">4.9 Consider Other Threats</a></h4></div></div></div><p id="PN10F4C">TLS is designed to address only one aspect of security—confidentiality and
+		                integrity of the communication between you and your users—but there are many other
+		                threats that you need to deal with. In most cases, that means ensuring that your web
+		                site does not have other weaknesses.</p></div></div><div class="section" title="5 Validation"><div class="titlepage"><div><div><h3 class="title"><a id="N10F4E"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10F4E">5 Validation</a></h3></div></div></div><p id="PN10F52">With many configuration parameters available for tweaking, it is difficult to know in
+		            advance what impact certain changes will have. Further, changes are sometimes made
+		            accidentally; software upgrades can introduce changes silently. For that reason, we
+		            advise that you use a comprehensive SSL/TLS assessment tool initially to verify your
+		            configuration to ensure that you start out secure, and then periodically to ensure that
+		            you stay secure. For public web sites, we recommend the free SSL Labs server test.<a href="apA-ssl-tls-deployment-best-practices.html#ftn.N10F54" id="N10F54" class="footnote">22</a></p></div><div class="section" title="6 Advanced Topics"><div class="titlepage"><div><div><h3 class="title"><a id="N10F5A"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10F5A">6 Advanced Topics</a></h3></div></div></div><p id="PN10F5E">The following advanced topics are currently outside the scope of our guide. They
+		            require a deeper understanding of SSL/TLS and <em class="firstterm">Public Key
+		                Infrastructure</em> (PKI), and they are still being debated by
+		            experts.</p><div class="variablelist"><dl><dt><span class="term">Public Key Pinning</span></dt><dd><p id="PN10F68"><em class="firstterm">Public key pinning</em> is designed to give web site
+		                        operators the means to restrict which CAs can issue certificates for their
+		                        web sites. This feature has been deployed by Google for some time now
+		                        (hardcoded into their browser, Chrome) and has proven to be very useful in
+		                        preventing attacks and making the public aware of them. In 2014, Firefox
+		                        also added support for hardcoded pinning. A standard called
+		                            <em class="firstterm">Public Key Pinning Extension for HTTP</em><a href="apA-ssl-tls-deployment-best-practices.html#ftn.N10F6E" id="N10F6E" class="footnote">23</a> is now available. Public key pinning addresses the biggest
+		                        weakness of PKI (the fact that any CA can issue a certificate for any web
+		                        site), but it comes at a cost; deploying requires significant effort and
+		                        expertise, and creates risk of losing control of your site (if you end up
+		                        with invalid pinning configuration). You should consider pinning largely
+		                        only if you’re managing a site that might be realistically attacked via a
+		                        fraudulent certificate.</p></dd><dt><span class="term">DNSSEC and DANE</span></dt><dd><p id="PN10F79"><em class="firstterm">Domain Name System Security Extensions</em> (DNSSEC) is
+		                        a set of technologies that add integrity to the domain name system. Today,
+		                        an active network attacker can easily hijack any DNS request and forge
+		                        arbitrary responses. With DNSSEC, all responses can be cryptographically
+		                        tracked back to the DNS root. <em class="firstterm">DNS-based Authentication of Named
+		                            Entities</em> (DANE) is a separate standard that builds on top of
+		                        DNSSEC to provide bindings between DNS and TLS. DANE could be used to
+		                        augment the security of the existing CA-based PKI ecosystem or bypass it
+		                        altogether.</p><p id="PN10F80">Even though not everyone agrees that DNSSEC is a good direction for the
+		                        Internet, support for it continues to improve. Browsers don’t yet support
+		                        either DNSSEC or DANE (preferring similar features provided by HSTS and HPKP
+		                        instead), but there is some indication that they are starting to be used to
+		                        improve the security of email delivery.</p></dd></dl></div></div><div class="section" title="7 Changes"><div class="titlepage"><div><div><h3 class="title"><a id="N10F82"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10F82">7 Changes</a></h3></div></div></div><p id="PN10F86">The first release of this guide was on 24 February 2012. This section tracks the
+		            document changes over time, starting with version 1.3.</p><div class="section" title="Version 1.3 (17 September 2013)"><div class="titlepage"><div><div><h4 class="title"><a id="N10F88"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10F88">Version 1.3 (17 September 2013)</a></h4></div></div></div><p id="PN10F8C">The following changes were made in this version:</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p id="PN10F90">Recommend replacing 1024-bit certificates straight away.</p></li><li class="listitem"><p id="PN10F93">Recommend against supporting SSL v3.</p></li><li class="listitem"><p id="PN10F96">Remove the recommendation to use RC4 to mitigate the BEAST attack
+		                        server-side.</p></li><li class="listitem"><p id="PN10F99">Recommend that RC4 is disabled.</p></li><li class="listitem"><p id="PN10F9C">Recommend that 3DES is disabled in the near future.</p></li><li class="listitem"><p id="PN10F9F">Warn about the CRIME attack variations (TIME and BREACH).</p></li><li class="listitem"><p id="PN10FA2">Recommend supporting forward secrecy.</p></li><li class="listitem"><p id="PN10FA5">Add discussion of ECDSA certificates.</p></li></ul></div></div><div class="section" title="Version 1.4 (8 December 2014)"><div class="titlepage"><div><div><h3 class="title"><a id="N10FA7"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10FA7">Version 1.4 (8 December 2014)</a></h3></div></div></div><p id="PN10FAA">The following changes were made in this version:</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p id="PN10FAE">Discuss SHA1 deprecation and recommend migrating to the SHA2
+		                        family.</p></li><li class="listitem"><p id="PN10FB1">Recommend that SSL v3 is disabled and mention the POODLE attack.</p></li><li class="listitem"><p id="PN10FB4">Expand Section 3.1 to cover the strength of the DHE and ECDHE key
+		                        exchanges.</p></li><li class="listitem"><p id="PN10FB7">Recommend OCSP Stapling as a performance-improvement measure, promoting it
+		                        to Section 3.5.</p></li></ul></div></div><div class="section" title="Version 1.5 (8 June 2016)"><div class="titlepage"><div><div><h3 class="title"><a id="N10FB9"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10FB9">Version 1.5 (8 June 2016)</a></h3></div></div></div><p id="PN10FBC">The following changes were made in this version:</p><div class="itemizedlist"><ul class="itemizedlist"><li class="listitem"><p id="PN10FC0">Refreshed the entire document to keep up with the times.</p></li><li class="listitem"><p id="PN10FC3">Recommended use of authenticated cipher suites.</p></li><li class="listitem"><p id="PN10FC6">Spent more time discussing key exchange strength and the Logjam
+		                        attack.</p></li><li class="listitem"><p id="PN10FC9">Removed the recommendation to disable client-initiated renegotiation.
+		                        Modern software does this anyway, and it might be impossible or difficult to
+		                        disable it with something older. At the same time, the DoS vector isn’t
+		                        particularly strong. Overall, I feel it’s better to spend available
+		                        resources fixing something else.</p></li><li class="listitem"><p id="PN10FCC">Added a warning about flaky OCSP stapling implementations.</p></li><li class="listitem"><p id="PN10FCF">Added mention of subresource integrity enforcement.</p></li><li class="listitem"><p id="PN10FD2">Added mention of cookie integrity validation and encryption.</p></li><li class="listitem"><p id="PN10FD5">Added mention of HSTS preloading.</p></li><li class="listitem"><p id="PN10FD8">Recommended using CSP for better handling of third-party mixed
+		                        content.</p></li><li class="listitem"><p id="PN10FDB">Mentioned FREAK, Logjam, and DROWN attacks.</p></li><li class="listitem"><p id="PN10FDE">Removed the section that discussed mitigation of various TLS attacks,
+		                        which are largely obsolete by now, especially if the advice presented here
+		                        is followed. Moved discussion of CRIME variants into a new section.</p></li><li class="listitem"><p id="PN10FE1">Added a brief discussion of DNSSEC and DANE to the Advanced
+		                        section.</p></li></ul></div></div></div><div class="section" title="Acknowledgments"><div class="titlepage"><div><div><h3 class="title"><a id="N10FE3"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10FE3">Acknowledgments</a></h3></div></div></div><p id="PN10FE7">Special thanks to Marsh Ray, Nasko Oskov, Adrian F. Dimcev, and Ryan Hurst for their
+		            valuable feedback and help in crafting the initial version of this document. Also thanks
+		            to many others who generously share their knowledge of security and cryptography with
+		            the world. The guidelines presented here draw on the work of the entire security
+		            community.</p></div><div class="section" title="About SSL Labs"><div class="titlepage"><div><div><h3 class="title"><a id="N10FE9"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10FE9">About SSL Labs</a></h3></div></div></div><p id="PN10FED">SSL Labs (<code class="uri">www.ssllabs.com</code>) is Qualys’s research effort to understand
+		            SSL/TLS and PKI as well as to provide tools and documentation to assist with assessment
+		            and configuration. Since 2009, when SSL Labs was launched, hundreds of thousands of
+		            assessments have been performed using the free online assessment tool. Other projects
+		            run by SSL Labs include periodic Internet-wide surveys of TLS configuration and SSL
+		            Pulse, a monthly scan of about 150,000 most popular TLS-enabled web sites in the
+		            world.</p></div><div class="section" title="About Qualys"><div class="titlepage"><div><div><h3 class="title"><a id="N10FF2"/><a class="heading-link" href="apA-ssl-tls-deployment-best-practices.html#N10FF2">About Qualys</a></h3></div></div></div><p id="PN10FF6">Qualys, Inc. (NASDAQ: QLYS), is a pioneer and leading provider of cloud security and
+		            compliance solutions with over 8,800 customers in more than 100 countries, including a
+		            majority of each of the Forbes Global 100 and Fortune 100. The QualysGuard Cloud
+		            Platform and integrated suite of solutions help organizations simplify security
+		            operations and lower the cost of compliance by delivering critical security intelligence
+		            on demand and automating the full spectrum of auditing, compliance, and protection for
+		            IT systems and web applications. Founded in 1999, Qualys has established strategic
+		            partnerships with leading managed service providers and consulting organizations,
+		            including Accenture, BT, Cognizant Technology Solutions, Dell SecureWorks, Fujitsu, HCL
+		            Comnet, Infosys, Optiv, NTT, Tata Communications, Verizon and Wipro. The company is also
+		            a founding member of the Cloud Security Alliance (CSA).</p></div><div id="footnotes"><div class="footnote-line"> </div><div xmlns="http://www.w3.org/1999/xhtml" class="footnote"><p>[<a href="apA-ssl-tls-deployment-best-practices.html#N10E6A" id="ftn.N10E6A" class="para">17</a>] <a xmlns="http://www.w3.org/1999/xhtml" class="link" href="http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml">Transport Layer Security (TLS) Parameters</a> (IANA, retrieved
+		                            18 March 2016)</p></div><div xmlns="http://www.w3.org/1999/xhtml" class="footnote"><p>[<a href="apA-ssl-tls-deployment-best-practices.html#N10E8F" id="ftn.N10E8F" class="para">18</a>] <a xmlns="http://www.w3.org/1999/xhtml" class="link" href="https://weakdh.org/">Weak Diffie-Hellman and the Logjam
+		                            Attack</a> (retrieved 16 March 2016)</p></div><div xmlns="http://www.w3.org/1999/xhtml" class="footnote"><p>[<a href="apA-ssl-tls-deployment-best-practices.html#N10EFA" id="ftn.N10EFA" class="para">19</a>] <a xmlns="http://www.w3.org/1999/xhtml" class="link" href="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity">Subresource Integrity</a> (Mozilla Developer Network, retrieved 16
+		                        March 2016)</p></div><div xmlns="http://www.w3.org/1999/xhtml" class="footnote"><p>[<a href="apA-ssl-tls-deployment-best-practices.html#N10F0B" id="ftn.N10F0B" class="para">20</a>] <a xmlns="http://www.w3.org/1999/xhtml" class="link" href="https://community.qualys.com/blogs/securitylabs/2013/08/07/defending-against-the-breach-attack">Defending against the BREACH Attack</a> (Qualys Security Labs; 7
+		                        August 2013)</p></div><div xmlns="http://www.w3.org/1999/xhtml" class="footnote"><p>[<a href="apA-ssl-tls-deployment-best-practices.html#N10F25" id="ftn.N10F25" class="para">21</a>] <a xmlns="http://www.w3.org/1999/xhtml" class="link" href="https://hstspreload.appspot.com/">HSTS Preload
+		                            List</a> (Google developers, retrieved 16 March 2016)</p></div><div xmlns="http://www.w3.org/1999/xhtml" class="footnote"><p>[<a href="apA-ssl-tls-deployment-best-practices.html#N10F54" id="ftn.N10F54" class="para">22</a>] <a xmlns="http://www.w3.org/1999/xhtml" class="link" href="https://www.ssllabs.com">SSL Labs</a> (retrieved 16 March
+		                    2016)</p></div><div xmlns="http://www.w3.org/1999/xhtml" class="footnote"><p>[<a href="apA-ssl-tls-deployment-best-practices.html#N10F6E" id="ftn.N10F6E" class="para">23</a>] <a xmlns="http://www.w3.org/1999/xhtml" class="link" href="https://datatracker.ietf.org/doc/rfc7469/">RFC
+		                                    7469: Public Key Pinning Extension for HTTP</a> (Evans et al,
+		                                April 2015)</p></div></div></div><div style="padding-left: 50px; font-family: sans-serif; font-size: 12px; color: #444444; margin-bottom: 15px"><div style="float: left; height: 16px"><a href="https://www.feistyduck.com"><img style="margin-top: 4px; margin-right: 4px; border: 1px solid white" height="15" width="15" src="fd-favicon.png"/></a></div><div style="float: left; height: 16px; padding-top: 6px">Copyright © 2018 <a style="color: #444444" href="https://www.feistyduck.com">Feisty Duck</a>. All rights reserved.</div><div> </div></div><!--FDMARKER:BODY--></body></html>

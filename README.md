@@ -2,6 +2,18 @@
 
 Snaphots of computer science websites for offline viewing.
 
+```bash
+wget --reject pdf \
+     --recursive \
+     --no-clobber \
+     --page-requisites \
+     --html-extension \
+     --convert-links \
+     --restrict-file-names=windows \
+     --domains site_domain> \
+     --no-parent site_url
+```
+
 ## markburgess.org/os
 
 Last update: 2018-11-01
@@ -25,3 +37,9 @@ Readings in Database Systems, 5th Edition - Peter Bailis, Joseph M. Hellerstein,
 Last update: 2018-11-01
 
 How to Design Programs, Second Edition - Matthias Felleisen, Robert Bruce Findler, Matthew Flatt, Shriram Krishnamurthi
+
+## feistyduck.com/library/openssl-cookbook/online
+
+Last update: 2018-11-01
+
+OpenSSL Cookbook / A Short Guide to the Most Frequently Used OpenSSL Features and Commands - Ivan Ristić

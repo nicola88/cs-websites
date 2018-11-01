@@ -1,0 +1,258 @@
+
+body {
+	font-family: Palatino, serif;
+}
+
+.book > .titlepage {        
+    margin-bottom: 0px;
+}
+
+.book > .titlepage h3.author {    
+    margin-top: 0px;
+    margin-bottom: 2em;
+}
+
+.book > .titlepage hr {
+    width: 0;
+    height: 0;
+    border: 0;
+}
+
+.part {
+    height: 600px;
+}
+
+.chapter > .titlepage, .part > .titlepage, .preface > .titlepage, .index  > .titlepage , .appendix > .titlepage {
+    padding-top: 150px;
+	padding-bottom: 0.4em;
+}
+
+.toc {
+    font-family: sans-serif;    
+    line-height: 1.5em;
+    font-size: 0.8em;
+}
+
+.toc p {
+    padding-top: 0.9em;
+    font-size: 2.9em;
+}
+
+.abstract {
+    margin-top: 2em;    
+}
+
+.abstract > p {    
+    margin-bottom: 0.4em;
+}
+
+.indexdiv {
+    font-family: sans-serif;    
+    line-height: 1.4em;
+    font-size: 0.9em;
+}
+
+h1 {    
+    font-size: 2.2em;
+    font-weight: bold;
+    margin-bottom: 0.2em; 
+    font-family: sans-serif;
+    padding-top: 0.5em;
+}
+
+h2 {  
+    font-size: 1.5em;
+    font-weight: bold;
+	margin-top: 1.4em;
+	margin-bottom: 0.8em;
+    font-family: sans-serif;
+    padding-top: 0.3em;	
+}
+
+h3 {
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-top: 1.4em;
+	margin-bottom: 0.4em;
+    font-family: sans-serif;
+    padding-top: 0.3em;
+}
+
+h4 {
+    font-size: 1.3em;   
+    font-weight: bold;
+    margin-top: 1.4em;
+	margin-bottom: 0.4em;
+    font-family: sans-serif;
+    padding-top: 0.3em;
+}
+
+h5 {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-top: 1.4em;
+	margin-bottom: 0.4em;
+    font-family: sans-serif;
+    padding-top: 0.3em;
+}
+
+h6 {
+    font-size: 1.1em;    
+    font-weight: bold;
+    margin-top: 1.4em;
+	margin-bottom: 0.4em;
+    font-family: sans-serif;
+    padding-top: 0.3em;
+}
+
+p {    
+    text-indent: 0em;
+    margin-top: 0.2em;    
+    text-align: justify;
+    line-height: 1.5em;	
+}
+
+.term {	
+	font-weight: bold;
+}
+
+.sidebar {
+	border: 1px solid black;
+	padding: 2em;	
+	text-align: left;
+}
+
+.sidebar > .titlepage p {
+    text-align: center;	
+}
+
+.sidebar > .titlepage {
+	font-size: 1.3em;	
+	margin-top: 0.2em;
+	margin-bottom: 0.8em;
+	font-family: sans-serif;
+}
+
+.note, .tip, .warning {
+	border-left: 0.8em solid grey;
+	padding-left: 1.0em;
+	line-height: 0.8em;
+	font-size: 0.95em;
+	margin-left: 0.25in;
+	margin-right: 0.25in;
+}
+
+.note > .titlepage, .tip > .titlepage, .warning > .titlepage {
+	font-size: 1.4em;
+}
+
+table {    
+    border: 0px;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    font-family: sans-serif;
+    line-height: 1.4em;
+    font-size: 0.9em;
+    width: 100%;
+    margin-bottom: 1em;
+}
+
+th {    
+    border: 0px;
+    border-bottom: 1px solid black;
+    padding: 0.4em;
+    margin: 0px;
+    background: #f0f0f0;
+}
+
+td {    
+    border: 0px;
+    padding: 0.4em;
+    margin: 0px;
+	text-align: left;
+}
+
+.table > .title {
+    font-family: sans-serif;
+    font-size: 0.9em;
+}
+
+.figure {
+    margin-bottom: 1em;
+}
+
+.figure > .title {
+    font-family: sans-serif;
+    font-size: 0.9em;
+}
+
+td > .itemizedlist > ul > li {
+	margin-left: -1.5em;
+}
+
+.listitem > p {    	
+    margin: 0.4em;
+	margin-left: 0;
+	text-align: left;	
+}
+
+.footnote {
+    position: relative;
+    vertical-align: top;
+    top: -0.5em;
+    vertical-align: top;
+    font-size: 0.8em;
+}
+
+#footnotes .footnote-line {
+    width: 150px;
+    margin-top: 2em;
+    border-top: 2px solid black;
+    padding-top: 1em;
+}
+
+#footnotes p {
+    font-family: sans-serif;
+}
+
+.blockquote {
+	font-style: italic;
+}
+		
+.p12n {
+	margin-top: 2em;
+	border-top: 1px solid grey;
+	padding-top: 0.2em;
+    font-family: sans-serif;
+    font-size: 0.8em;    
+    font-weight: normal;    
+    color: grey;
+}
+
+.uri {
+	font-family: serif;
+	font-style: italic;	
+	font-weight: normal;
+}
+
+pre {
+	line-height: 1.4em;
+	white-space: pre-wrap;       /* CSS 3 */
+	white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+	white-space: -pre-wrap;      /* Opera 4-6 */
+	white-space: -o-pre-wrap;    /* Opera 7 */
+	word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+.mediaobject {
+	border: 1px solid black;
+}
+
+.heading-link, .heading-link:link, .heading-link:visited {
+	color: black;
+	text-decoration: none;
+}
+
+.heading-link:hover {
+	text-decoration: underline;
+}

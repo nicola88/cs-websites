@@ -1,0 +1,116 @@
+
+body {			
+	background: #f0f0f0;
+	margin: 0px;
+	font-family: serif;
+	-moz-font-feature-settings: "cswh=0"	
+}
+
+body > .book, body > .chapter, body > .part, body > .preface, body > .index, body > .toc, body > .appendix {
+	width: 800px;        
+	margin-top: 20px;
+	margin-bottom: 5px;
+	margin-left: 41px;
+	margin-right: 150px;
+	padding: 0 60px;
+	border: 1px solid #b8b8ba;    
+	background: white;
+	padding-bottom: 40px;	
+	font-size: 1.1em;
+}
+
+code {
+	font-size: 1.15em;
+}
+
+.p12n {
+    border: 0;    
+    margin: 0;
+    margin-left: 41px;
+    margin-bottom: 25px;    
+}
+
+div.added    {
+	background-color: #ffff99;     
+}
+
+div.deleted  {
+	text-decoration: line-through;
+    background-color: #FF7F7F;
+}
+
+div.changed {
+	background-color: #99ff99;
+}
+
+div.off {
+}
+
+span.added   {
+	background-color: #ffff99;    
+}
+
+span.deleted {
+	text-decoration: line-through;
+    background-color: #FF7F7F;
+}
+
+span.changed {
+	background-color: #99ff99;
+}
+
+span.off {
+}
+
+#xheader {
+	position: fixed;
+	opacity: 0.9;
+	-moz-opacity: 0.9;
+	background: url(xheader-background.png) repeat-x bottom center;
+	width: 100%;
+	height: 56px;
+	z-index: 100;					
+}	
+		
+#xheader_cover {
+	float: left;
+	padding-right: 7px;
+	padding-left: 2px;
+	padding-top: 1px;
+}
+		
+#xheader_title {
+	font-family: sans-serif;
+	font-size: 14px;
+	font-weight: bold;		
+}					
+		
+#xheader_title a {
+	text-decoration: none;
+	color: black;
+}
+		
+#xheader_title .nav {
+	font-size: 11px;
+	color: #444444;
+}
+		
+#xheader_title a:hover {
+	text-decoration: underline;			
+}
+		
+#xheader_crumbs {
+	font-family: sans-serif;
+	font-size: 11px;
+	font-weight: normal;			
+	padding: 0px;
+	margin: 0px;
+	line-height: 14px;
+}
+
+.xnav-icon {
+	position: fixed;
+	width: 25px;
+	height: 50px;
+	left: 10px;
+}

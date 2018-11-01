@@ -1,0 +1,12 @@
+
+.chapterLabel, .partLabel {    
+    color: #1a7d66;		
+}
+
+.link, .xref {
+	color: #1a7d66;
+}
+
+.note, .tip, .warning {
+	border-left: 0.6em solid #1a7d66;
+}
