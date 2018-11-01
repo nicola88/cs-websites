@@ -1,0 +1,340 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<title>Distributed Transactions &amp; Replication</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+</font mstheme><table border="0" width="100%">
+  <tr>
+    <td width="9%"><font face="century gothic, arial, helvetica" mstheme><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></font mstheme></td>
+    <td width="91%"><font face="century gothic, arial, helvetica" mstheme><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></font mstheme></td>
+  </tr>
+</table><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+</font mstheme></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Distributed Transactions &amp; Replication</h1>
+
+<h2>Transaction Management in R*</h2>
+
+<p>Unravels details of logging &amp; messages sent. </p>
+
+<p>Assumptions 
+
+<ul>
+  <li>update in place, WAL</li>
+  <li>batched force of log records</li>
+</ul>
+
+<p>Desired Characteristics 
+
+<ul>
+  <li>guaranteed xact atomicity</li>
+  <li>ability to &quot;forget&quot; outcome of commit ASAP</li>
+  <li>minimal log writes &amp; message traffic</li>
+  <li>optimized performance in no-failure case</li>
+  <li>exploitation of completely or partially R/O xacts</li>
+  <li>maximize ability to perform unilateral abort</li>
+</ul>
+
+<p>In order to minimize logging and comm: 
+
+<ul>
+  <li>rare failures do not deserve extra overhead in normal processing</li>
+  <li>hierarchical commit better than 2P</li>
+</ul>
+
+<h3>Normal Processing (2PC)</h3>
+
+<table BORDER="1" CELLPADDING="7" WIDTH="492" HSPACE="12">
+  <tr>
+    <td VALIGN="TOP" WIDTH="29%" BGCOLOR="#FFFFFF"><p align="center">Coordinator Log </td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF"><p align="center">Messages </td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF"><p align="center">Subordinate Log </td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="29%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF"><p align="center">PREPARE </td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="29%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF"><p align="center"><font FACE="Brush Script MT">prepare*/abort*</font> </td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="29%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF"><p align="center">VOTE YES/NO </td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="29%" BGCOLOR="#FFFFFF"><p align="center"><font FACE="Brush Script MT">commit*/abort*</font> </td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="29%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF"><p align="center">COMMIT/ABORT </td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="29%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF"><p align="center"><font FACE="Brush Script MT">commit*/abort*</font> </td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="29%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF"><p align="center">ACK </td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="29%" BGCOLOR="#FFFFFF"><p align="center"><font FACE="Brush Script MT">end</font> </td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="29%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="30%" BGCOLOR="#FFFFFF">&nbsp;</td>
+  </tr>
+</table>
+
+<p>since subords force abort (&amp; commit) before ACKing, they never need to ask coord
+about final outcome. <br>
+<b>Rule: </b>never need to ask something you used to know; log before ACKing. <br>
+&nbsp;&nbsp;&nbsp; Guarantees atomicity. </p>
+
+<p><b>Total cost:</b> <br>
+&nbsp;&nbsp;&nbsp;&nbsp; subords: 2 forced log-writes (prepare/commit), 2 messages
+(YES/ACK) <br>
+&nbsp;&nbsp;&nbsp;&nbsp; coord: 1 forced log write (commit), 1 async log write (end), 2
+messages/subord (prepare/commit) </p>
+
+<p><b>2PC &amp; Failures</b> </p>
+
+<p>Recovery process per site handles xacts committing at crash, as well as incoming
+recovery messages. 
+
+<ol>
+  <li>on restart, read log and accumulate committing xact info in main mem</li>
+  <li>if you discover a local xact in the prepared state, contact coord to find out what to do</li>
+  <li>if you discover a local xact that didn&#146;t get prepared, UNDO it, write abort record,
+    and forget</li>
+  <li>if a local xact was committing (i.e. this is the coord), then send out COMMIT msgs to
+    subords that haven&#146;t ACKed. Similar for aborting.</li>
+</ol>
+<b>
+
+<p>Upon discovering a failure elsewhere:</b> </p>
+
+<p>&nbsp;&nbsp;&nbsp; If a coord discovers that a subord is unreachable... <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; while waiting for its vote: coord
+aborts xact as usual <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; while waiting for an ACK: coord
+gives xact to recovery manager <br>
+&nbsp;&nbsp;&nbsp; If a subord discovers that a coord is unreachable... <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if it hasn&#146;t sent a YES vote
+yet: abort (&quot;unilateral abort&quot;) <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if it has sent a YES vote, subord
+gives xact to recovery manager </p>
+
+<p><b>&nbsp;If a recovery mgr receives an inquiry from a subord in prepared state</b> <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if main mem info says xact is
+committing or aborting, send COMMIT/ABORT <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if main mem info says nothing...? <br>
+&nbsp; </p>
+
+<p><b>An Aside: Hierarchical 2PC</b> </p>
+
+<p>If you have a tree-shaped process graph. </p>
+
+<p>&nbsp;&nbsp;&nbsp;&nbsp; root (which talks to user) is a coordinator <br>
+&nbsp;&nbsp;&nbsp;&nbsp; leaves are subordinates <br>
+&nbsp;&nbsp;&nbsp;&nbsp; interior nodes are both <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; after receiving PREPARE, propagate
+it to children <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; vote after children; any NO below
+causes a NO vote <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; after receiving a COMMIT record,
+force-write log, ACK to parent, and propagate to children. Similar for ABORT. </p>
+
+<p>&nbsp; </p>
+
+<p><b>Presumed Abort</b> <br>
+&nbsp;&nbsp;&nbsp;&nbsp; recall... if main-mem info say nothing, coord says ABORT <br>
+&nbsp;&nbsp;&nbsp;&nbsp; SO... coord can forget a xact immediately after deciding to abort
+it! (write abort record, THEN forget) <br>
+&nbsp;&nbsp;&nbsp;&nbsp; abort can be async write <br>
+&nbsp;&nbsp;&nbsp;&nbsp; no ACKS required from subords on ABORT <br>
+&nbsp;&nbsp;&nbsp;&nbsp; no need to remember names of subords in abort record, nor write
+end record after abort <br>
+&nbsp;&nbsp;&nbsp;&nbsp; if coord sees subord has failed, need not pass xact to recovery
+system; can just ABORT. </p>
+
+<p>Now, look at R/O xacts: <br>
+&nbsp;&nbsp;&nbsp;&nbsp; subords who have only read send READ VOTEs instead of YES VOTEs,
+release locks, write no log records <br>
+&nbsp;&nbsp;&nbsp;&nbsp; logic is: READ &amp; YES = YES, READ &amp; NO = NO, READ &amp;
+READ = READ <br>
+&nbsp;&nbsp;&nbsp;&nbsp; if all votes are READ, there&#146;s no second phase <br>
+&nbsp;&nbsp;&nbsp;&nbsp; commit record at coord includes only YES sites <br>
+&nbsp;&nbsp;&nbsp;&nbsp; Tallying up the R/O work: <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; nobody writes log records <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; nonleaf processes send one message
+to children <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; children send one message (to
+parent) </p>
+
+<p><b>Presumed Commit</b> </p>
+
+<p>Idea: let&#146;s invert the logic above, since commit is the fast path: </p>
+
+<p>&nbsp;&nbsp;&nbsp;&nbsp; require ACK for ABORT, not COMMIT <br>
+&nbsp;&nbsp;&nbsp;&nbsp; subords force abort records, not commit <br>
+&nbsp;&nbsp;&nbsp;&nbsp; no information? Presume commit! </p>
+
+<p>Problem: 
+
+<ol>
+  <li>subord prepares to commit</li>
+  <li>coord crashes</li>
+  <li>on restart, coord aborts transaction and forgets it</li>
+  <li>subord asks about transaction, coord says &quot;no info = commit!&quot;</li>
+  <li>subord commits, everyone else does not</li>
+</ol>
+
+<p>Solution: <br>
+&nbsp;&nbsp;&nbsp;&nbsp; coord records names of subords on stable storage before allowing
+them to prepare (&quot;collecting&quot; record) <br>
+&nbsp;&nbsp;&nbsp;&nbsp; then it can tell them about aborts on restart <br>
+&nbsp;&nbsp;&nbsp;&nbsp; everything else analogous (mirror) to Presumed Abort <br>
+&nbsp;&nbsp;&nbsp;&nbsp; Tallying up the R/O work: <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; nonleaf writes collecting (forced)
+and commit (async) <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; nonleaf sends one message to all
+children (PREPARE) <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; children send one message (to
+parent) </p>
+
+<p><b>Performance analysis in paper:</b> <br>
+&nbsp;&nbsp;&nbsp;&nbsp; PA &gt; 2PC (&gt; = &quot;beats&quot;) <br>
+&nbsp;&nbsp;&nbsp;&nbsp; PA &gt; PC for R/O transactions <br>
+&nbsp;&nbsp;&nbsp;&nbsp; for xacts with only one write subord, PC &gt; PA (equal log
+writes, PA needs an ACK from subord) <br>
+&nbsp;&nbsp;&nbsp;&nbsp; for n-1 writing subords, PC &gt;&gt; PA (equal logging, but PA
+forces n-1 times when PC does not &#150; commit records of subords.&nbsp; Also PA send n
+extra messages) <br>
+&nbsp;&nbsp;&nbsp;&nbsp; choice between PA and PC could be made on a transaction-by
+transaction basis 
+
+<p>&nbsp; </p>
+
+<h3>Gray, et al on Replication</h3>
+
+<p>The Upshot: Deadlock/reconciliation rates grow exponentially with replication factor.
+This gets even worse with disconnected operation (mobile computers). </p>
+
+<p><b>Background</b> 
+
+<ul>
+  <li>eager replication (deadlocks) vs. lazy replication (reconciliations)</li>
+  <li>group (update anywhere) vs. master (primary copy)</li>
+  <li>scaleup pitfall: replication looks fine on small demos, dies when you scale up</li>
+  <li>system delusion: lots of inconsistent versions floating around, too hard to reconcile
+    them all</li>
+</ul>
+
+<p>&nbsp;<b>Important Observations</b> 
+
+<ul>
+  <li>in group mode, every update generates an update at all nodes (i.e. nodes times more
+    work). This generates actions2 more work!</li>
+  <li>Eager Group replication:</li>
+  <ul>
+    <li>deadlocks grow like nodes3</li>
+    <li>deadlocks grow like actions5 (where actions = # of actions per transaction)</li>
+    <li>mobile nodes cannot run when disconnected</li>
+  </ul>
+  <li>Eager Master replication</li>
+  <ul>
+    <li>Reduces deadlocks: like a single-site system with higher TPS</li>
+    <li>Still grow like actions5</li>
+  </ul>
+  <li>Lazy Group replication</li>
+  <ul>
+    <li>transaction which would wait under eager needs to be reconciled here</li>
+    <ul>
+      <li>Assume wait is rare. Deadlock is rare2 (i.e. very unlikely)</li>
+      <li>so reconciliation is much more common than deadlock</li>
+    </ul>
+    <li>reconciliations grow like TPS2´ (actions ´ nodes)3</li>
+  </ul>
+  <li>Lazy Master replication</li>
+  <ul>
+    <li>like RPC mechanism of previous paper (reads should send read-lock requests to master)</li>
+    <li>deadlock rate at master grows with (TPS´ Nodes)2´ actions4</li>
+    <li>mobile nodes can&#146;t run while disconnected</li>
+  </ul>
+</ul>
+
+<p>&nbsp;<b>Intuitions for a Solution</b> 
+
+<ul>
+  <li>checkbook example</li>
+  <li>Lotus Notes example: convergence semantics (with no new updates &amp; connectivity,
+    everybody will eventually get the same state). Uses timestamps.</li>
+  <li>lost update problem (more recent account update wins, old one is lost)</li>
+  <ul>
+    <li>solution: commutative operations (e.g. increment/decrement)</li>
+  </ul>
+</ul>
+<b>
+
+<p>Two-Tier Replication</b> 
+
+<ul>
+  <li>The world consists of base nodes and mobile nodes</li>
+  <li>mobile nodes contain 2 versions of objects: a (maybe stale) master version, and a
+    tentative version</li>
+  <li>2 types of xacts:</li>
+  <ul>
+    <li>base xacts work only on master data, involve at most 1 mobile node</li>
+    <li>tentative xacts work only on local tentative data. Only involve data mastered at base
+      nodes or the local node (no other mobile nodes)</li>
+    <li>on reconnect:</li>
+    <ul>
+      <li>tentative versions are removed</li>
+      <li>tentative xacts are rerun as real xacts</li>
+      <li>before committing the base xacts, an acceptance criterion is used to make sure the
+        results are close enough to the original tentative versions</li>
+    </ul>
+  </ul>
+  <li>Features:</li>
+  <ul>
+    <li>mobile nodes may make tentative updates</li>
+    <li>base xacts execute with single-copy serializability</li>
+    <li>xact is durable when the base xact completes</li>
+    <li>replicas at all sites converge to base system state</li>
+    <li>if all xacts commute, there are no reconciliations</li>
+  </ul>
+  <li>Their &quot;solution&quot; to the dangers:</li>
+  <ul>
+    <li>use lazy master with timestamps &amp; commutativity to avoid high deadlock rates</li>
+    <li>use 2-tier replication to handle disconnected operation</li>
+  </ul>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/19/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

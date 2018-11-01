@@ -1,0 +1,169 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 3: Techniques Everyone Should Know</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch4-newdbms.html">Next Chapter</a></div>
+<div class="headerlink"><a href="ch2-importantdbms.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch3-techniques.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch3-techniques">Chapter 3: Techniques Everyone Should Know</div>
+	<div class="introauthor">Introduced by Peter Bailis</div>
+
+      <div class="paperchoicebox">
+	<div class="paperchoicetitle">Readings:</div>
+	<div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=102545501597608314" target="_blank">Patricia G. Selinger, Morton M. Astrahan, Donald D. Chamberlin, Raymond A. Lorie, Thomas G. Price. <span class="papertitle">Access path selection in a relational database management system</span>. <span class="papervenue">SIGMOD</span>, 1979.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=2142924814045750364" target="_blank">C. Mohan, Donald J. Haderle, Bruce G. Lindsay, Hamid Pirahesh, Peter M. Schwarz. <span class="papertitle">ARIES: A Transaction Recovery Method Supporting Fine-Granularity Locking and Partial Rollbacks Using Write-Ahead Logging</span>. <span class="papervenue">ACM Transactions on Database Systems</span>, 17(1), 1992, 94-162.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=15730220590995320737" target="_blank">Jim Gray, Raymond A. Lorie, Gianfranco R. Putzolu, Irving L. Traiger. <span class="papertitle">Granularity of Locks and Degrees of Consistency in a Shared Data Base</span>. <span class="papervenue"></span>, IBM, September, 1975.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=9784855600346107276" target="_blank">Rakesh Agrawal, Michael J. Carey, Miron Livny. <span class="papertitle">Concurrency Control Performance Modeling: Alternatives and Implications</span>. <span class="papervenue">ACM Transactions on Database Systems</span>, 12(4), 1987, 609-654.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=6135007404184895390" target="_blank">C. Mohan, Bruce G. Lindsay, Ron Obermarck. <span class="papertitle">Transaction Management in the R* Distributed Database Management System</span>. <span class="papervenue">ACM Transactions on Database Systems</span>, 11(4), 1986, 378-396.</a></div>
+      </div>
+
+    
+
+      <div class="intro">
+      <p>In this chapter, we present primary and near-primary sources for several of the most important core concepts in database system design: query planning, concurrency control, database recovery, and distribution. The ideas in this chapter are so fundamental to modern database systems that nearly every mature database system implementation contains them. Three of the papers in this chapter are far and away the canonical references on their respective topics. Moreover, in contrast with the prior chapter, this chapter focuses on broadly applicable techniques and algorithms rather than whole systems.</p>
+<div id="query-optimization" class="bodysection">Query Optimization</div>
+<p>Query optimization is important in relational database architecture because it is core to enabling data-independent query processing. Selinger et al.&rsquo;s foundational paper on System R enables practical query optimization by decomposing the problem into three distinct subproblems: cost estimation, relational equivalences that define a search space, and cost-based search.</p>
+<p>The optimizer provides an estimate for the cost of executing each component of the query, measured in terms of I/O and CPU costs. To do so, the optimizer relies on both pre-computed statistics about the contents of each relation (stored in the system catalog) as well as a set of heuristics for determining the cardinality (size) of the query output (e.g., based on estimated predicate selectivity). As an exercise, consider these heuristics in detail: when do they make sense, and on what inputs will they fail? How might they be improved?</p>
+<p>Using these cost estimates, the optimizer uses a dynamic programming algorithm to construct a plan for the query. The optimizer defines a set of physical operators that implement a given logical operator (e.g., looking up a tuple using a full &rsquo;segment&rsquo; scan versus an index). Using this set, the optimizer iteratively constructs a &ldquo;left-deep&rdquo; tree of operators that in turn uses the cost heuristics to minimize the total amount of estimated work required to run the operators, accounting for &ldquo;interesting orders&rdquo; required by upstream consumers. This avoids having to consider all possible orderings of operators but is still exponential in the plan size; as we discuss in <a href="ch7-queryoptimization.html">Chapter 7</a>, modern query optimizers still struggle with large plans (e.g., many-way joins). Additionally, while the Selinger et al. optimizer performs compilation in advance, other early systems, like Ingres&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-ingres">25</a>]</span> interpreted the query plan - in effect, on a tuple-by-tuple basis.</p>
+<p>Like almost all query optimizers, the Selinger et al. optimizer is not actually &ldquo;optimal&rdquo; - there is no guarantee that the plan that the optimizer chooses will be the fastest or cheapest. The relational optimizer is closer in spirit to code optimization routines within modern language compilers (i.e., will perform a best-effort search) rather than mathematical optimization routines (i.e., will find the best solution). However, many of today&rsquo;s relational engines adopt the basic methodology from the paper, including the use of binary operators and cost estimation.</p>
+<div id="concurrency-control" class="bodysection">Concurrency Control</div>
+<p>Our first paper on transactions, from Gray et al., introduces two classic ideas: multi-granularity locking and multiple lock modes. The paper in fact reads as two separate papers.</p>
+<p>First, the paper presents the concept of multi-granularity locking. The problem here is simple: given a database with a hierarchical structure, how should we perform mutual exclusion? When should we lock at a coarse granularity (e.g., the whole database) versus a finer granularity (e.g., a single record), and how can we support concurrent access to different portions of the hierarchy at once? While Gray et al.&rsquo;s hierarchical layout (consisting of databases, areas, files, indexes, and records) differs slightly from that of a modern database system, all but the most rudimentary database locking systems adapt their proposals today.</p>
+<p>Second, the paper develops the concept of multiple degrees of isolation. As Gray et al. remind us, a goal of concurrency control is to maintain data that is &ldquo;consistent&rdquo; in that it obeys some logical assertions. Classically, database systems used serializable transactions as a means of enforcing consistency: if individual transactions each leave the database in a &ldquo;consistent&rdquo; state, then a serializable execution (equivalent to some serial execution of the transactions) will guarantee that all transactions observe a &ldquo;consistent&rdquo; state of the database&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-eswaran76">5</a>]</span>. Gray et al.&rsquo;s &ldquo;Degree 3&rdquo; protocol describes the classic (strict) &ldquo;two-phase locking&rdquo; (2PL), which guarantees serializable execution and is a major concept in transaction processing.</p>
+<p>However, serializability is often considered too expensive to enforce. To improve performance, database systems often instead execute transactions using non-serializable isolation. In the paper here, holding locks is expensive: waiting for a lock in the case of a conflict takes time, and, in the event of a deadlock, might take forever (or cause aborts). Therefore, as early as 1973, database systems such as IMS and System R began to experiment with non-serializable policies. In a lock-based concurrency control system, these policies are implemented by holding locks for shorter durations. This allows greater concurrency, may lead to fewer deadlocks and system-induced aborts, and, in a distributed setting, may permit greater availability of operation.</p>
+<p>In the second half of this paper, Gray et al. provide a rudimentary formalization of the behavior of these lock-based policies. Today, they are prevalent; as we discuss in <a href="ch6-isolation.html">Chapter 6</a>, non-serializable isolation is the default in a majority of commercial and open source RDBMSs, and some RDBMSs do not offer serializability at all. Degree 2 is now typically called Repeatable Read isolation and Degree 1 is now called Read Committed isolation, while Degree 0 is infrequently used&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-ansi-critique">1</a>]</span>. The paper also discusses the important notion of recoverability: policies under which a transaction can be aborted (or &ldquo;undone&rdquo;) without affecting other transactions. All but Degree 0 transactions satisfy this property.</p>
+<p>A wide range of alternative concurrency control mechanisms followed Gray et al.&rsquo;s pioneering work on lock-based serializability. As hardware, application demands, and access patterns have changed, so have concurrency control subsystems. However, one property of concurrency control remains a near certainty: there is no unilateral &ldquo;best&rdquo; mechanism in concurrency control. The optimal strategy is workload-dependent. To illustrate this point, we&rsquo;ve included a study from Agrawal, Carey, and Livny. Although dated, this paper&rsquo;s methodology and broad conclusions remain on target. It&rsquo;s a great example of thoughtful, implementation-agnostic performance analysis work that can provide valuable lessons over time.</p>
+<p>Methodologically, the ability to perform so-called &ldquo;back of the envelope&rdquo; calculations is a valuable skill: quickly estimating a metric of interest using crude arithmetic to arrive at an answer within an order of magnitude of the correct value can save hours or even years of systems implementation and performance analysis. This is a long and useful tradition in database systems, from the &ldquo;Five Minute Rule&rdquo;&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-fiveminute">12</a>]</span> to Google&rsquo;s &ldquo;Numbers Everyone Should Know&rdquo;&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-google-numbers">4</a>]</span>. While some of the lessons drawn from these estimates are transient&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-five-twenty">8</a>, <a href="ch3-techniques.html#ref-five-ten">10</a>]</span>, often the conclusions provide long-term lessons.</p>
+<p>However, for analysis of complex systems such as concurrency control, simulation can be a valuable intermediate step between back of the envelope and full-blown systems benchmarking. The Agrawal study is an example of this approach: the authors use a carefully designed system and user model to simulate locking, restart-based, and optimistic concurrency control.</p>
+<p>Several aspects of the evaluation are particularly valuable. First, there is a &ldquo;crossover&rdquo; point in almost every graph: there aren&rsquo;t clear winners, as the best-performing mechanism depends on the workload and system configuration. In contrast, virtually every performance study without a crossover point is likely to be uninteresting. If a scheme &ldquo;always wins,&rdquo; the study should contain an analytical analysis, or, ideally, a proof of why this is the case. Second, the authors consider a wide range of system configurations; they investigate and discuss almost all parameters of their model. Third, many of the graphs exhibit non-monotonicity (i.e., don&rsquo;t always go up and to the right); this a product of thrashing and resource limitations. As the authors illustrate, an assumption of infinite resources leads to dramatically different conclusions. A less careful model that made this assumption implicit would be much less useful.</p>
+<p>Finally, the study&rsquo;s conclusions are sensible. The primary cost of restart-based methods is &ldquo;wasted&rdquo; work in the event of conflicts. When resources are plentiful, speculation makes sense: wasted work is less expensive, and, in the event of infinite resources, it is free. However, in the event of more limited resources, blocking strategies will consume fewer resources and offer better overall performance. Again, there is no unilaterally optimal choice. However, the paper&rsquo;s concluding remarks have proven prescient: computing resources are still scarce, and, in fact, few commodity systems today employ entirely restart-based methods. However, as technology ratios - disk, network, CPU speeds - continue to change, re-visiting this trade-off is valuable.</p>
+<div id="database-recovery" class="bodysection">Database Recovery</div>
+<p>Another major problem in transaction processing is maintaining durability: the effects of transaction processing should survive system failures. A near-ubiquitous technique for maintaining durability is to perform logging: during transaction execution, transaction operations are stored on fault-tolerant media (e.g., hard drives or SSDs) in a log. Everyone working in data systems should understand how write-ahead logging works, preferably in some detail.</p>
+<p>The canonical algorithm for implementing a &ldquo;No Force, Steal&rdquo; WAL-based recovery manager is IBM&rsquo;s ARIES algorithm, the subject of our next paper. (Senior database researchers may tell you that very similar ideas were invented at the same time at places like Tandem and Oracle.) In ARIES, the database need not write dirty pages to disk at commit time (&ldquo;No Force&rdquo;), and the database can flush dirty pages to disk at any time (&ldquo;Steal&rdquo;)&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-haerder-reuter">15</a>]</span>; these policies allow high performance and are present in almost every commercial RDBMS offering but in turn add complexity to the database. The basic idea in ARIES is to perform crash recovery in three stages. First, ARIES performs an analysis phase by replaying the log forwards in order to determine which transactions were in progress at the time of the crash. Second, ARIES performs a redo stage by (again) replaying the log and (this time) performing the effects of any transactions that were in progress at the time of the crash. Third, ARIES performs an undo stage by playing the log backwards and undoing the effect of uncommitted transactions. Thus, the key idea in ARIES is to &ldquo;repeat history&rdquo; to perform recovery; in fact, the undo phase can execute the same logic that is used to abort a transaction during normal operation.</p>
+<p>ARIES should be a fairly simple paper but it is perhaps the most complicated paper in this collection. In graduate database courses, this paper is a rite of passage. However, this material is fundamental, so it is important to understand. Fortunately, Ramakrishnan and Gehrke&rsquo;s undergraduate textbook&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-cowbook">22</a>]</span> and a survey paper by Michael Franklin&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-franklin-aries">7</a>]</span> each provide a milder treatment. The full ARIES paper we have included here is complicated significantly by its diversionary discussions of the drawbacks of alternative design decisions along the way. On the first pass, we encourage readers to ignore this material and focus solely on the ARIES approach. The drawbacks of alternatives are important but should be saved for a more careful second or third read. Aside from its organization, the discussion of ARIES protocols is further complicated by discussions of managing internal state like indexes (i.e., nested top actions and logical undo logging &mdash; the latter of which is also used in exotic schemes like Escrow transactions&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-escrow">21</a>]</span>) and techniques to minimize downtime during recovery. In practice, it is important for recovery time to appear as short as possible; this is tricky to achieve.</p>
+<div id="distribution" class="bodysection">Distribution</div>
+<p>Our final paper in this chapter concerns transaction execution in a distributed environment. This topic is especially important today, as an increasing number of databases are distributed - either replicated, with multiple copies of data on different servers, or partitioned, with data items stored on disjoint servers (or both). Despite offering benefits to capacity, durability, and availability, distribution introduces a new set of concerns. Servers may fail and network links may be unreliable. In the absence of failures, network communication may be costly.</p>
+<p>We concentrate on one of the core techniques in distributed transaction processing: atomic commitment (AC). Very informally, given a transaction that executes on multiple servers (whether multiple replicas, multiple partitions, or both), AC ensures that the transaction either commits or aborts on all of them. The classic algorithm for achieving AC dates to the mid-1970s and is called Two-Phase Commit (2PC; not to be confused with 2PL above!)&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-gray-2pc">9</a>, <a href="ch3-techniques.html#ref-lampson-2pc">18</a>]</span>. In addition to providing a good overview of 2PC and interactions between the commit protocol and the WAL, the paper here contains two variants of AC that improve its performance. The Presumed Abort variant allows processes to avoid forcing an abort decision to disk or acknowledge aborts, reducing disk utilization and network traffic. The Presumed Commit optimization is similar, optimizing space and network traffic when more transactions commit. Note the complexity of the interactions between the 2PC protocol, local storage, and the local transaction manager; the details are important, and correct implementation of these protocols can be challenging.</p>
+<p>The possibility of failures substantially complicates AC (and most problems in distributed computing). For example, in 2PC, what happens if a coordinator and participant both fail after all participants have sent their votes but before the coordinator has heard from the failed participant? The remaining participants will not know whether or to commit or abort the transaction: did the failed participant vote YES or vote NO? The participants cannot safely continue. In fact, <em>any</em> implementation of AC may block, or fail to make progress, when operating over an unreliable network&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-bernstein-book">2</a>]</span>. Coupled with a serializable concurrency control mechanism, blocking AC means throughput may stall. As a result, a related set of AC algorithms examined AC under relaxed assumptions regarding both the network (e.g., by assuming a synchronous network)&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-3pc">24</a>]</span> and the information available to servers (e.g., by making use of a &ldquo;failure detector&rdquo; that determines when nodes fail)&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-ac-srds">14</a>]</span>.</p>
+<p>Finally, many readers may be familiar with the closely related problem of consensus or may have heard of consensus implementations such as the Paxos algorithm. In consensus, any proposal can be chosen, as long as all processes eventually will agree on it. (In contrast, in AC, any individual participant can vote NO, after which all participants must abort.) This makes consensus an &ldquo;easier&rdquo; problem than AC&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-ac-consensus">13</a>]</span>, but, like AC, any implementation of consensus can also block in certain scenarios&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-flp">6</a>]</span>. In modern distributed databases, consensus is often used as the basis for replication, to ensure replicas apply updates in the same order, an instance of state-machine replication (see Schneider&rsquo;s tutorial&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-statemachine">23</a>]</span>). AC is often used to execute transactions that span multiple partitions. Paxos by Lamport&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-paxos">17</a>]</span> is one of the earliest (and most famous, due in part to a presentation that rivals ARIES in complexity) implementations of consensus. However, the Viewstamped Replication&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-vrr">19</a>]</span> and Raft&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-raft">20</a>]</span>, ZAB&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-zab">16</a>]</span>, and Multi-Paxos&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-multipaxos">3</a>]</span> algorithms may be more helpful in practice. This is because these algorithms implement a distributed log abstraction (rather than a &rsquo;consensus object&rsquo; as in the original Paxos paper).</p>
+<p>Unfortunately, the database and distributed computing communities are somewhat separate. Despite shared interests in replicated data, transfer of ideas between the two were limited for many years. In the era of cloud and Internet-scale data management, this gap has shrunk. For example, Gray and Lamport collaborated in 2006 on Paxos Commit&nbsp<span class="citationlink">[<a href="ch3-techniques.html#ref-paxoscommit">11</a>]</span>, an interesting algorithm combining AC and Lamport&rsquo;s Paxos. There is still much to do in this intersection, and the number of &ldquo;techniques everyone should know&rdquo; in this space has grown.</p>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-ansi-critique">
+<p>[1] Berenson, H., Bernstein, P., Gray, J., Melton, J., O&rsquo;Neil, E. and O&rsquo;Neil, P. A critique of ANSI SQL isolation levels. <em>SIGMOD</em>, 1995.</p>
+</div>
+<div id="ref-bernstein-book">
+<p>[2] Bernstein, P., Hadzilacos, V. and Goodman, N. Concurrency control and recovery in database systems. Addison-Wesley New York. 1987.</p>
+</div>
+<div id="ref-multipaxos">
+<p>[3] Chandra, T.D., Griesemer, R. and Redstone, J. Paxos made live: An engineering perspective. <em>PODC</em>, 2007.</p>
+</div>
+<div id="ref-google-numbers">
+<p>[4] Dean, J. Designs, lessons and advice from building large distributed systems (keynote). <em>LADIS</em>, 2009.</p>
+</div>
+<div id="ref-eswaran76">
+<p>[5] Eswaran, K.P., Gray, J.N., Lorie, R.A. and Traiger, I.L. The notions of consistency and predicate locks in a database system. <em>Communications of the ACM</em>. 19, 11 (1976), 624-633.</p>
+</div>
+<div id="ref-flp">
+<p>[6] Fischer, M.J., Lynch, N.A. and Paterson, M.S. Impossibility of distributed consensus with one faulty process. <em>Journal of the ACM (JACM)</em>. 32, 2 (1985), 374-382.</p>
+</div>
+<div id="ref-franklin-aries">
+<p>[7] Franklin, M.J. Concurrency control and recovery. <em>The Computer Science and Engineering Handbook</em>. (1997), 1-58-1077.</p>
+</div>
+<div id="ref-five-twenty">
+<p>[8] Graefe, G. The five-minute rule twenty years later, and how flash memory changes the rules. <em>DaMoN</em>, 2007.</p>
+</div>
+<div id="ref-gray-2pc">
+<p>[9] Gray, J. Notes on data base operating systems. <em>Operating systems: An advanced course</em>. Springer Berlin Heidelberg. 393-481.</p>
+</div>
+<div id="ref-five-ten">
+<p>[10] Gray, J. and Graefe, G. The five-minute rule ten years later, and other computer storage rules of thumb. <em>ACM SIGMOD Record</em>. 26, 4 (1997), 63-68.</p>
+</div>
+<div id="ref-paxoscommit">
+<p>[11] Gray, J. and Lamport, L. Consensus on transaction commit. <em>ACM Transactions on Database Systems (TODS)</em>. 31, 1 (Mar. 2006), 133-160.</p>
+</div>
+<div id="ref-fiveminute">
+<p>[12] Gray, J. and Putzolu, F. The 5 minute rule for trading memory for disc accesses and the 10 byte rule for trading memory for cPU time. <em>SIGMOD</em>, 1987.</p>
+</div>
+<div id="ref-ac-consensus">
+<p>[13] Guerraoui, R. Revisiting the relationship between non-blocking atomic commitment and consensus. <em>WDAG</em>, 1995.</p>
+</div>
+<div id="ref-ac-srds">
+<p>[14] Guerraoui, R., Larrea, M. and Schiper, A. Non blocking atomic commitment with an unreliable failure detector. <em>SRDS</em>, 1995.</p>
+</div>
+<div id="ref-haerder-reuter">
+<p>[15] Haerder, T. and Reuter, A. Principles of transaction-oriented database recovery. <em>ACM Computing Surveys (CSUR)</em>. 15, 4 (1983), 287-317.</p>
+</div>
+<div id="ref-zab">
+<p>[16] Junqueira, F.P., Reed, B.C. and Serafini, M. Zab: High-performance broadcast for primary-backup systems. <em>DSN</em>, 2011.</p>
+</div>
+<div id="ref-paxos">
+<p>[17] Lamport, L. The part-time parliament. <em>ACM Transactions on Computer Systems (TOCS)</em>. 16, 2 (1998), 133-169.</p>
+</div>
+<div id="ref-lampson-2pc">
+<p>[18] Lampson, B. and Sturgis, H. Crash recovery in a distributed data storage system. Xerox PARC Technical Report. 1979.</p>
+</div>
+<div id="ref-vrr">
+<p>[19] Liskov, B. and Cowling, J. Viewstamped replication revisited. MIT; MIT-CSAIL-TR-2012-021. 2012.</p>
+</div>
+<div id="ref-raft">
+<p>[20] Ongaro, D. and Ousterhout, J. In search of an understandable consensus algorithm. <em>USENIX ATC</em>, 2014.</p>
+</div>
+<div id="ref-escrow">
+<p>[21] O&rsquo;Neil, P.E. The escrow transactional method. <em>ACM Transactions on Database Systems</em>. 11, 4 (1986), 405-430.</p>
+</div>
+<div id="ref-cowbook">
+<p>[22] Ramakrishnan, R. and Gehrke, J. Database management systems. McGraw Hill. 2000.</p>
+</div>
+<div id="ref-statemachine">
+<p>[23] Schneider, F.B. Implementing fault-tolerant services using the state machine approach: A tutorial. <em>ACM Computing Surveys (CSUR)</em>. 22, 4 (1990), 299-319.</p>
+</div>
+<div id="ref-3pc">
+<p>[24] Skeen, D. Nonblocking commit protocols. <em>SIGMOD</em>, 1981.</p>
+</div>
+<div id="ref-ingres">
+<p>[25] Stonebraker, M., Held, G., Wong, E. and Kreps, P. The design and implementation of iNGRES. <em>ACM Transactions on Database Systems (TODS)</em>. 1, 3 (1976), 189-222.</p>
+</div>
+</div>
+
+
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

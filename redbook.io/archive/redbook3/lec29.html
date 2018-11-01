@@ -1,0 +1,351 @@
+<html>
+
+<head>
+<meta NAME="Author" CONTENT="Joe Hellerstein">
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<title>Data Mining</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Data Mining</h1>
+
+<p>Emerging hot area (<a HREF="http://www.ibm.com/sfasp/locations/milan/index.html">see
+this!</a>), linking DBMS with AI and stats. <br>
+Vision: O Great Database!&nbsp; Tell me what I want to know. <br>
+Practice (c. 1998): a small collection of statistical &quot;queries&quot; (with wide open
+parameters) 
+
+<ol>
+  <li>Clustering/Segmentation: group together similar items (separating dissimilar items)</li>
+  <li>Predictive Modeling: predict value of some attributes based on values of others (and
+    previous &quot;training&quot;)</li>
+  <ul>
+    <li>e.g. classification: assign items to pre-specified categories</li>
+  </ul>
+  <li>Dependency Modeling: model joint probability densities (relationships among columns)</li>
+  <ul>
+    <li>another example: Association Rules (e.g. find items that get purchased together)</li>
+  </ul>
+  <li>Data Summarization: find compact descriptions of subsets of data</li>
+  <li>Change and Deviation Analysis: find significant changes in sequences of data (e.g. stock
+    data).&nbsp; Sequence-oriented.</li>
+</ol>
+
+<p>Applications of Mining: 
+
+<ul>
+  <li>Marketing</li>
+  <li>Fraud detection</li>
+  <li>Telecomm</li>
+  <li>Science (astronomy, remote sensing, protein sequencing)</li>
+  <li>NBA stats (IBM Advanced Scout)</li>
+</ul>
+
+<p>DBMS spin: a taxonomy of queries: 
+
+<ul>
+  <ul>
+    <li>find anomalies/points (traditional queries?)</li>
+    <li>find common stuff (trend analysis/aggregation/OLAP)</li>
+    <li>find pretty common stuff (mining)</li>
+  </ul>
+  <p>Is there some insight here?</p>
+</ul>
+
+<h3>Association Rules</h3>
+
+<p>Why look at this example of data mining? 
+
+<ul>
+  <li>It's statistically &quot;lite&quot; (no background required)</li>
+  <li>It has a relational query processing flavor</li>
+  <li>Probably for both of these reasons, there have been a ton of follow-on papers (arguably
+    too many...)</li>
+</ul>
+
+<p>&nbsp;&quot;Basket data&quot; </p>
+
+<p>Association Rule: X ==&gt; Y (X and Y are disjoint sets of items) 
+
+<ul>
+  <ul>
+    <li>confidence c: c% of transactions that contain X also contain Y (rule-specific)</li>
+    <li>support s: s% of all transactions contain both X and Y (relative to all data)</li>
+  </ul>
+</ul>
+
+<p>Problem: Efficiently find all rules with support &gt; minsup, confidence &gt; minconf </p>
+
+<p>Anecdotes: 
+
+<ul>
+  <ul>
+    <li>diapers &amp; beer</li>
+    <li>Wendy&#146;s &amp; McDonalds (pb &amp; j)</li>
+  </ul>
+</ul>
+
+<p>&nbsp; <br>
+One algorithm from the paper: Apriori <br>
+&nbsp; 
+
+<ul>
+  <p>L1 = {large 1-itemsets} </p>
+  <p>for (k = 2; Lk -1 != <font face="Symbol">Æ </font>; k++) { <ul>
+    <p>Ck = apriori-gen(Lk-1); // candidate k-itemsets <br>
+    forall transactions t in the database { <ul>
+      <p>Ct = subset(Ck, t); // Candidates from Ck contained in t <br>
+      forall candidates c in Ct <ul>
+        <p>c.count++;</p>
+      </ul>
+    </ul>
+    <p>} <br>
+    Lk = {c in Ck | c.count &gt;= minsup}</p>
+  </ul>
+  <p>} </p>
+  <p>Answer =&nbsp; <font face="Symbol">È</font>kLk</p>
+</ul>
+
+<p>apriori-gen(Lk-1) { <br>
+&nbsp; 
+
+<ul>
+  <p>// Intuition: every subset of a large itemset must be large. <br>
+  // So combine almost-matching pairs of large (k-1)-itemsets, <br>
+  // and prune out those with non-large (k-1)-subsets.</p>
+</ul>
+
+<p>join: 
+
+<ul>
+  <p>insert into Ck <br>
+  select p.item1, &#133;, p.itemk-1, q.itemk-1 <br>
+  from Lk-1 p, Lk-1 q <br>
+  where p.item1 = q.item1 and &#133; and p.itemk-2 = q.itemk-2 and p.itemk-1 &lt; q.itemk-1;</p>
+</ul>
+
+<p>prune: 
+
+<ul>
+  <p>// delete itemsets such that some (k-1)-subset is not in Lk-1 <br>
+  forall itemsets c in Ck <ul>
+    <p>forall (k-1)-subsets s of c <ul>
+      <p>if (s not in Lk-1) { <ul>
+        <p>delete c from Ck; <br>
+        break;</p>
+      </ul>
+      <p>}</p>
+    </ul>
+  </ul>
+</ul>
+
+<p>} </p>
+
+<p>Example from paper (minsup = 2) <br>
+&nbsp; </p>
+
+<table ALIGN="LEFT" BORDER="1" CELLSPACING="2" CELLPADDING="7" WIDTH="108" HSPACE="12">
+  <tr>
+    <td VALIGN="TOP" WIDTH="38%">TID</td>
+    <td VALIGN="TOP" WIDTH="62%">Items</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="38%">100</td>
+    <td VALIGN="TOP" WIDTH="62%">1 3 4</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="38%">200</td>
+    <td VALIGN="TOP" WIDTH="62%">2 3 5</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="38%">300</td>
+    <td VALIGN="TOP" WIDTH="62%">1 2 3 5</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="38%">400</td>
+    <td VALIGN="TOP" WIDTH="62%">2 5</td>
+  </tr>
+</table>
+
+<p>&nbsp; <br>
+&nbsp; <br>
+&nbsp; </p>
+
+<table ALIGN="LEFT" BORDER="1" CELLSPACING="2" CELLPADDING="7" WIDTH="134" HSPACE="12">
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">Itemset</td>
+    <td VALIGN="TOP" WIDTH="50%">Support</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">{1}</td>
+    <td VALIGN="TOP" WIDTH="50%">2</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">{2}</td>
+    <td VALIGN="TOP" WIDTH="50%">3</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">{3}</td>
+    <td VALIGN="TOP" WIDTH="50%">3</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">{5}</td>
+    <td VALIGN="TOP" WIDTH="50%">3</td>
+  </tr>
+</table>
+
+<p>&nbsp; <br>
+&nbsp; <br>
+&nbsp; </p>
+
+<table ALIGN="LEFT" BORDER="1" CELLSPACING="2" CELLPADDING="7" WIDTH="67" HSPACE="12">
+  <tr>
+    <td VALIGN="TOP">Itemset</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP">{1 2}</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP">{1 3}</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP">{1 5}</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP">{2 3}</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP">{2 5}</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP">{3 5}</td>
+  </tr>
+</table>
+
+<p>&nbsp; <br>
+&nbsp; <br>
+&nbsp; </p>
+
+<table ALIGN="LEFT" BORDER="1" CELLSPACING="2" CELLPADDING="7" WIDTH="134" HSPACE="12">
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">Itemset</td>
+    <td VALIGN="TOP" WIDTH="50%">Support</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">{1 3}</td>
+    <td VALIGN="TOP" WIDTH="50%">2</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">{2 3}</td>
+    <td VALIGN="TOP" WIDTH="50%">2</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">{2 5}</td>
+    <td VALIGN="TOP" WIDTH="50%">3</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">{3 5}</td>
+    <td VALIGN="TOP" WIDTH="50%">2</td>
+  </tr>
+</table>
+
+<p>&nbsp; </p>
+
+<p>&nbsp; </p>
+
+<table ALIGN="LEFT" BORDER="1" CELLSPACING="2" CELLPADDING="7" WIDTH="134" HSPACE="12">
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">Itemset</td>
+    <td VALIGN="TOP" WIDTH="50%">Support</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%">{2 3 5}</td>
+    <td VALIGN="TOP" WIDTH="50%">2</td>
+  </tr>
+</table>
+
+<p>&nbsp; <br>
+&nbsp; <br>
+&nbsp; </p>
+
+<table ALIGN="LEFT" BORDER="1" CELLSPACING="2" CELLPADDING="7" WIDTH="67" HSPACE="12">
+  <tr>
+    <td VALIGN="TOP">Itemset</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP">{2 3 5}</td>
+  </tr>
+</table>
+
+<p>&nbsp; <br>
+&nbsp; <br>
+&nbsp; <br>
+&nbsp; </p>
+
+<p>Efficiently Implementing subset: The hash tree. 
+
+<ul>
+  <li>Leaves contain a list of itemsets</li>
+  <li>Internal nodes contain a hash table, with each bucket pointing to a child.</li>
+  <li>Root is at depth 1.</li>
+  <li>When inserting into interior node at depth d, we choose child by applying hash function
+    to dth item in itemset.</li>
+  <li>To check all candidate subsets of transaction t:</li>
+  <li>If at leaf, find which itemsets there are in t (i.e. naïve check)</li>
+  <li>If we&#146;ve reached an internal node by hashing on item i, hash on each item after i
+    in turn, and continue recursively for each.</li>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>Variation: AprioriTid generates a new &quot;database&quot; at each step k, with items
+being &lt;TID, all subsets of size k in that xact&gt;, and scans that rather than the
+original database next time around. Benefit: database gets fewer rows at each stage. Cost:
+databases generated may be big. </p>
+
+<p>&nbsp; </p>
+
+<p>Hybrid: AprioriHybrid: run Apriori for a while, then switch to AprioriTid when the
+generated DB would fit in mem. </p>
+
+<p>&nbsp; </p>
+
+<p>Analysis shows that AprioriHybrid is fastest, beating old algorithms and matching
+Apriori and AprioriTid when either one wins. </p>
+
+<p>&nbsp; </p>
+
+<p>Later Work: 
+
+<ul>
+  <li>If you have an IsA hierarchy, do association rules on it (you may not be able to say
+    that pampers -&gt; beer, but if you know pampers IsA diaper, and luvs IsA diaper, maybe
+    you&#146;ll find that diapers-&gt;beer.)</li>
+  <li>Parallel versions of this stuff.</li>
+  <li>Quantitative association rules: &quot;10% of married people between age 50 and 60 have
+    at least 2 cars.&quot;</li>
+  <li>Online association rules: you should be able to change support and confidence
+    threshholds on the fly, and be able to incrementally change answers as new transactions
+    stream in (Christian Hidber, ICSI/UCB).</li>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

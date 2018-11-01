@@ -1,0 +1,505 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+
+<title>Data Warehousing, Decision Support &amp; OLAP</title>
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Data Warehousing, Decision Support &amp; OLAP</h1>
+
+<h3>Overview &amp; Buzz Words</h3>
+
+<p>This area evolved via consultants, RDBMS vendors, and startup companies.&nbsp; All had
+something to prove, had to &quot;differentiate their product&quot;.&nbsp; As a result, the
+area is a mess.&nbsp; Researchers making a little (but just a little) headway cleaning up
+the mess. </p>
+
+<ul>
+  <li>A &quot;data warehouse&quot; is an organization-wide snapshot of data, typically used
+    for decision-making.</li>
+  <li>A DBMS that runs these decision-making queries efficiently is sometimes called a
+    &quot;Decision Support System&quot; DSS</li>
+  <li>DSS systems and warehouses are typically separate from the on-line transaction
+    processing (OLTP) system.</li>
+  <li>By contrast, one class of DSS queries is sometimes called on-line analytic processing
+    (OLAP)</li>
+  <ul>
+    <li>the Return of Codd (as Essbase shill?)</li>
+  </ul>
+  <li>A &quot;data mart&quot; is a mini-warehouse -- typically a DSS for one aspect or branch
+    of a company, with lots of relatively homogeneous data (i.e. a straight DSS)</li>
+</ul>
+<b>
+
+<p>Warehouse/DSS properties</b> </p>
+
+<ul>
+  <li>Very large: 100gigabytes to many terabytes (or as big as you can go)</li>
+  <li>Tends to include historical data</li>
+  <li>Workload: mostly complex queries that access lots of data, and do many scans, joins,
+    aggregations.&nbsp; Tend to look for &quot;the big picture&quot;.&nbsp; Some workloads are
+    canned queries (OLAP), some are ad-hoc (general DSS). Parallelism a must.</li>
+  <li>Updates pumped to warehouse in batches (overnight)</li>
+  <li>Data may be heavily summarized and/or consolidated in advance (must be done in batches
+    too, must finish overnight).&nbsp; This is where the lion's share of the research work has
+    been (e.g. &quot;materialized views&quot;) -- a small piece of the problem.</li>
+</ul>
+
+<p>A typical data warehousing architecture (c. 1996): <br>
+&nbsp; <br>
+<img SRC="images/ware.gif" WIDTH="514" HEIGHT="278"> <br>
+&nbsp; </p>
+
+<ul>
+  <li>Data Cleaning</li>
+  <ul>
+    <li>Data Migration: simple transformation rules (replace &quot;gender&quot; with
+      &quot;sex&quot;)</li>
+    <li>Data Scrubbing: use domain-specific knowledge (e.g. zip codes) to modify data. Try
+      parsing and fuzzy matching from multiple sources.</li>
+    <li>Data Auditing: discover rules and relationships (or signal violations thereof). Not
+      unlike data &quot;mining&quot;.</li>
+  </ul>
+</ul>
+
+<ul>
+  <li>Data Load: can take a very long time! (Sorting, indexing, summarization, integrity
+    constraint checking, etc.) Parallelism a must.</li>
+  <ul>
+    <li>Full load: like one big xact &#150; change from old data to new is atomic.</li>
+    <li>Incremental loading (&quot;refresh&quot;) makes sense for big warehouses, but
+      transaction model is more complex <font COLOR="#000000">&#150; have to break the load into
+      lots of transactions, and commit them periodically to avoid locking everything.&nbsp; Need
+      to be careful to keep metadata &amp; indices consistent along the way.</font></li>
+  </ul>
+</ul>
+<b>
+
+<p>OLAP Overview</b> <br>
+To facilitate analysis and visualization, data is often modeled multidimensionally </p>
+
+<ul>
+  <li>Think n-dimensional spreadsheet rather than relational table</li>
+</ul>
+
+<p>E.g. for a sales warehouse we have dimensions time_of_sale, sales_district,
+salesperson, product&#133; <br>
+Dimensions can be organized hierarchically into more detail </p>
+
+<ul>
+  <li>e.g. time_of_sale may be &quot;rolled up&quot; into day-month-quarter-year</li>
+  <li>product &quot;rolled up&quot; into product-category-industry</li>
+  <li>opposite of &quot;rollup&quot;: &quot;drill-down&quot;</li>
+  <li>Other fun ops:</li>
+  <ul>
+    <li>Slice_and_dice (i.e. selection &amp; projection in the dimensions)</li>
+    <li>Pivot (re-orient the multidimensional view)</li>
+  </ul>
+</ul>
+
+<p>The values stored in the multidimensional cells are called <i>numeric measures</i> </p>
+
+<ul>
+  <li>E.g. sales, budget, revenue, inventory, ROI (return on investment), etc.</li>
+  <li>These are things over which you might aggregate</li>
+</ul>
+
+<h4>ROLAP vs. MOLAP</h4>
+
+<p>ROLAP (Relational OLAP) uses standard relational tables &amp; engine to do OLAP </p>
+
+<ul>
+  <ul>
+    <li>Requires denormalized schema</li>
+    <li>Star Schema: Fact table + table per dimension</li>
+    <li>Snowflake Schema: off of the dimensions, have rolled-up versions</li>
+    <li>Products: MicroStrategy, Metacube (Informix), Information Advantage.</li>
+    <li>Uses standard relational query processing, with lots of indexes and precomputation</li>
+  </ul>
+</ul>
+
+<p>MOLAP (Multidimensional OLAP) actually stores things in multi-d format </p>
+
+<ul>
+  <ul>
+    <li>Special index structures are used to support this</li>
+    <li>Note that much of the cube is empty! (no sales of Purple Chevy Trucks in June in Reno)</li>
+    <li>Identify the &quot;dense&quot; and &quot;sparse&quot; dimensions. Build an index over
+      combos of sparse dimensions. Within a combo, find a dense subcube of the dense dimensions.
+      Zhao, et al. propose a different model.</li>
+    <li>Products: Essbase (Arbor), Express (Oracle), Lightship (Pilot)</li>
+    <li>Essentially everything is precomputed</li>
+  </ul>
+</ul>
+
+<p>More recently, HOLAP (Hybrid OLAP) to combine the best of both </p>
+
+<ul>
+  <ul>
+    <li>Microsoft Plato due out soon, will make OLAP commonplace</li>
+    <li>Some vendors (e.g. Informix/Essbase) talking about MOLAP ADTs inside an ORDBMS</li>
+    <li>Keep this in mind as we read Zhao/Deshpande/Naughton</li>
+  </ul>
+</ul>
+
+<h3>The Data Cube</h3>
+
+<p>Gray, et al. present a ROLAP language approach to cubing. </p>
+
+<p>The full data cube is all the base data in the cube, plus all the subaggregates
+obtained by projection. </p>
+
+<p>CUBE as relational operator implies need to model projection with a magic ALL value
+(ick!).&nbsp; Recall the mess with NULLs -- this is worse. </p>
+
+<p>We will come back to computing the cube later (Zhao/Deshpande/Naughton.) </p>
+
+<p>&nbsp; <br>
+&nbsp; </p>
+
+<table BORDER="0" CELLSPACING="0" CELLPADDING="7" WIDTH="580">
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%"><img SRC="images/cubes.gif" HEIGHT="288" WIDTH="264"></td>
+    <td VALIGN="TOP" WIDTH="51%"></td>
+  </tr>
+</table>
+
+<p>&nbsp; </p>
+
+<h3>Variant Indexes</h3>
+
+<p>Index support for DSS &amp; ROLAP. <br>
+General question: what indexing tricks can you play when you know there will be no
+updates? </p>
+
+<p><b>Big picture</b>: broadly view an index as a) a form of redundant storage, b) a form
+of (partial) precomputation. Given there are no updates, you can precompute some pretty
+tricky stuff and store it on the side for when you need it! </p>
+
+<p>&nbsp; <br>
+<b>Background</b>: Model 204, PC databases (&quot;patented Rushmore technology&quot;). Now
+in data warehousing and ROLAP products. </p>
+
+<p><b>Traditional (&quot;Value-List&quot;) Indexes</b> </p>
+
+<p>B+-trees. </p>
+
+<p>If you use them for small domains, at the leaves you get lots of records per distinct
+key. </p>
+
+<p><u>Bitmap-based B+-trees (&quot;Bitmap Indexes&quot;)</u> </p>
+
+<p><b>Idea</b>: instead of storing a list of all RIDS with <i>key=x </i>at the leaves,
+store a bitmaps of the entire relation, where bit <i>i</i> is on iff the <i>i</i>'th tuple
+in the relation has <i>key=x</i>. </p>
+
+<p><b>Quibble</b>: isn&#146;t this awfully wasteful in space? Not necessarily. Consider a
+column whose domain has 32 values. If there are <i>n</i> tuples, then on average each
+RID-list at the leaves is <i>n</i>/32*sizeof(RID) bits long. If a RID is 4 bytes (32
+bits), that&#146;s <i>n</i> bits long, i.e. the same size as the bitmap. </p>
+
+<p><b>Refined Quibble</b>: well, even with that few values there won&#146;t be a uniform
+distribution &#150; some RID-lists will be long, but some will still be short! This is
+true. In practice you use a hybrid solution &#150; RID-lists for rare values, bitmaps for
+popular ones. </p>
+
+<p><b>Remember, low storage means less to read at query time.</b> </p>
+
+<p>There are other benefits to bitmaps besides storage! In particular, you can take
+multiple predicates and do ANDing and ORing across predicates quickly &#150; this in
+contrast to (a) using an index for only 1 predicate, and (b) using multiple indexes and
+doing RID-list union/intersection. <font COLOR="#000000">NOTing works too, with a bit of
+extra data (existence bitmap).</font> </p>
+
+<p><b>Refinement</b>: <font COLOR="#000000">Segmentation. </font>Split the relation into
+segments, and the bitmaps into fragments. If a fragment holds <i>x</i> bits, a segment
+will be <i>x</i> rows long. A good value for <i>x</i> here might be the number of bits you
+can pack on a page (model 204 got about 48K bits). Two benefits: <br>
+&nbsp; </p>
+
+<ol>
+  <li>Storage: For rare values (stored as RID-lists), can guarantee the RID-list fits on a
+    page (1/32 of 48K is about 1.5K). Also, can store compressed RIDS &#150; since we know
+    what segment we&#146;re dealing with at any time, we only need the least significant 2
+    bytes of RID to distinguish the tuples in that segment.</li>
+  <li>Combining predicates: this is done segment-by-segment. Some indexes may have no entries
+    on some&nbsp; segments (e.g. for retail customer data if a table is ordered by customer
+    age, and the index is on department, the bitmap of customers who bought liquor should
+    contain no index entries for people under 21 &#150; i.e. the first many segments). In the
+    case of an AND on liquor purchases and something else, one needn&#146;t fetch bitmaps from
+    any index on those segments.</li>
+</ol>
+<b>
+
+<p>Projection Indexes</b> </p>
+
+<p><b>Idea</b>: store a copy of a column of a table, in the same order as the table. </p>
+
+<p><b>Benefit</b>: don&#146;t have to read other columns if you don&#146;t need &#145;em. </p>
+
+<p><b>Bit-Sliced Indexes</b> </p>
+
+<p><b>Idea</b>: take a projection index, and slice it vertically into columns of bits.
+Each column is a bit-sliced <br>
+index. </p>
+
+<p><b>Example</b>: the SALES column contains all sales made in the last month, in pennies.
+Assuming no <br>
+item cost more than 2^20 &#150; 1 pennies (= $10485.75), this is 20 bit-slice indexes. </p>
+
+<p><b>Benefits</b>: </p>
+
+<ol>
+  <li>Storage: can use a number of bits per value which is not a power of 2 (e.g. 20 bits per
+    sale).</li>
+  <li>Computing Aggregates, checking predicates: you can play some base-2 arithmetic games
+    that we&#146;ll see soon.</li>
+</ol>
+<b><u>
+
+<p>Applications of Variant Indexes</u></b> </p>
+
+<p><b>Aggregate computation:</b> </p>
+
+<p>We assume a bitmap called the <i>foundset </i>from the predicate evaluation. </p>
+
+<ol>
+  <li>SUM with each index?</li>
+  <ul>
+    <li>Traditional: for each value in index, determine number of entries in foundset with that
+      value,&nbsp;&nbsp;&nbsp;&nbsp; multiple value*count. Sum up all those numbers.</li>
+    <li>Projection Indexes: add up all the numbers corresponding to bits turned on in foundset</li>
+    <li>Bit-Sliced Index: AND slice with foundset, count bits in result, multiple by appropriate
+      power of 2. Sum these.</li>
+    <li><b>Bottom Line</b>: Bit-Slice beats Projection in I/Os due to storage savings, both beat
+      Bitmap&nbsp;&nbsp;&nbsp;&nbsp; (though Projecion doesn&#146;t beat it by much!)</li>
+  </ul>
+  <li><font COLOR="#000000">COUNT?</font></li>
+  <li><font COLOR="#000000">AVG?</font></li>
+  <li><font COLOR="#000000">MAX/MIN?</font></li>
+  <li><font COLOR="#000000">MEDIAN/N-TILE?</font></li>
+  <ul>
+    <li><font COLOR="#000000">Traditional usually best, a tricky solution for Bit-Sliced
+      sometimes pays off (not in paper)</font></li>
+  </ul>
+  <li><font COLOR="#000000">SUM(COLUMN-PRODUCT): projection indexes are big winners (column
+    values from a single tuple brought together easily)</font></li>
+</ol>
+<b>
+
+<p>Range Predicate Evaluation</b> </p>
+
+<p>&#133; WHERE rangep AND q; </p>
+
+<ol>
+  <li>Traditional: loop through all values in rangep and test for q</li>
+  <li>Projection Index: for each row in foundset of q, lookup in proj. index and check rangep</li>
+  <li>Bit-Sliced Index: tricky. From most to least significant bit, you let foundset
+    AND/OR/NOT=&nbsp;&nbsp;&nbsp;&nbsp; bitslice.</li>
+  <li>Bottom Line: for small ranges, traditional is best. For large ranges, bit-sliced is
+    best.</li>
+</ol>
+<b>
+
+<p>ROLAP</b> </p>
+
+<p>Star schema, join it up and group it. </p>
+
+<p>Summary tables can help (e.g. store the sums, counts, etc. per group at various levels
+of detail for various groupings.) But this can get out of hand and doesn&#146;t always
+help if you have &quot;non-dimensional&quot; selection. </p>
+
+<p>Join index is an index on a table T based on a quantity that involves a column value
+from another table S via some standard join. Example: Star Join Index indexes the fact
+table on combinations of values in detail tables. Again, this can get out of hand. </p>
+
+<p>Bitmap join index solves the problem. Index on T based a single column of S. Multiple
+columns can be combined by bitmap techniques to give the behavior of multi-column join
+indexes. </p>
+
+<p><b>Note</b>: join indexes can be of any of the 3 kinds listed at the top! With the
+right kinds of join indexes, a ROLAP query can be done &quot;without any joins&quot;:
+selection conditions handled via traditional or bit-sliced join indexes, projection join
+indexes to retrieve dimensional values in SELECT list. </p>
+
+<p>&nbsp; <br>
+<b>Groupsets</b>: partition bits in foundset by group. <br>
+&nbsp; </p>
+
+<ul>
+  <li>&nbsp;&nbsp;&nbsp;&nbsp; Traditional (2-column GROUP BY):</li>
+</ul>
+
+<pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for each entry in 1st grouping column</pre>
+
+<pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for each entry in 2nd grouping column</pre>
+
+<pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; AND the bitmap from 1st column with that from 2nd</pre>
+
+<pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; compute aggregate on the resulting bitmap</pre>
+
+<p>&nbsp; </p>
+
+<ul>
+  <ul>
+    <p>Can be very inefficient when there are lots of groupsets and rows per groupset are
+    randomly distributed due to computation of aggregate on sparse bitmaps.</p>
+  </ul>
+</ul>
+
+<p>&nbsp; </p>
+
+<ul>
+  <li>&nbsp;&nbsp;&nbsp;&nbsp; Projection (join) indexes on fact table:</li>
+  <ul>
+    <p>for each element of foundset, lookup value in projection index and find group. Then use
+    other projection indexes to get aggregation columns of that element, and update the
+    running aggregate for that group. If the groups don&#146;t all fit in memory, can do this
+    with some staging to disk (sort or hash).</p>
+  </ul>
+</ul>
+<font COLOR="#000000">
+
+<p>Additional benefit for grouping via segmentation &amp; clustering (we&#146;ll skip it.)</font>
+</p>
+
+<p><font COLOR="#000000">Also groupset indexes.</font> </p>
+
+<h3>Computing the Cube Efficiently</h3>
+<b>
+
+<p>ROLAP</b>: Use hashing or sorting (Agrawal, et al., VLDB &#146;96). Be sure to reuse
+aggs computed for small groups to compute aggs over big groups. </p>
+
+<p><b>MOLAP</b>: Carefully walk the basic cube to compute projected aggs with minimal
+memory requirements (Zhao, et al. SIGMOD &#146;97)&nbsp;&nbsp; Zhao, et al. point out
+interesting interplay (coming up at the end.) </p>
+
+<p>Starting point: storing cubes </p>
+
+<ul>
+  <li>Chunk the cube into n-dimensional subcubes</li>
+  <li>For dense cubes (&gt; 40% full), store them as is (fixed size.)</li>
+  <li>For sparse cubes (&lt; 40% full), compress them with &quot;chunk-offset
+    compression&quot; (&lt;offset-in-Chunk, value&gt; pairs).</li>
+  <li>An algorithm is given for converting a relation to a chunked array representation.</li>
+</ul>
+
+<p>First, a simple array cubing alg </p>
+
+<ul>
+  <li>Given: cube of dimensions A,B,C.&nbsp; Compute: aggregates for BC.</li>
+  <li>This is like &quot;sweeping a plane&quot; through the A dimension, and bringing the
+    values into the BC plane. Do this in a chunkwise fashion &#150; compute the agg on a
+    chunk, then on the chunk in front of it, and so on. When you&#146;re done with a
+    &quot;front cell&quot;, write it to disk. This uses only 1 chunk-size piece of memory at a
+    time.</li>
+  <li>Then compute individual aggs (B and C) from the agg for BC.</li>
+</ul>
+
+<p>Question: what do we use to compute subaggs? Think of the following lattice:&nbsp;<img SRC="images/lattice.gif" ALIGN="TEXTTOP" WIDTH="132" HEIGHT="131"> <br>
+The decision corresponds to a choice of a spanning tree in the lattice.&nbsp; We are given
+dimension sizes and chunk sizes, so we can compute the size to store each node in lattice,
+as well as how much memory needed to use a node to compute its child. </p>
+
+<p><i>Minimum Spanning Tree </i>(MST) of Lattice is defined as follows: <br>
+&nbsp;&nbsp;&nbsp;&nbsp; For each node n, its parent in the MST is the parent node n&#146;
+with minimum size. </p>
+
+<p>The full naïve algorithm: </p>
+
+<ol>
+  <li>Construct the MST</li>
+  <li>Compute each node from its parent in the MST as illustrated above.</li>
+</ol>
+
+<p>Problem: we rescan things too often (to compute AB, AC, and BC we scan ABC 3 times) </p>
+
+<p><b>The Multi-Way Array Algorithm</b> </p>
+
+<p>Goal: compute all the subaggs in a single pass of the underlying cube, using minimal
+memory. <br>
+<i>Dimension Order</i>: an ordering on the dimensions corresponding to a &quot;row
+major&quot; traversal of chunks (ABC in the following picture): <br>
+<img SRC="images/cube.gif" WIDTH="267" HEIGHT="198"> <br>
+This determines memory requirements: </p>
+
+<ul>
+  <li>The BC values require 1 chunk BCs each to aggregate away the A's</li>
+  <li>The AC values require 4 chunks ACs each to aggregate away the B's</li>
+  <li>The AB values require 16 chunks ABs each to aggregate away the C's</li>
+  <li>More generally, if array element size is <i>u</i>, dimension <i>X</i> chunk size is <i>X<sub>c</sub></i>,
+    and dimension <i>Y</i> size is <i>Y<sub>d</sub></i>, we need |<i>B<sub>c</sub></i>||<i>C<sub>c</sub></i>|<i>u
+    </i>+ |<i>A<sub>d</sub></i>||<i>C<sub>c</sub></i>|<i>u </i>+ |<i>A<sub>d</sub></i>||<i>B<sub>d</sub></i>|<i>u
+    </i>memory to do this simultaneously.</li>
+  <li>This generalizes naturally to more dimensions: to compute a projection on one dimension,
+    you need to look at product of sizes of <i>dimensions</i> in the ordering prefix <i>before
+    </i>the projected dimension, times the product of the <i>chunk </i>sizes of the <i>remaining
+    </i>dimensions.</li>
+  <li>I.e. it's harder to aggregate away dimensions that are later in the dimension order</li>
+</ul>
+
+<p>This leads to the <i>Minimum Memory Spanning Tree </i>(MMST): </p>
+
+<ul>
+  <li>For each node below the root of the lattice, choose the parent who requires the least
+    memory during traversal (Note: this depends on the chosen dimension ordering.)</li>
+  <li>To project out more than 1 dimension, you use the same logic to go from k dimensions to
+    k-1 as you did from all dimensions to all-1. E.g. to compute C from AC, you need to look
+    at |<i>A<sub>d</sub></i>| values simultaneously. This happens as you write the k-d aggs to
+    disk.</li>
+  <li>There&#146;s a simple formula for memory requirements for the MMST.</li>
+</ul>
+
+<p>What is the optimal dimension order? </p>
+
+<ul>
+  <li>Can be computed by optimizing that simple formula.</li>
+  <li>Turns out to be simple: order by increasing dimension size!</li>
+  <li>Memory requirement is independent of the size of the largest dimension (which is
+    aggregated away 1st).</li>
+</ul>
+
+<p>And if you don&#146;t have enough memory for that? </p>
+
+<ul>
+  <li>There&#146;s a multi-pass version, which heuristically chooses all but some subtrees of
+    the MMST to compute at a time.</li>
+</ul>
+<b>
+
+<p>Upshot:</b> <br>
+Not only does their algorithm work well and beat the best known ROLAP technique, it
+suggests a better ROLAP technique: </p>
+
+<ol>
+  <li>Scan table and convert to array</li>
+  <li>Do MOLAP processing</li>
+  <li>Dump resulting cube to a table.</li>
+</ol>
+
+<p>Wild! A wacky new &quot;non-relational&quot; query processing operation to be used in
+relational DBMSs!&nbsp; A benefit of thinking in a new data model??</p>
+<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

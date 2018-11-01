@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 4: New DBMS Architectures</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch5-dataflow.html">Next Chapter</a></div>
+<div class="headerlink"><a href="ch3-techniques.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch4-newdbms.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch4-newdbms">Chapter 4: New DBMS Architectures</div>
+	<div class="introauthor">Introduced by Michael Stonebraker</div>
+
+      <div class="paperchoicebox">
+	<div class="paperchoicetitle">Readings:</div>
+	<div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=12924804892742402591" target="_blank">Mike Stonebraker, Daniel J. Abadi, Adam Batkin, Xuedong Chen, Mitch Cherniack, Miguel Ferreira, Edmond Lau, Amerson Lin, Sam Madden, Elizabeth O'Neil, Pat O'Neil, Alex Rasin, Nga Tran, Stan Zdonik. <span class="papertitle">C-store: A Column-oriented DBMS</span>. <span class="papervenue">SIGMOD</span>, 2005.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=14161764654889427045" target="_blank">Cristian Diaconu, Craig Freedman, Erik Ismert, Per-Ake Larson, Pravin Mittal, Ryan Stonecipher, Nitin Verma, Mike Zwilling. <span class="papertitle">Hekaton: SQL Server's Memory-optimized OLTP Engine</span>. <span class="papervenue">SIGMOD</span>, 2013.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=12931776946707721868" target="_blank">Stavros Harizopoulos, Daniel J. Abadi, Samuel Madden, Michael Stonebraker. <span class="papertitle">OLTP Through the Looking Glass, and What We Found There</span>. <span class="papervenue">SIGMOD</span>, 2008.</a></div>
+      </div>
+
+    
+
+      <div class="intro">
+      <p>Probably the most important thing that has happened in the DBMS landscape is the death of &ldquo;one size fits all&rdquo;. Until the early 2000&rsquo;s the traditional disk-based row-store architecture was omni-present. In effect, the commercial vendors had a hammer and everything was a nail.</p>
+<p>In the last fifteen years, there have been several major upheavals, which we discuss in turn.</p>
+<p>First, the community realized that column stores are dramatically superior to row stores in the data warehouse marketplace. Data warehouses found early acceptance in customer facing retail environments and quickly spread to customer facing data in general. Warehouses recorded historical information on customer transactions. In effect, this is the who-what-why-when-where of each customer interaction.</p>
+<p>The conventional wisdom is to structure a data warehouse around a central Fact table in which this transactional information is recorded. Surrounding this are dimension tables which record information that can be factored out of the Fact table. In a retail scenario one has dimension tables for Stores, Customers, Products and Time. The result is a so-called star schema&nbsp<span class="citationlink">[<a href="ch4-newdbms.html#ref-kimball-book">3</a>]</span>. If stores are grouped into regions, then there may be multiple levels of dimension tables and a snowflake schema results.</p>
+<p>The key observation is that Fact tables are generally &ldquo;fat&rdquo; and often contain a hundred or more attributes. Obviously, they also &ldquo;long&rdquo; since there are many, many facts to record. In general, the queries to a data warehouse are a mix of repeated requests (produce a monthy sales report by store) and &ldquo;ad hoc&rdquo; ones. In a retail warehouse, for example, one might want to know what is selling in the Northeast when a snowstorm occurs and what is selling along the Atlantic seaboard during hurricanes.</p>
+<p>Moreover, nobody runs a select * query to fetch all of the rows in the Fact table. Instead, they invariably specify an aggregate, which retrieves a half-dozen attributes out of the 100 in the table. The next query retrieves a different set, and there is little-to-no locality among the filtering criteria.</p>
+<p>In this use case, it is clear that a column store will move a factor of 16 less data from the disk to main memory than a row store will (6 columns versus 100). Hence, it has an unfair advantage. Furthermore, consider a storage block. In a column store, there is a single attribute on that block, while a row store will have 100. Compression will clearly work better on one attribute than on 100. In addition, row stores have a header on the front of each record (in SQLServer it is apparently 16 bytes). In contrast, column stores are careful to have no such header.</p>
+<p>Lastly, a row-based executor has an inner loop whereby a record is examined for validity in the output. Hence, the overhead of the inner loop, which is considerable, is paid per record examined. In contrast, the fundamental operation of a column store is to retrieve a column and pick out the qualifying items. As such, the inner-loop overhead is paid once per column examined and not once per row examined. As such a column executor is way more efficient in CPU time and retrieves way less data from the disk. In most real-world environments, column stores are 50-100 times faster than row stores.</p>
+<p>Early column stores included Sybase IQ&nbsp<span class="citationlink">[<a href="ch4-newdbms.html#ref-sybase">5</a>]</span>, which appeared in the 1990s, and MonetDB&nbsp<span class="citationlink">[<a href="ch4-newdbms.html#ref-monetdb">2</a>]</span>. However, the technology dates to the 1970s&nbsp<span class="citationlink">[<a href="ch4-newdbms.html#ref-earlycolumn1">1</a>, <a href="ch4-newdbms.html#ref-earlycolumn2">4</a>]</span>. In the 2000&rsquo;s C-Store/Vertica appeared as well-financed startup with a high performance implementation. Over the next decade the entire data warehouse market morphed from a row-store world to a column store world. Arguably, Sybase IQ could have done the same thing somewhat earlier, if Sybase had invested more aggressively in the technology and done a multi-node implementation. The advantages of a column executor are persuasively discussed in&nbsp<span class="citationlink">[<a href="ch4-newdbms.html#ref-monetdb">2</a>]</span>, although it is &ldquo;down in the weeds&rdquo; and hard to read.</p>
+<p>The second major sea change was the precipitous decline in main memory prices. At the present time, one can buy a 1Terabyte for perhaps $25,000, and a high performance computing cluster with a few terabytes can be bought for maybe $100K. The key insight is that OLTP data bases are just not that big. One terabyte is a very big OLTP data base, and is a candidate for main memory deployment. As noted in the looking glass paper in this section, one does not want to run a disk-based row store when data fits in main memory - the overhead is just way too high.</p>
+<p>In effect, the OLTP marketplace is now becoming a main memory DBMS marketplace. Again, traditional disk-based row stores are just not competitive. To work well, new solutions are needed for concurrency control, crash recovery, and multi-threading, and I expect OLTP architectures to evolve over the next few years.</p>
+<p>My current best guess is that nobody will use traditional two phase locking. Techniques based on timestamp ordering or multiple versions are likely to prevail. The third paper in this section discusses Hekaton, which implements a state-of-the art MVCC scheme.</p>
+<p>Crash recovery must also be dealt with. In general, the solution proposed is replication, and on-line failover, which was pioneered by Tandem two decades ago. The traditional wisdom is to write a log, move the log over the network, and then roll forward at the backup site. This active-passive architecture has been shown in&nbsp<span class="citationlink">[<a href="ch4-newdbms.html#ref-commandlogging">6</a>]</span> to be a factor of 3 inferior to an active-active scheme where the transactions is simply run at each replica. If one runs an active-active scheme, then one must ensure that transactions are run in the same order at each replica. Unfortunately, MVCC does not do this. This has led to interest in deterministic concurrency control schemes, which are likely to be wildly faster in an end-to-end system that MVCC.</p>
+<p>In any case, OLTP is going to move to main memory deployment, and a new class of main memory DBMSs is unfolding to support this use case.</p>
+<p>The third phenomenon that has unfolded is the &ldquo;no SQL&rdquo; movement. In essence, there are 100 or so DBMSs, which support a variety of data models and have the following two characteristics:</p>
+<ol>
+<li><p>&ldquo;Out of box&rdquo; experience. They are easy for a programmer to get going and do something productive. RDBMSs, in contrast, are very heavyweight, requiring a schema up front.</p></li>
+<li><p>Support for semi-structured data. If every record can have values for different attributes, then a traditional row store will have very, very wide tuples, and be very sparse, and therefore inefficient.</p></li>
+</ol>
+<p> This is a wake-up call to the commercial vendors to make systems that are easier to use and support semi-structured data types, such as JSON. In general, I expect the No SQL market to merge with the SQL market over time as RDBMSs react to the two points noted above.</p>
+<p>The fourth sea change is the emergence of the Hadoop/HDFS/Spark environment, which is discussed in <a href="ch6-isolation.html">Chapter 6</a>.</p>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-earlycolumn1">
+<p>[1] Batory, D.S. On searching transposed files. <em>ACM Transactions on Database Systems (TODS)</em>. 4, 4 (Dec. 1979).</p>
+</div>
+<div id="ref-monetdb">
+<p>[2] Boncz, P.A., Zukowski, M. and Nes, N. MonetDB/X100: Hyper-pipelining query execution. <em>CIDR</em>, 2005.</p>
+</div>
+<div id="ref-kimball-book">
+<p>[3] Kimball, R. and Ross, M. The data warehouse toolkit: The complete guide to dimensional modeling. John Wiley &amp; Sons. 2011.</p>
+</div>
+<div id="ref-earlycolumn2">
+<p>[4] Lorie, R. and Symonds, A. A relational access method for interactive applications. <em>Courant Computer Science Symposia, Vol. 6: Data Base Systems</em>. (1971).</p>
+</div>
+<div id="ref-sybase">
+<p>[5] MacNicol, R. and French, B. Sybase iQ multiplex-designed for analytics. <em>VLDB</em>, 2004.</p>
+</div>
+<div id="ref-commandlogging">
+<p>[6] Malviya, N., Weisberg, A., Madden, S. and Stonebraker, M. Rethinking main memory OLTP recovery. <em>ICDE</em>, 2014.</p>
+</div>
+</div>
+
+
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

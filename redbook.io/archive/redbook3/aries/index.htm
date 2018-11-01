@@ -1,0 +1,74 @@
+<html>
+
+<head>
+<meta name="GENERATOR" content="Microsoft FrontPage 3.0">
+<title>Logging and Recovery</title>
+
+<meta name="Microsoft Theme" content="blueprnt 011, default"><meta name="Microsoft Border" content="tb, default"></head>
+
+<body background="../_themes/blueprnt/blutextb.gif" bgcolor="#FFFFFF" text="#003399" link="#CC9900" vlink="#666699" alink="#CC3399"><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><!--mstheme--><font face="century gothic, arial, helvetica">
+
+<!--mstheme--></font><table border="0" width="100%">
+  <tr>
+    <td width="9%"><!--mstheme--><font face="century gothic, arial, helvetica"><img src="../images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"><!--mstheme--></font></td>
+    <td width="91%"><!--mstheme--><font face="century gothic, arial, helvetica"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font><!--mstheme--></font></td>
+  </tr>
+</table><!--mstheme--><font face="century gothic, arial, helvetica">
+
+<!--msthemeseparator--><p align="center"><img src="../_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+<!--mstheme--></font></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top"><!--mstheme--><font face="century gothic, arial, helvetica">
+
+<h1 align="center"><!--mstheme--><font color="#000066">Logging and Recovery<!--mstheme--></font></h1>
+
+<h2 align="center"><!--mstheme--><font color="#000066"><a HREF="sld001.htm">Click here to start</a> <!--mstheme--></font></h2>
+
+<p align="center"><br>
+</p>
+<div align="center"><center>
+
+<!--mstheme--></font><table width="90%">
+  <tr>
+    <td valign="top" align="left" width="50%"><!--mstheme--><font face="century gothic, arial, helvetica"><h3><!--mstheme--><font color="#000066"><u>Table of Contents</u><!--mstheme--></font></h3>
+    <p ALIGN="LEFT"><a HREF="sld001.htm">Logging and Recovery</a></p>
+    <p ALIGN="LEFT"><a HREF="sld002.htm">Review: The ACID properties</a></p>
+    <p ALIGN="LEFT"><a HREF="sld003.htm">Motivation</a></p>
+    <p ALIGN="LEFT"><a HREF="sld004.htm">Assumptions</a></p>
+    <p ALIGN="LEFT"><a HREF="sld005.htm">Handling the Buffer Pool</a></p>
+    <p ALIGN="LEFT"><a HREF="sld006.htm">More on Steal and Force</a></p>
+    <p ALIGN="LEFT"><a HREF="sld007.htm">Basic Idea: Logging</a></p>
+    <p ALIGN="LEFT"><a HREF="sld008.htm">Write-Ahead Logging (WAL)</a></p>
+    <p ALIGN="LEFT"><a HREF="sld009.htm">WAL &amp; the Log</a></p>
+    <p ALIGN="LEFT"><a HREF="sld010.htm">Log Records</a></p>
+    <p ALIGN="LEFT"><a HREF="sld011.htm">Other Log-Related State</a></p>
+    <p ALIGN="LEFT"><a HREF="sld012.htm">Normal Execution of an Xact</a></p>
+    <p ALIGN="LEFT"><a HREF="sld013.htm">Checkpointing</a></p>
+    <p ALIGN="LEFT"><a HREF="sld014.htm">The Big Picture: What&#146;s Stored Where</a></p>
+    <p ALIGN="LEFT"><a HREF="sld015.htm">Simple Transaction Abort</a></p>
+    <p ALIGN="LEFT"><a HREF="sld016.htm">Abort, cont.</a></p>
+    <p ALIGN="LEFT"><a HREF="sld017.htm">Transaction Commit</a></p>
+    <p ALIGN="LEFT"><a HREF="sld018.htm">Crash Recovery: Big Picture</a></p>
+    <p ALIGN="LEFT"><a HREF="sld019.htm">Recovery: The Analysis Phase</a></p>
+    <p ALIGN="LEFT"><a HREF="sld020.htm">Recovery: The REDO Phase</a></p>
+    <p ALIGN="LEFT"><a HREF="sld021.htm">Recovery: The UNDO Phase</a></p>
+    <p ALIGN="LEFT"><a HREF="sld022.htm">Example of Recovery</a></p>
+    <p ALIGN="LEFT"><a HREF="sld023.htm">Example: Crash During Restart!</a></p>
+    <p ALIGN="LEFT"><a HREF="sld024.htm">Additional Crash Issues</a></p>
+    <p ALIGN="LEFT"><a HREF="sld025.htm">Summary of Logging/Recovery</a></p>
+    <p ALIGN="LEFT"><a HREF="sld026.htm">Summary, Cont.</a><!--mstheme--></font></td>
+    <td valign="top" width="50%"><!--mstheme--><font face="century gothic, arial, helvetica"><strong>Author: </strong>Joe Hellerstein, UC-Berkeley <p><strong>Email:
+    </strong><a HREF="MAILTO:redbook@postgres.berkeley.edu">redbook@postgres.berkeley.edu</a> </p>
+    <p><strong>Home Page: </strong><a HREF="http://epoch.cs.berkeley.edu:8000/redbook/index.htm">http://epoch.cs.Berkeley.EDU:8000/redbook</a>
+    </p>
+    <p><a HREF="aries.ppt">Download presentation source </a><!--mstheme--></font></td>
+  </tr>
+</table><!--mstheme--><font face="century gothic, arial, helvetica">
+</center></div>&nbsp;
+<!--mstheme--></font><!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><!--mstheme--><font face="century gothic, arial, helvetica">
+
+<!--msthemeseparator--><p align="center"><img src="../_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/17/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="../feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+<!--mstheme--></font></td></tr><!--msnavigation--></table></body>
+</html>

@@ -1,0 +1,495 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<title>Extensibility &amp; Object-Relational Systems</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+</font mstheme><table border="0" width="100%">
+  <tr>
+    <td width="9%"><font face="century gothic, arial, helvetica" mstheme><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></font mstheme></td>
+    <td width="91%"><font face="century gothic, arial, helvetica" mstheme><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></font mstheme></td>
+  </tr>
+</table><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+</font mstheme></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Extensibility &amp; Object-Relational Systems</h1>
+
+<h3>Motivation &amp; Politics</h3>
+
+<p>In the early 80&#146;s, it became clear that Relational systems were not robust enough
+for non-administrative data-intensive applications of the day: 
+
+<ul>
+  <ul>
+    <li>CAD/CAM</li>
+    <li>CASE</li>
+    <li>GIS</li>
+    <li>etc.</li>
+  </ul>
+</ul>
+
+<p>Two buzz-phrases began to emerge: &quot;Object-Oriented&quot; and
+&quot;Extensible&quot; </p>
+
+<p>Much vision &amp; politics ensued: 
+
+<ul>
+  <ul>
+    <li>Various data models (NF2, ER, Functional, Semantic)</li>
+    <li>Object-Oriented DB System Manifesto (OO-ness)</li>
+    <li>Third-Generation DB System Manifesto (Extensibility)</li>
+    <li>Many query languages proposed</li>
+  </ul>
+</ul>
+
+<p>Systems were built, companies started, etc. </p>
+
+<p>Today, the field has settled down into two arenas: 
+
+<ul>
+  <ul>
+    <li>Persistent OO PL systems (e.g. EXODUS, ObjectStore, Objectivity, Versant, etc.)</li>
+    <li>Query-based systems with OO features (e.g. Starburst, Postgres, Illustra, Informix &amp;
+      ORacle &quot;Universal Servers&quot;, DB/2 UDB)</li>
+    <li>Almost nobody does both well</li>
+  </ul>
+</ul>
+
+<p>Few people continue to argue in terms of the paradigms. (Exhaustion?) <br>
+&nbsp; </p>
+
+<h3>Systems History</h3>
+
+<p>Three influential research systems: 
+
+<ul>
+  <ul>
+    <li>Starburst (IBM Almaden)</li>
+    <li>POSTGRES (Berkeley)</li>
+    <li>EXODUS (Wisconsin)</li>
+    <li>Others include O2 (Altair), ORION (MCC), Iris (HP), Genesis (Texas)</li>
+  </ul>
+</ul>
+
+<p>We will focus on POSTGRES &amp; EXODUS, discuss Starburst briefly. <br>
+&nbsp; </p>
+
+<h3>EXODUS</h3>
+
+<ul>
+  <ul>
+    <li>EXODUS was intended to be both a persistent PL system and a query system</li>
+    <ul>
+      <li>&quot;Toolkit&quot; extensibility</li>
+    </ul>
+    <li>query processing engine never got built, though the EXODUS optimizer architecture was
+      influential (Graefe &amp; DeWitt)</li>
+    <li>Ended up focusing on OODB stuff, so we will discuss it more later.</li>
+    <li>SHORE (follow-on to EXODUS) is delivering on EXODUS promises, but rather late.</li>
+    <ul>
+      <li>Persistent C++</li>
+      <li>Query Processing (w/ GIS features): Paradise</li>
+      <li>Extensible Optimizer: Opt++</li>
+      <li>Parallelism</li>
+    </ul>
+    <li>We'll see Exodus/SHORE work on pointer swizzling, client-server caching</li>
+  </ul>
+</ul>
+
+<h3>Object-Relational Systems</h3>
+
+<p>Informix's buzzphrase for Illustra and look-alikes (courtesy Roger Sippl).&nbsp; Didn't
+patent the name! </p>
+
+<p>Query-based, extensible systems with some OO features like inheritance and OIDs. </p>
+
+<p>SQL3 draft is very much like this. </p>
+
+<p>Stonebraker&#146;s application matrix: <br>
+&nbsp; </p>
+<div align="center"><center>
+
+<table BORDER="1" CELLPADDING="7" WIDTH="268">
+  <tr>
+    <td VALIGN="TOP" WIDTH="28%" BGCOLOR="#C0C0C0">Query</td>
+    <td VALIGN="TOP" WIDTH="34%">&nbsp;RDBMS</td>
+    <td VALIGN="TOP" WIDTH="38%">ORDBMS&nbsp;</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="28%" BGCOLOR="#C0C0C0">No Query</td>
+    <td VALIGN="TOP" WIDTH="34%">File Sys.&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="38%">OODBMS&nbsp;</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="28%" BGCOLOR="#C0C0C0">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="34%" BGCOLOR="#C0C0C0">Simple Data</td>
+    <td VALIGN="TOP" WIDTH="38%" BGCOLOR="#C0C0C0">Complex Data</td>
+  </tr>
+</table>
+</center></div>
+
+<p>&nbsp; </p>
+
+<p>Argues that the upper right is growing, and will engulf upper left and lower right. </p>
+
+<p>&nbsp; </p>
+
+<p><b>Hot Applications:</b> 
+
+<ul>
+  <ul>
+    <li>Web servers, full-text collections</li>
+    <li>Time-series data</li>
+    <li>&quot;Asset Management&quot;</li>
+    <li>GIS</li>
+    <li>image DB</li>
+  </ul>
+</ul>
+
+<p>Players: 
+
+<ul>
+  <ul>
+    <li>Informix Universal Server (head of illustra, body of informix). Shipping now.</li>
+    <li>IBM DB2 UDB (head of Starburst, body of DB2). Extensibility features coming along.</li>
+    <li>UniSQL (Won Kim of ORION fame). Went out of business recently.</li>
+    <li>Oracle Universal Server (marketing-ware). Shipping now.</li>
+    <li>NCR (Teradata) just bought Wisconsin's Paradise ORDBMS (and DeWitt/Naughton/students)</li>
+    <li>Other big R vendors are late (Sybase, Tandem, etc.)</li>
+    <p><br>
+    O vendors still not running queries</p>
+  </ul>
+</ul>
+
+<h3>Overview: Things needed in an Object-Relational <font FACE="Arial">DBMS</font></h3>
+
+<p>(From the &quot;Third-Generation Database System Manifesto&quot;) </p>
+
+<p>The relational data model (as implemented!) is &quot;semantically impoverished&quot;: 
+
+<ul>
+  <ul>
+    <li>fixed set of base types (integer, float, etc)</li>
+    <li>only structuring allowed is normal-form relations</li>
+    <li>only operations are relational algebra, using comparators from base types</li>
+  </ul>
+</ul>
+
+<p>Instead, people want a &quot;semantically rich&quot; data model 
+
+<ul>
+  <ul>
+    <li>extensible ADTs</li>
+    <li>complex types based on type constructors, and methods for those types</li>
+    <li>inheritance</li>
+    <li>&quot;Object identity&quot;</li>
+  </ul>
+</ul>
+
+<h3>Zaniolo: GEM</h3>
+
+<p>One of the nicest, cleanest language papers, influential in the design of
+object-relational data models and query languages (starting with Postquel) 
+
+<ul>
+  <li>ref types, nested dots, implicit joins (implication about OIDs)</li>
+  <li>generalization hierarchies (converted to &quot;collection inheritence&quot;)</li>
+  <li>set-valued attrs (non-1st-normal-form!)</li>
+</ul>
+
+<h3>Stonebraker: Extensible ADTs</h3>
+
+<p>Seminal paper. </p>
+
+<p>Idea: you should be able to add new<i> atomic</i> types to the system, along with
+methods for the types, and new access methods. </p>
+
+<p>Type is defined by: 
+
+<ul>
+  <ul>
+    <li>storage size (can be variable)</li>
+    <li>input method</li>
+    <li>output method</li>
+    <li>any other methods a user wishes to provide</li>
+  </ul>
+</ul>
+
+<p>Then you could do standard relational processing over those types. </p>
+
+<p>Example: add 2d spatial operators to RDBMS </p>
+
+<p>Engineering issues (some from the paper, some not): 
+
+<ul>
+  <ul>
+    <li>Parsing</li>
+    <ul>
+      <li>must know about user-defined types and methods (table-driven)</li>
+    </ul>
+    <li>Optimization</li>
+    <ul>
+      <li>must be able to compute selectivity for user-defined predicates</li>
+      <li>must know about cost of user-defined methods, and consider predicate pullup</li>
+      <li>must know how to match user-defined predicates to fancy new access methods</li>
+      <li>must know whether user-defined join predicates can be evaluated by hash or merge</li>
+    </ul>
+    <li>Execution:</li>
+    <ul>
+      <li>must have dynamic linking support (24x7 operation)</li>
+      <li>methods called via &quot;function pointers&quot;, &quot;functors&quot; or some similar
+        construct</li>
+      <ul>
+        <li>can slow down standard processing</li>
+      </ul>
+      <li>support for &quot;untrusted&quot; functions (hot topic today)</li>
+      <li>support for &quot;large objects&quot;</li>
+      <li>caching for expensive methods (a la subquery caching)</li>
+      <li>extensible aggregations</li>
+      <ul>
+        <li>3 functions: init, iter, end</li>
+      </ul>
+    </ul>
+    <li>Access Methods</li>
+    <ul>
+      <li>Stonebraker: An access method is a generic object that provides</li>
+      <ul>
+        <li>open, get-first, get-next, close, insert, delete</li>
+        <li>if it&#146;s fancy, it takes SARGs and evaluates them quickly</li>
+        <li>needs to provide cost estimates to optimizer</li>
+      </ul>
+      <li>Problems</li>
+      <ul>
+        <li>integration with CC</li>
+        <ul>
+          <li>can be solved by physical logging</li>
+          <li>can open up logging interface for AM-specific logging</li>
+        </ul>
+        <li>integration with Buffer Manager</li>
+      </ul>
+      <li>In practice, almost nobody used the Postgres Access method extensibility</li>
+      <li>GiST!</li>
+    </ul>
+    <li>Buffer Management</li>
+    <ul>
+      <li>Large objects require new schemes</li>
+    </ul>
+    <li>Transactions</li>
+    <ul>
+      <li>integration with access methods</li>
+    </ul>
+  </ul>
+</ul>
+
+<p>&nbsp;Note: Extensible ADTs do not fundamentally change a relational system 
+
+<ul>
+  <ul>
+    <li>they fit naturally with the relational model</li>
+    <li>as Stonebraker shows, they fit naturally into RDBMS query processing</li>
+    <li>for relational &quot;believers&quot; this is all you should need to solve all problems</li>
+  </ul>
+</ul>
+
+<h3>POSTGRES</h3>
+
+<p>Stonebraker, Rowe, a few staff and many students, 1986-1994. Post-INGRES. </p>
+
+<p>&nbsp;The Postgres Data Model 
+
+<ol>
+  <li>Co-opt the OO terminology <ul>
+      <li>class = relation </li>
+      <li>instance = tuple </li>
+      <li>object-id = tuple-id </li>
+      <li>method = attribute or function of attributes</li>
+    </ul>
+  </li>
+  <li>Support extensible ADTs <ul>
+      <li>extensible procedures using C functions </li>
+      <li>binary operators, which interface to extensible AM</li>
+    </ul>
+  </li>
+  <li>Support type constructors<ul>
+      <li>trick: use queries<ul>
+          <li>columns can be parameterized Postquel functions (returns setof, or tuple)</li>
+          <li>queries can live in fields of a tuple (returns setof or tuple)</li>
+          <li>another exploitation of the view paradigm!</li>
+          <li>these derived objects can optionally be cached (never implemented)</li>
+          <li>nested-dots used to traverse complex object structures</li>
+          <li>leverages EXISTING techniques for relational processing. Cute!</li>
+        </ul>
+      </li>
+      <li>added array support directly</li>
+    </ul>
+  </li>
+  <li>added class inheritance (gives method inheritance and collection hierarchies)</li>
+</ol>
+
+<p>Implementation Details 
+
+<ul>
+  <li>originally written in LISP, then ran Lisp2C, resulting in a horrible built-in
+    inheritance mechanism over C</li>
+  <li>only access methods added to Postgres were done &quot;in house&quot;</li>
+  <ul>
+    <li>B-tree and R-tree early</li>
+    <li>linear hashing late</li>
+    <li>GiST added in the last couple years</li>
+  </ul>
+  <li>&quot;Fast Path&quot; to AMs, as an alternative to &quot;Persistent X&quot;</li>
+  <ul>
+    <li>never well-documented or used outside Berkeley</li>
+  </ul>
+  <li>ADTs as described above</li>
+  <li>No Overwrite Storage, time travel, etc</li>
+  <li>Research project was &quot;shut down&quot; in 94.&nbsp; 2 Berkeley students did a major
+    cleanup (remove lispisms, remove a number of theses), migrated to SQL, and released
+    Postgres95.&nbsp; This was picked up by freeware hackers on the net, and now PostgreSQL
+    seems to be the serious freeware db of choice (www.postgresql.org).</li>
+</ul>
+
+<p>More Stuff 
+
+<ul>
+  <li>Postgres Rule System: Active Database support (we will skip this topic this year)</li>
+  <li>Shared-mem parallel version, with new optimization techniques</li>
+  <li>&quot;Inversion&quot; file system</li>
+  <li>PICASSO UI (Rowe &amp; students)</li>
+  <li>Support for tertiary memory</li>
+  <li>Method Indexing</li>
+  <li>Partial Indexes</li>
+  <li>Expensive predicate optimization</li>
+  <li>Commercialized as Illustra</li>
+  <li>Concepts ported into Informix</li>
+</ul>
+
+<p>Editorial Comments 
+
+<ul>
+  <li>Postgres code was a mess. Miraculous that it worked. More miraculous that Illustra
+    salvaged it!</li>
+  <li>Data model was sloppy but clever. Burst some OO bubbles.</li>
+  <ul>
+    <li>Roger King: &quot;My cat is object-oriented&quot;</li>
+    <li>Missed an important distinction between Class and Collection.</li>
+  </ul>
+  <li>No-overwrite storage was not as bad as you think. Expect the concept to resurface.</li>
+  <li>In many ways, the most successful of the 3 projects</li>
+  <ul>
+    <li>used to be written off as goofy research, but Illustra is now ahead of the game</li>
+    <li>ADT extensibility &amp; dynamic linking are very useful &#150; Illustra&#146;s
+      &quot;DataBlades&quot;, Oracle's &quot;Data Cartridges&quot;</li>
+    <li>though not all aspects worked well, almost all were novel and influential</li>
+    <li>Many radical ideas in one system!</li>
+  </ul>
+</ul>
+
+<h3>Starburst</h3>
+
+<p>Original goal: build a nice playpen for whatever comes next. </p>
+
+<p>Extensible &quot;in-house&quot;. Not by users! </p>
+
+<p>No one survey paper seems to capture the work they did.  Best bet: &quot;Starburst Mid-Flight: As The Dust Clears&quot;, Haas, et al., TKDE 1990</p>
+
+<p>Plumbing: 
+
+<ul>
+  <ul>
+    <li>clean internal query representation (QGM). Key to Query Rewrite!</li>
+    <li>non-normalized catalogs for efficiency &#150; normalized view for users</li>
+    <li>uniform record structure across RSS &amp; RDS</li>
+    <li>a single expression evaluator for RSS &amp; RDS</li>
+    <li>WAL instead of shadow pages</li>
+    <li>B+-tree compression</li>
+    <li>Buffer Pool Manager accepts hints from optimizer (a la DBMIN)</li>
+  </ul>
+</ul>
+
+<p>Extensibility features: 
+
+<ul>
+  <ul>
+    <li>User-defined functions:</li>
+    <ul>
+      <li>table expressions: queries or C functions</li>
+      <li>scalar functions</li>
+      <li>no dynamic linking</li>
+    </ul>
+    <li>Rule-based query rewrite engine</li>
+    <ul>
+      <li>a little rule system with QGM as &quot;working memory&quot;</li>
+      <li>conditions and actions are C functions that check and change QGM</li>
+      <li>some nifty rule control mechanisms (rule classes, rule budgets, multiple conflict res.)</li>
+    </ul>
+    <li>Extensible access methods (as in POSTGRES)</li>
+    <li>&quot;Attachments&quot;: routines to be automatically called before/after dealing with
+      an access method</li>
+    <ul>
+      <li>used by Starburst Rule System to generate transition logs</li>
+      <li>used to implement pre-computed joins (see below)</li>
+      <li>Complex objects implemented in a &quot;wrapper&quot; (SQL-XNF), translated down to
+        Starburst SQL</li>
+    </ul>
+  </ul>
+</ul>
+
+<p>&quot;Proofs&quot; of Extensibility: 
+
+<ul>
+  <ul>
+    <li>added &quot;signature&quot; attachment to automatically tag tuples with some derived
+      values</li>
+    <ul>
+      <li>though writing the attachment was hard, hooking it in took only 1 day</li>
+    </ul>
+    <li>added Outer Join</li>
+    <ul>
+      <li>not so simple &#150; required adding things in QGM, optimizer, and executor</li>
+    </ul>
+    <li>IMS attachment</li>
+    <ul>
+      <li>pre-computed joins using pointers, which are maintained</li>
+      <li>written by &quot;outsiders&quot; &#150; Mike Carey &amp; Beau Shekita from Wisconsin
+        &#150; in a summer visit to Almaden</li>
+    </ul>
+    <li>Grammar-like rule-based query optimizer combined with System R bottom-up construction</li>
+    <li>2nd Rule System called &quot;Alert&quot;, based on infinitely-running queries.
+      Lightweight and pretty effective.</li>
+    <li>Persistent C++ support (SMRC)</li>
+    <li>Recursive query processing!</li>
+    <li>Lots of technology for query rewriting</li>
+  </ul>
+</ul>
+
+<p>Many of the Starburst folks took a &quot;vacation&quot; from research the last few
+years, and merged Starburst technology into DB2 UDB. </p>
+
+<p>Editorial Comments 
+
+<ul>
+  <ul>
+    <li>Probably the best code of the bunch</li>
+    <li>The world&#146;s most effective query optimizer?</li>
+    <li>The DB2 experience good for all concerned</li>
+    <li>Attention paid to details, shows up in complex parts of system</li>
+    <li>A long-term advantage? Depends on market, IBM&#146;s development culture...</li>
+  </ul>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/19/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

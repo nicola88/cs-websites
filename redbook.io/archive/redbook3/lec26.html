@@ -1,0 +1,411 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<title>Object-Oriented DBMS</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1 align="left">Object-Oriented DBMS</h1>
+
+<h3>Background</h3>
+
+<p>The relational model: 
+
+<ul>
+  <li>DB = {relations}</li>
+  <li>Relation = {tuples}</li>
+  <li>Tuple = {named fields/columns (homogeneous)}</li>
+</ul>
+
+<p>&nbsp;Relational Languages 
+
+<ul>
+  <li>SQL @ declarative queries (or QBE, Quel, etc.)</li>
+  <li>C/SQL or 4GLs for applications</li>
+</ul>
+
+<p>&nbsp;Other relational goodies 
+
+<ul>
+  <li>Logical vs. physical schemas (data independence)</li>
+  <li>Views, triggers, authorization, constraints</li>
+  <li>Simple algebra &amp; query optimization</li>
+  <li>Robust systems w/good performance</li>
+  <li>Easily parallelizable</li>
+</ul>
+
+<p>&nbsp; <br>
+Q: Isn't this heaven? <br>
+A1: &quot;A relational database is like a garage that forces you to take your car apart
+and store the pieces in little drawers&quot; <br>
+A2: E/R world, set-valued attributes, variances among entities, &amp; SQL limitations
+(expressive power) </p>
+
+<p>&nbsp; <br>
+<b>OODBMS Goals</b> 
+
+<ol>
+  <li>Shrink the &quot;impedance mismatch&quot; problem for application programmers</li>
+  <ul>
+    <ul>
+      <li>DB vs. PL type systems</li>
+      <li>Declarative vs. procedural programming</li>
+      <li>Set-at-a-time vs. instance-at-a-time compilation</li>
+    </ul>
+  </ul>
+  <li>Relax data model limitations</li>
+  <ul>
+    <ul>
+      <li>Atomic values, tuples, sets, arrays, identity</li>
+      <li>Classes w/methods &amp; encapsulation</li>
+      <li>Subtyping/inheritance</li>
+      <li>Composite objects (w/sharing)</li>
+      <li>Versions/configurations (&amp; long xacts)</li>
+    </ul>
+  </ul>
+  <li>New language features</li>
+  <ul>
+    <ul>
+      <li>Computationally complex methods (e.g. C++)</li>
+      <li>Complex object &quot;queries&quot;</li>
+      <li>Integrated DBPL(s) (sometimes)</li>
+    </ul>
+  </ul>
+</ol>
+
+<ul>
+  <li>General focus tends to be on CAx, GIS, telecomm, cooperative/collaborative work, etc.</li>
+  <li>Predates &quot;Object-Relational&quot; systems (but coeval with Postgres)</li>
+</ul>
+
+<p>&nbsp; </p>
+
+<h3>The OODBMS Manifesto (Atkinson/Bancilhon/DeWitt/Dittrich/Maier/Zdonik, '90)</h3>
+
+<p>Thou shalt support: 
+
+<ol>
+  <li>Complex objects (tuples, sets, bags, arrays + constructors &amp; ops)</li>
+  <li>Object identity (equal ! ==> identical; sharing &amp;
+    updates)</li>
+  <li>Encapsulation (ADTs/info hiding/implementation vs. interface)</li>
+  <li>Class/type hierarchies (inheritance, substitution for specialization)</li>
+  <li>Late binding (==> polymorphism, &quot;virtual&quot; classes in
+    C++ terms)</li>
+  <li>Computational completeness (methods)</li>
+  <li>Extensibility (system &amp; user types are the same)</li>
+  <li>Persistence (orthogonal to type)</li>
+  <li>Secondary storage (large DBs)</li>
+  <li>Concurrency control</li>
+  <li>Recovery</li>
+  <li>Ad hoc query facility (declarative, optimized)</li>
+</ol>
+
+<p>Thou may support: 
+
+<ol>
+  <li>Multiple inheritance</li>
+  <li>Type checking (static vs. dynamic up to you)</li>
+  <li>Distribution (client/server)</li>
+  <li>Long xacts</li>
+  <li>Version management</li>
+</ol>
+
+<p>Wide open: 
+
+<ol>
+  <li>Programming paradigm</li>
+  <li>Type systems details (base + constructors)</li>
+  <li>Type system fanciness (e.g. templates, etc.)</li>
+</ol>
+
+<h3>ObjectStore</h3>
+
+<p>One of the more successful vendors, both commercially and design-wise. Took C++ type
+system &amp; language constructs, added databasey features such as: 
+
+<ul>
+  <ul>
+    <li>Persistence for objects (at allocation)</li>
+    <li>Bulk types (via templates)</li>
+    <li>Relationships (i.e. OO referential integrity)</li>
+    <li>Query expressions (simple, but optimizable)</li>
+    <li>Fancy runtime system with DB goodies like CC&amp;R, client/server, indexes, &#133;</li>
+  </ul>
+</ul>
+
+<p>Some simple DDL examples to see data model, C++ extensions, &quot;query language&quot;,
+index support. </p>
+
+<p>Still in business (<a HREF="http://www.odi.com">www.odi.com</a>), supporting C++, Java,
+ActiveX. </p>
+
+<h3>Pointer Swizzling: ObjectStore &amp; QuickStore</h3>
+
+<p>A main system design contribution in OODBMS, and ObjectStore does it in a clever
+way.&nbsp; QuickStore is a responsible academic study of the technique, comparing it to
+the obvious alternative. 
+
+<ul>
+  <li>Problem: C++ contains pointers. Persistent C++ stores pointers on disk, somehow. At
+    fetch time, must fetch the disk objects into memory and turn stored refs into valid memory
+    pointers. This is called &quot;swizzling&quot; a disk pointer to a (virtual) memory
+    pointer.</li>
+  <li>Can be done with hash indices over the buffer pool, and special compilation
+    (persistent-object refs turn into function calls that do hash lookups to map disk ptr to
+    memory pointer; each time you follow a persistent ptr in C++ you call a function and
+    traverse a hash index).</li>
+  <li>ObjectStore &amp; QuickStore take advantage of VM protection to do this better</li>
+  <li>Persistent pointers are stored as normal C++ memory refs -- <i>even on disk!</i></li>
+</ul>
+<b>
+
+<p>Mapping</b> <br>
+<pre>
+
+            (static)               (dynamic)
+disk page -----------> VM address -----------> physical mem address (buffer
+pool)
+</pre>
+
+<ul>
+  <li>Buffer pool is a file, virtual memory is mapped to it via <tt>mmap()</tt></li>
+  <ul>
+    <li>mapping from VM to physical mem done by OS</li>
+  </ul>
+  <li>mapping from disk page to VM start done with a QuickStore main-mem table:</li>
+  <p><br>
+  (virtual address range, physical disk location, pointer in memory, flags) <ul>
+    <li>flags include access type (R/W), whether page is X-locked, whether page has been read in
+      already</li>
+    <li>binary tree index over virtual address ranges</li>
+    <li>hashtable index over physical disk location</li>
+  </ul>
+</ul>
+
+<p>Disk page contains <i>mapping object</i>, and each persistent object has a <i>bitmap
+object</i> <br>
+<img SRC="images/quickstore.jpg" WIDTH="416" HEIGHT="341"> 
+
+<ul>
+  <li><i>meta-object</i> is a header on the page that points to the <i>mapping object</i> and
+    the <i>bitmap object</i></li>
+  <li><i>mapping object</i> is a table of (virtual addr, disk addr) pairs for all pointers
+    from this page to elsewhere</li>
+  <li><i>bitmap object</i> is a table of locations of pointers within the objects on the page (obtained via
+    type analysis)</li>
+</ul>
+<b>
+
+<p>Pointer Swizzling</b> 
+
+<ul>
+  <li>VM page is access-protected before first read</li>
+  <li>Upon reading a page, mapping object is fetched</li>
+  <li>for each entry in mapping object</li>
+  <ul>
+    <li>check main-mem table to see if the entry's page is already mapped</li>
+    <li>if not, map now</li>
+    <ul>
+      <li>try to allocate the old VM frame if possible</li>
+      <li>if not possible, allocate a new VM frame and <i>swizzle </i>pointers to old frame</li> (found via bitmap object)
+      <li>access protect the frame that's allocated</li>
+    </ul>
+  </ul>
+  <li>if any of the pointers in the mapping object were changed (placed elsewhere in VM), go
+    to bitmap object and <i>swizzle</i> all pointers on the page.&nbsp; note that swizzling
+    may be necessary even if <i>this</i> read did not result in the relocation in VM</li>
+  <li>Subsequent traversals of that pointer work as fast as normal C++ refs; database is out
+    of the way!</li>
+  <li>Mapping of VM frame to page must remain valid for duration of xact.</li>
+  <li>When a buffer pool page is evicted, the VM frame is protected again to initiate a fetch
+    on the next ref.</li>
+</ul>
+
+<p>Example: linked list. </p>
+
+<p>Paper gives a brief overview of OO7 benchmark (the main OODBMS benchmark)</p>
+
+<p>Pros: 
+
+<ul>
+  <li>Pointer traversal is as fast as it ever was</li>
+  <li>Allows &quot;legacy&quot; C++ code to manipulate persistent data</li>
+</ul>
+
+<p>Cons: 
+
+<ul>
+  <li>Places some limits on amount of data one xact can access at a time, or from one page.</li>
+  <li>Initial faulting cost higher; shows up in access-once workloads.</li>
+</ul>
+
+<p>Transactional fallout: 
+
+<ul>
+  <li>Concurrency control via page-level locking</li>
+  <li>Logging of page diffs</li>
+  <li>Client writes go to log by commit time, then (lazily) to DB</li>
+</ul>
+
+<h3>Client-Server Caching</h3>
+
+<p>ObjectStore takes one (reasonable) solution: Call-Back Locking. Franklin and Carey look
+at that and many others. </p>
+
+<p><b>Goal:</b> Allow clients to cache objects/pages <i>and maybe locks </i>from server
+for longer than a xact, without sacrificing transactional semantics. I.e. efficiently
+solve the transactional cache consistency problem. </p>
+
+<p><b>Note:</b> There are many solutions, and they don't break down into simple choices
+(e.g. optimistic vs. pessimistic.) </p>
+
+<p><b>Related Work:</b> Shared-memory multiprocessor architecture and parallel programming
+models deal with cache consistency, but not transactional cache consistency. Also, they're
+not really client-server, and OODBMSs are. Note that caching is not very different from
+replication, and some of the possible approaches were pioneered in distributed DBMSs, and
+to a lesser extent in shared-disk parallel DBMSs. </p>
+
+<p><b>Algorithms considered:</b> 
+
+<ol>
+  <li>Server-Based 2PL (S2PL)</li>
+</ol>
+
+<ol TYPE="a">
+  <ul>
+    <li>Basic 2PL (C2PL): 2PL at server</li>
+    <li>Caching 2PL (B2PL): 2PL at server + data caching at client.</li>
+    <ul>
+      <li>when client requests a lock, server ships a new copy of page if necessary</li>
+    </ul>
+  </ul>
+</ol>
+
+<ol START="2">
+  <li>Optimistic 2PL (O2PL)</li>
+  <li><br>
+    Each client sets locks locally <i>without</i> contacting server.&nbsp; Server keeps track
+    of who has copies of what.&nbsp; At commit time, client sends all updates to server. <ul>
+      <li>xact gets x-locks at server</li>
+      <li>then attempts to get x-locks at all clients with copies.</li>
+      <li>Copies are handled either by</li>
+      <ul>
+        <li>invalidation (copy deleted from other clients)</li>
+        <li>propagation (copy is updated at other clients)</li>
+        <li>dynamic (choose between invalidate and propagate based on some criteria)</li>
+      </ul>
+    </ul>
+    <p>Variants: <ul>
+      <li>O2PL-Invalidate (O2PL-I)</li>
+      <li>O2PL-Propagate (O2PL-P)</li>
+      <li>O2PL-Dynamic (O2PL-D)</li>
+      <p><br>
+      propagate first update.&nbsp; after that, propagate if <ol>
+        <li>page is resident at client</li>
+        <li>page was re-accessed at client since last propagation (i.e. last propagation wasn't <i>wasted</i>)</li>
+      </ol>
+      <p>This scheme is a bit over-eager in propagating updates: always loses to one of O2PL-I
+      or O2PL-D in earlier studies. </p>
+      <li>O2PL-New-Dynamic (O2PL-ND)</li>
+      <p><br>
+      Add one more condition for propagation: <ol>
+        <li>page previously invalidated at client <i>mistakenly</i></li>
+      </ol>
+      <p><i>Mistaken</i> invalidation is managed by keeping a LIFO list of invalidate page #'s
+      at each client. On a page access, if that page is in the list it is marked as <i>mistakenly
+      invalidated</i> when it's read in. <br>
+      Less eager about propagation. <br>
+      &nbsp;</p>
+    </ul>
+  </li>
+  <li>Callback Locking (CBL)</li>
+</ol>
+
+<ol TYPE="a">
+  <p>Clients can cache locks across xacts.&nbsp; Data must be locked immediately at
+  server.&nbsp; If server knows some client has a conflicting lock, sends a
+  &quot;callback&quot; to that client and waits for it to drop the lock. <br>
+  &nbsp; <ul>
+    <li>Callback-Read (CB-R):</li>
+    <ul>
+      <li>clients only cache read locks</li>
+      <li>write requests generate callbacks</li>
+      <li>at end of writing xact, client sends copy of data to server</li>
+      <li>writer maintains read lock cached after EOT</li>
+    </ul>
+    <li>Callback-All (CB-A):</li>
+    <ul>
+      <li>clients can cache read and write locks</li>
+      <li>server keeps track of one <i>exclusive</i> copy at a client</li>
+      <li>when a conflicting write appears, sends a <i>downgrade</i> request to the exclusive
+        client</li>
+    </ul>
+  </ul>
+  <p>Detail regarding deadlock detection: <ul>
+    <li>client responds immediately to callback even if it can't drop/downgrade
+      immediately.&nbsp; This gives deadlock detector full info.</li>
+  </ul>
+</ol>
+<b>
+
+<p>Workloads</b> 
+
+<ol>
+  <li>HOTCOLD</li>
+  <ul>
+    <li>High locality per client, some R/W and W/W sharing</li>
+  </ul>
+  <li>FEED</li>
+  <ul>
+    <li>One site produces all data, others consume (read) it.</li>
+  </ul>
+  <li>UNIFORM</li>
+  <ul>
+    <li>&nbsp;Low locality, moderate write prob. (caching shouldn't help)</li>
+  </ul>
+  <li>HICON</li>
+  <ul>
+    <li>skewed access a la shared-disk</li>
+  </ul>
+</ol>
+<b>
+
+<p>Performance Study</b> <br>
+&quot;Typical Wisconsin blizzard of data&quot;.&nbsp; The upshot: 
+
+<ul>
+  <li>O2PL-ND dominates O2PL-I, matching its performance when it's best.&nbsp; Does as well as
+    O2PL-D in the case when propagation is more appropriate. The slower the network (relative
+    to CPU) the better O2PL-ND looks (due to cost of unnecessary propagation).</li>
+  <li>CB-Read dominates CB-All in many situations because caching of write-locks increased the
+    number of messages except in minimal-contention situations.</li>
+  <li>CB algorithms beaten by O2PL-ND if network is bottleneck, but are comparable if disk is
+    the bottleneck.</li>
+  <li>CB algorithms have lower abort rate than O2PL-ND, and do better in high-contention
+    scenarios.&nbsp; Since OODBs have long transactions, CB-R is a likely choice as the
+    winner.</li>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

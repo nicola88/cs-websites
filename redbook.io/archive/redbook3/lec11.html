@@ -1,0 +1,171 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+
+<title>Concurrency Control 3: Locking vs. Optimistic</title>
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Concurrency Control 3: Locking vs. Optimistic</h1>
+
+<h3>Agrawal/Carey/Livny Performance Study: Locking vs. Optimistic </h3>
+
+<p>Previous work had conflicting results: </p>
+
+<ul>
+  <li>Carey &amp; Stonebraker (VLDB84), Agrawal &amp; DeWitt (TODS85): blocking beats restarts</li>
+  <li>Tay (Harvard PhD) &amp; Balter (PODC82): restarts beat blocking</li>
+  <li>Franaszek &amp; Robinson (TODS85): optimistic beats locking</li>
+</ul>
+
+<p>Goal of this paper: </p>
+
+<ul>
+  <li>Do a good job modeling the problem and its variants</li>
+  <li>Capture causes of previous conflicting results</li>
+  <li>Make recommendations based on variables of problem</li>
+</ul>
+
+<p>Methodology: </p>
+
+<ul>
+  <li>simulation study, compare Blocking (i.e. 2PL), Immediate Restart (restart when denied a
+    lock), and Optimistic (a la Kung &amp; Robinson)</li>
+  <li>pay attention to model of system:</li>
+  <ul>
+    <li>database system model: hardware and software model (CPUs, disks, size &amp; granule of
+      DB, load control mechanism, CC algorithm</li>
+    <li>user model: arrival of user tasks, nature of tasks (e.g. batch vs. interactive)</li>
+    <li>transaction model: logical reference string (i.e. CC schedule), physical reference
+      string (i.e. disk block requests, CPU processing bursts).</li>
+  </ul>
+</ul>
+
+<ul>
+  <ul>
+    <p>Probabilistic modeling of each. They argue this is key to a performance study of a
+    DBMS.</p>
+  </ul>
+</ul>
+
+<ul>
+  <li>logical queuing model</li>
+  <li>physical queuing model</li>
+</ul>
+
+<p>&nbsp; <br>
+Measurements </p>
+
+<ul>
+  <li>measure throughput, mostly</li>
+  <li>pay attention to variance of response time, too</li>
+  <li>pick a DB size so that there are noticeable conflicts (else you get comparable
+    performance)</li>
+</ul>
+
+<p>&nbsp; <br>
+Experiment 1: Infinite Resources </p>
+
+<ul>
+  <li>as many disks and CPUs as you want</li>
+  <li>blocking thrashes due to transactions blocking numerous times</li>
+  <li>restart plateaus: adaptive wait period (avg response time) before restart</li>
+  <ul>
+    <li>serves as a primitive load control!</li>
+  </ul>
+  <li>optimistic scales logarithmically</li>
+  <li>standard deviation of response time under locking much lower</li>
+</ul>
+
+<p>&nbsp; <br>
+Experiment 2: Limited Resources (1 CPU, 2 disks) </p>
+
+<ul>
+  <li>Everybody thrashes</li>
+  <li>blocking throughput peaks at mpl 25</li>
+  <li>optimistic peaks at 10</li>
+  <li>restart peaks at 10, plateaus at 50 &#150; as good or better than optimistic</li>
+  <li>at super-high mpl (200), restart beats both blocking and optimistic</li>
+  <ul>
+    <li>but total throughput worse than blocking @ mpl 25</li>
+    <li>effectively, restart is achieving mpl 60</li>
+    <li>load control is the answer here &#150; adding it to blocking &amp; optimistic makes them
+      handle higher mpls better</li>
+  </ul>
+</ul>
+
+<p>Experiment 3: Multiple Resources (5, 10, 25, 50 CPUs, 2 disks each) </p>
+
+<ul>
+  <li>optimistic starts to win at 25 CPUs</li>
+  <ul>
+    <li>when useful disk utilization is only about 30%, system begins to behave like infinite
+      resources</li>
+  </ul>
+  <li>even better at 50</li>
+</ul>
+
+<p>Experiment 4: Interactive Workloads </p>
+
+<p>Add user think time. </p>
+
+<ul>
+  <li>makes the system appear to have more resources</li>
+  <li>so optimistic wins with think times 5 &amp; 10 secs. Blocking still wins for 1 second
+    think time.</li>
+</ul>
+
+<p>Questioning 2 assumptions: </p>
+
+<ul>
+  <li>fake restart &#150; biases for optimistic</li>
+  <ul>
+    <li>fake restarts result in less conflict.</li>
+    <li>cost of conflict in optimistic is higher</li>
+    <li>issue of k &gt; 2 transactions contending for one item</li>
+    <ul>
+      <li>will have to punish k-1 of them with real restart</li>
+    </ul>
+  </ul>
+  <li>write-lock acquisition</li>
+  <ul>
+    <li>recall our discussion of lock upgrades and deadlock</li>
+    <li>blind write biases for restart (optimistic not an issue here), particularly with
+      infinite resources (blocking holds write locks for a long time; waste of deadlock restart
+      not an issue here).</li>
+    <li>with finite resources, blind write restarts transactions earlier (making restart look
+      better)</li>
+  </ul>
+</ul>
+
+<p>Conclusions </p>
+
+<ul>
+  <li>blocking beats restarting, unless resource utilization is low</li>
+  <li>possible in situations of high think time</li>
+  <li>mpl control important. Restart&#146;s adaptive load control is too clumsy, though.</li>
+  <li>false assumptions made blocking look relatively worse</li>
+  <li>Final quote by Wulf!</li>
+</ul>
+<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

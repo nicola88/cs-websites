@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 6: Weak Isolation and Distribution</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch7-queryoptimization.html">Next Chapter</a></div>
+<div class="headerlink"><a href="ch5-dataflow.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch6-isolation.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch6-isolation">Chapter 6: Weak Isolation and Distribution</div>
+	<div class="introauthor">Introduced by Peter Bailis</div>
+
+      <div class="paperchoicebox">
+	<div class="paperchoicetitle">Readings:</div>
+	<div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=12975897967422539576" target="_blank">Atul Adya, Barbara Liskov, and Patrick O'Neil. <span class="papertitle">Generalized Isolation Level Definitions</span>. <span class="papervenue">ICDE</span>, 2000.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=5432858092023181552" target="_blank">Giuseppe DeCandia, Deniz Hastorun, Madan Jampani, Gunavardhan Kakulapati, Avinash Lakshman, Alex Pilchin, Swaminathan Sivasubramanian, Peter Vosshall, and Werner Vogels. <span class="papertitle">Dynamo: Amazon's Highly Available Key-Value Store</span>. <span class="papervenue">SOSP</span>, 2007.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=17642052422667212790" target="_blank">Eric Brewer. <span class="papertitle">CAP Twelve Years Later: How the "Rules" Have Changed</span>. <span class="papervenue">IEEE Computer</span>, 45, 2 (2012).</a></div>
+      </div>
+
+    
+
+      <div class="intro">
+      <p>Conventional database wisdom dictates that serializable transactions are the canonical solution to the problem of concurrent programming, but this is seldom the case in real-world databases. In practice, database systems instead overwhelmingly implement concurrency control that is non-serializable, exposing users to the possibility that their transactions will not appear to have executed in some serial order. In this chapter, we discuss why the use of this so-called &ldquo;weak isolation&rdquo; is so widespread, what these non-serializable isolation modes actually do, and why reasoning about them is so difficult.</p>
+<div id="overview-and-prevalence" class="bodysection">Overview and Prevalence</div>
+<p>Even in the earliest days of database systems (see <a href="ch3-techniques.html">Chapter 3</a>), systems builders realized that implementing serializability is expensive. The requirement that transactions appear to execute sequentially has profound consequences for the degree of concurrency a database can achieve. If transactions access disjoint sets of data items in the database, serializability is effectively &ldquo;free&rdquo;: under these disjoint access patterns, a serializable schedule admits data parallelism. However, if transactions contend on the same data items, in the worst case, the system cannot process them with any parallelism whatsoever. This property is fundamental to serializability and independent of the actual implementation: because transactions cannot safely make progress independently under all workloads (i.e., they must <em>coordinate</em>), any implementation of serializability may, in effect, require serial execution. In practice, this means that transactions may need to wait, decreasing throughput while increasing latency. Transaction processing expert Phil Bernstein suggests that serializability typically incurs a three-fold performance penalty on a single-node database compared to one of the most common weak isolation levels called Read Committed&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-bernstein-tutorial">12</a>]</span>. Depending on the implementation, serializability may also lead to more aborts, restarted transactions, and/or deadlocks. In distributed databases, these costs increase because networked communication is expensive, increasing the time required to execute serial critical sections (e.g., holding locks); we have observed multiple order-of-magnitude performance penalties under adverse conditions&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-coord-avoid">7</a>]</span>.</p>
+<p>As a result, instead of implementing serializability, database system designers instead often implemented weaker models. Under weak isolation, transactions are not guaranteed to observe serializable behavior. Instead, transactions will observe a range of anomalies (or &ldquo;phenomena&rdquo;): behaviors that could not have arisen in a serial execution. The exact anomalies depend on which model is provided, but example anomalies include reading intermediate data that another transaction produced, reading aborted data, reading two or more different values for the same item during execution of the same transaction, and &ldquo;losing&rdquo; some effects of transactions due to concurrent writes to the same item.</p>
+<p>These weak isolation modes are surprisingly prevalent. In a recent survey of eighteen SQL and &ldquo;NewSQL&rdquo; databases&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-hat-vldb">5</a>]</span>, we found that only three of eighteen provided serializability by default and eight (including Oracle and SAP&rsquo;s flagship offerings) did not offer serializability at all! This state of affairs is further complicated by often inaccurate use of terminology: for example, Oracle&rsquo;s &ldquo;serializable&rdquo; isolation guarantee actually provides Snapshot Isolation, a weak isolation mode&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-fekete-ssi">14</a>]</span>. There is also a race to to bottom among vendors. Anecdotally, when vendor A, a major player in the transaction processing market, switched its default isolation mode from serializability to Read Committed, vendor B, who still defaulted to serializability, began to lose sales contracts during bake-offs with vendor A. Vendor B&rsquo;s database was clearly slower, so why would the customer choose B instead of A? Unsurprisingly, vendor B now provides Read Committed isolation by default, too.</p>
+<div id="the-key-challenge-reasoning-about-anomalies" class="bodysection">The Key Challenge: Reasoning about Anomalies</div>
+<p>The primary reason why weak isolation is problematic is that, depending on the application, weak isolation anomalies can result in application-level inconsistency: the invariants that each transaction preserves in a serializable execution may no longer hold under weak isolation. For example, if two users attempt to withdraw from a bank account at the same time and their transactions run under a weak isolation mode allowing concurrent writes to the same data item (e.g., the common Read Committed model), the users may successfully withdraw more money than the account contained (i.e., each reads the current amount, each calculates the amount following their withdrawal, then each writes the &ldquo;new&rdquo; total to the database). This is not a hypothetical scenario. In a recent, colorful example, an attacker systematically exploited weak isolation behavior in the Flexcoin Bitcoin exchange; by repeatedly and programmatically triggering non-transactional read-modify-write behavior in the Flexcoin application (an vulnerability under Read Committed isolation and, under a more sophisticated access pattern, Snapshot Isolation), the attacker was able to withdraw more Bitcoins than she should have, thus bankrupting the exchange&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-flexcoin">15</a>]</span>.</p>
+<p>Perhaps surprisingly, few developers I talk with regarding their use of transactions are even aware that they are running under non-serializable isolation. In fact, in our research, we have found that many open-source ORM-backed applications assume serializable isolation, leading to a range of possible application integrity violations when deployed on commodity database engines&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-feral">6</a>]</span>. The developers who are aware of weak isolation tend to employ a range of alternative techniques at the application level, including explicitly acquiring locks (e.g., SQL &ldquo;SELECT FOR UPDATE&rdquo;) and introducing false conflicts (e.g., writing to a dummy key under Snapshot Isolation). This is highly error-prone and negates many of the benefits of the transaction concept.</p>
+<p>Unfortunately, specifications for weak isolation are often incomplete, ambiguous, and even inaccurate. These specifications have a long history dating to the 1970s. While they have improved over time, they remain problematic.</p>
+<p>The earliest weak isolation modes were specified operationally: as we saw in <a href="ch3-techniques.html">Chapter 3</a>, popular models like Read Committed were originally invented by modifying the duration for which read locks were held&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-gray-isolation">17</a>]</span>. The definition of Read Committed was: &ldquo;hold read locks for a short duration, and hold write locks for a long duration.&rdquo;</p>
+<p>The ANSI SQL Standard later attempted to provide an implementation-independent description of several weak isolation modes that would apply not only to lock-based mechanisms but also to multi-versioned and optimistic methods as well. However, as Gray et al. describe in&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-ansi-critique">10</a>]</span>, the SQL Standard is both ambiguous and under-specified: there are multiple possible interpretations of the English-language description, and the formalization does not capture all behaviors of the lock-based implementations. Additionally, the ANSI SQL Standard does not cover all isolation modes: for example, vendors had already begun shipping production databases providing Snapshot Isolation (and labeling it as serializable!) before Gray et al. defined it in their 1995 paper. (Sadly, as of 2015, the ANSI SQL Standard remains unchanged.)</p>
+<p>To complicate matters further, Gray et al.&rsquo;s 1995 revised formalism is also problematic: it focuses on lock-related semantics and rules out behavior that might be considered safe in a multi-versioned concurrency control system. Accordingly, for his 1999 Ph.D. thesis&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-adya-phd">1</a>]</span>, Atul Adya introduced the best formalism for weak isolation that we have to date. Adya&rsquo;s thesis adapts the formalism of multi-version serialization graphs&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-bernstein-book">11</a>]</span> to the domain of weak isolation and describes anomalies according to restrictions on those graphs. We include Adya&rsquo;s corresponding ICDE 2000 paper, but isolation aficionados should consult the full thesis. Unfortunately, Adya&rsquo;s model is still underspecified in some cases (e.g., what exactly does G0 mean if no reads are involved?), and implementations of these guarantees differ across databases.</p>
+<p>Even with a perfect specification, weak isolation is still a real challenge to reason about. To decide whether weak isolation is &ldquo;safe,&rdquo; programmers must mentally translate their application-level consistency concerns down to low-level read and write behavior&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-consistency-borders">2</a>]</span>. This is ridiculously difficult, even for seasoned concurrency control experts. In fact, one might wonder what benefits of transactions remain if serializability is compromised? Why is it easier to reason about Read Committed isolation than no isolation at all? Given how many database engines like Oracle run under weak isolation, how does modern society function at all - whether users are booking airline flights, administering hospitals, or performing stock trades? The literature lends few clues, casting serious questions about the success of the transaction concept as deployed in practice today.</p>
+<p>The most compelling argument I have encountered for why weak isolation seems to be &ldquo;okay&rdquo; in practice is that few applications today experience high degrees of concurrency. Without concurrency, most implementations of weak isolation deliver serializable results. This in turn has led to a fruitful set of research results. Even in a distributed setting, weakly isolated databases deliver &ldquo;consistent&rdquo; results: for example, at Facebook, only 0.0004% of results returned from their eventually consistent store were &ldquo;stale&rdquo;&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-fb-inconsistency">19</a>]</span>, and others have found similar results&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-pbs">9</a>, <a href="ch6-isolation.html#ref-wada">25</a>]</span>. However, while for many applications weak isolation is apparently not problematic, it can be: as our Flexcoin example illustrates, given the possibility of errors, application writers must be vigilant in accounting for (or otherwise explicitly ignoring) concurrency-related anomalies.</p>
+<div id="weak-isolation-distribution-and-nosql" class="bodysection">Weak Isolation, Distribution, and &ldquo;NoSQL&rdquo;</div>
+<p>With the rise of Internet-scale services and cloud computing, weak isolation has become even more prevalent. As I mentioned earlier, distribution exacerbates overheads of serializability, and, in the event of partial system failures (e.g., servers crashing), transactions may stall indefinitely. As more and more programmers began to write distributed applications and used distributed databases, these concerns became mainstream.</p>
+<p>The past decade saw the introduction of a range of new data stores optimized for the distributed environment, collectively called &ldquo;NoSQL.&rdquo; The &ldquo;NoSQL&rdquo; label is unfortunately overloaded and refers to many aspects of these stores, from lack of literal SQL support to simpler data models (e.g., key-value pairs) and little to no transactional support. Today, as in MapReduce-like systems (Chapter 5), NoSQL stores are adding many these features. However, a notable, fundamental difference is that these NoSQL stores frequently focus on providing better availability of operations via weaker models, with an explicit focus on fault tolerance. (It is somewhat ironic that, while NoSQL stores are commonly associated with the use of non-serializable guarantees, classic RDBMSs do not provide serializability by default either.)</p>
+<p>As an example of these NoSQL stores, we include a paper on the Dynamo system, from Amazon, presented at SOSP 2007. Dynamo was introduced to provide highly available and low latency operation for Amazon&rsquo;s shopping cart. The paper is technically interesting as it combines several techniques, including quorum replication, Merkle tree anti-entropy, consistent hashing, and version vectors. The system is entirely non-transactional, does not provide any kind of atomic operation (e.g., compare and swap), and relies on the application writer to reconcile divergent updates. In the limit, any node can update any item (under hinted handoff).</p>
+<p>By using a merge function, Dynamo adopts an &ldquo;optimistic replication&rdquo; policy: accept writes first, reconcile divergent versions later&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-gray-dangers">16</a>, <a href="ch6-isolation.html#ref-optimistic">21</a>]</span>. On the one hand, presenting a set of divergent versions to the user is more friendly than simply discarding some concurrent updates, as in Read Committed isolation. On the other hand, programmers must reason about merge functions. This raises many questions: what is a suitable merge for an application? How do we avoid throwing away committed data? What if an operation should not have been performed concurrently in the first place? Some open source Dynamo clones, like Apache Cassandra, do not provide merge operators and simply choose a &ldquo;winning&rdquo; write based on a numerical timestamp. Others, like Basho Riak, have adopted &ldquo;libraries&rdquo; of automatically mergeable datatypes like counters, called Commutative Replicated Data Types&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-crdt">22</a>]</span>.</p>
+<p>Dynamo also does not make promises about recency of reads. Instead, it guarantees that, if writes stop, eventually all replicas of a data item will contain the same set of writes. This eventual consistency is a remarkably weak guarantee: technically, an eventually consistent datastore can return stale (or even garbage) data for an indefinite amount of time&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-ec-queue">4</a>]</span>. In practice, data store deployments frequently return recent data&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-pbs">9</a>, <a href="ch6-isolation.html#ref-wada">25</a>]</span>, but, nevertheless, users must reason about non-serializable behavior. Moreover, in practice, many stores offer intermediate forms of isolation called &ldquo;session guarantees&rdquo; that ensure that users read their own writes (but not the writes of other users); interestingly, these techniques were developed in the early 1990s as part of the Bayou project on mobile computing and have recently come to prominence again&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-terry-baseball">23</a>, <a href="ch6-isolation.html#ref-bayou-session">24</a>]</span>.</p>
+<div id="trade-offs-and-the-cap-theorem" class="bodysection">Trade-offs and the CAP Theorem</div>
+<p>We have also included Brewer&rsquo;s 12 year retrospective on the CAP Theorem. Originally formulated following Brewer&rsquo;s time building Inktomi, one of the first scalable search engines, Brewer&rsquo;s CAP Theorem pithily describes trade-offs between the requirement for coordination (or &ldquo;availability&rdquo;) and strong guarantees like serializability. While earlier results described this trade-off&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-davidson-survey">13</a>, <a href="ch6-isolation.html#ref-caprfc">18</a>]</span>, CAP became a rallying cry for mid-2000s developers and has considerable impact. Brewer&rsquo;s article briefly discusses performance implications of CAP, as well as the possibility of maintaining some consistency criteria without relying on coordination.</p>
+<div id="programmability-and-practice" class="bodysection">Programmability and Practice</div>
+<p>As we have seen, weak isolation is a real challenge: its performance and availability benefits mean it is extremely popular in deployments despite the fact that we have little understanding of its behavior. Even with a perfect specification, existing formulations of weak isolation would still be a extremely difficult to reason about. To decide whether weak isolation is &ldquo;safe,&rdquo; programmers must mentally translate their application-level consistency concerns down to low-level read and write behavior&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-consistency-borders">2</a>]</span>. This is ridiculously difficult, even for seasoned concurrency control experts.</p>
+<p>As a result, I believe there is a serious opportunity to investigate semantics that are not subject to the performance and availability overheads of serializability but are more intuitive, usable, and programmable than existing guarantees. Weak isolation has historically been highly challenging to reason about, but this need not be the case. We and others have found that several high-value use cases, including index and view maintenance, constraint maintenance, and distributed aggregation, frequently do not actually require coordination for &ldquo;correct&rdquo; behavior; thus, for these use cases, serializability is overkill&nbsp<span class="citationlink">[<a href="ch6-isolation.html#ref-bailis-phd">3</a>, <a href="ch6-isolation.html#ref-ramp">8</a>, <a href="ch6-isolation.html#ref-homeostasis">20</a>, <a href="ch6-isolation.html#ref-crdt">22</a>]</span>. That is, by providing databases with additional knowledge about their applications, database users can have their cake and eat it too. Further identifying and exploiting these use cases is an area ripe for research.</p>
+<div id="conclusions" class="bodysection">Conclusions</div>
+<p>In summary, weak isolation is prevalent due to its many benefits: less coordination, higher performance, and greater availability. However, its semantics, risks, and usage are poorly understood, even in an academic context. This is particularly baffling given the amount of research devoted to serializable transaction processing, which is considered by many to be a &ldquo;solved problem.&rdquo; Weak isolation is arguably even more deserving of such a thorough treatment. As I have highlighted, many challenges remain: how do modern systems even work, and how should users program weak isolation? For now, I offer the following take-aways:</p>
+<ul>
+<li><p>Non-serializable isolation is prevalent in practice (in both classical RDBMSs and recent NoSQL upstarts) due to its concurrency-related benefits.</p></li>
+<li><p>Despite this prevalence, many existing formulations of non-serializable isolation are poorly specified and difficult to use.</p></li>
+<li><p>Research into new forms of weak isolation show how to preserve meaningful semantics and improve programmability without the expense of serializability.</p></li>
+</ul>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-adya-phd">
+<p>[1] Adya, A. <em>Weak consistency: A generalized theory and optimistic implementations for distributed transactions</em>. Ph.D. Thesis, MIT, 1999</p>
+</div>
+<div id="ref-consistency-borders">
+<p>[2] Alvaro, P., Bailis, P., Conway, N. and Hellerstein, J.M. Consistency without borders. <em>SoCC</em>, 2013.</p>
+</div>
+<div id="ref-bailis-phd">
+<p>[3] Bailis, P. <em>Coordination avoidance in distributed databases</em>. Ph.D. Thesis, University of California at Berkeley, 2015.</p>
+</div>
+<div id="ref-ec-queue">
+<p>[4] Bailis, P. and Ghodsi, A. Eventual consistency today: Limitations, extensions, and beyond. <em>ACM Queue</em>. 11, 3 (2013).</p>
+</div>
+<div id="ref-hat-vldb">
+<p>[5] Bailis, P., Davidson, A., Fekete, A., Ghodsi, A., Hellerstein, J.M. and Stoica, I. Highly Available Transactions: Virtues and limitations. <em>VLDB</em>, 2014.</p>
+</div>
+<div id="ref-feral">
+<p>[6] Bailis, P., Fekete, A., Franklin, M.J., Ghodsi, A., Hellerstein, J.M. and Stoica, I. Feral Concurrency Control: An empirical investigation of modern application integrity. <em>SIGMOD</em>, 2015.</p>
+</div>
+<div id="ref-coord-avoid">
+<p>[7] Bailis, P., Fekete, A., Franklin, M.J., Hellerstein, J.M., Ghodsi, A. and Stoica, I. Coordination avoidance in database systems. <em>VLDB</em>, 2015.</p>
+</div>
+<div id="ref-ramp">
+<p>[8] Bailis, P., Fekete, A., Ghodsi, A., Hellerstein, J.M. and Stoica, I. Scalable atomic visibility with RAMP transactions. <em>SIGMOD</em>, 2014.</p>
+</div>
+<div id="ref-pbs">
+<p>[9] Bailis, P., Venkataraman, S., Franklin, M.J., Hellerstein, J.M. and Stoica, I. Probabilistically Bounded Staleness for practical partial quorums. <em>VLDB</em>, 2012.</p>
+</div>
+<div id="ref-ansi-critique">
+<p>[10] Berenson, H., Bernstein, P., Gray, J., Melton, J., O&rsquo;Neil, E. and O&rsquo;Neil, P. A critique of ANSI SQL isolation levels. <em>SIGMOD</em>, 1995.</p>
+</div>
+<div id="ref-bernstein-book">
+<p>[11] Bernstein, P., Hadzilacos, V. and Goodman, N. Concurrency control and recovery in database systems. Addison-Wesley New York. 1987.</p>
+</div>
+<div id="ref-bernstein-tutorial">
+<p>[12] Bernstein, P.A. and Das, S. Rethinking eventual consistency. <em>SIGMOD</em>, 2013.</p>
+</div>
+<div id="ref-davidson-survey">
+<p>[13] Davidson, S., Garcia-Molina, H. and Skeen, D. Consistency in partitioned networks. <em>ACM CSUR</em>. 17, 3 (1985), 341-370.</p>
+</div>
+<div id="ref-fekete-ssi">
+<p>[14] Fekete, A., Liarokapis, D., O&rsquo;Neil, E., O&rsquo;Neil, P. and Shasha, D. Making snapshot isolation serializable. <em>ACM TODS</em>. 30, 2 (Jun. 2005), 492-528.</p>
+</div>
+<div id="ref-flexcoin">
+<p>[15] Flexcoin: The Bitcoin Bank: Flexcoin: The Bitcoin Bank. 2014. <a href="http://www.flexcoin.com/" class="uri">http://www.flexcoin.com/</a>; originally via Emin G&uuml;n Sirer.</p>
+</div>
+<div id="ref-gray-dangers">
+<p>[16] Gray, J., Helland, P., O&rsquo;Neil, P. and Shasha, D. The dangers of replication and a solution. <em>SIGMOD</em>, 1996.</p>
+</div>
+<div id="ref-gray-isolation">
+<p>[17] Gray, J., Lorie, R., Putzolu, G. and Traiger, I. Granularity of locks and degrees of consistency in a shared data base. IBM. 1976.</p>
+</div>
+<div id="ref-caprfc">
+<p>[18] Johnson, P.R. and Thomas, R.H. RFC 667: The maintenance of duplicate databases. 1975.</p>
+</div>
+<div id="ref-fb-inconsistency">
+<p>[19] Lu, H., Veeraraghavan, K., Ajoux, P., Hunt, J., Song, Y.J., Tobagus, W., Kumar, S. and Lloyd, W. Existential consistency: Measuring and understanding consistency at Facebook. <em>SOSP</em>, 2015.</p>
+</div>
+<div id="ref-homeostasis">
+<p>[20] Roy, S., Kot, L., Bender, G., Ding, B., Hojjat, H., Koch, C., Foster, N. and Gehrke, J. The homeostasis protocol: Avoiding transaction coordination through program analysis. <em>SIGMOD</em>, 2015.</p>
+</div>
+<div id="ref-optimistic">
+<p>[21] Saito, Y. and Shapiro, M. Optimistic replication. <em>ACM Comput. Surv.</em> 37, 1 (Mar. 2005).</p>
+</div>
+<div id="ref-crdt">
+<p>[22] Shapiro, M., Preguica, N., Baquero, C. and Zawirski, M. Shapiro Marc. Preguica Nuno. Baquero Carlos. Zawirski Marek. A comprehensive study of convergent and commutative replicated data types. INRIA TR 7506. 2011.</p>
+</div>
+<div id="ref-terry-baseball">
+<p>[23] Terry, D. Replicated data consistency explained through baseball. <em>Communications of the ACM</em>. 56, 12 (2013), 82-89.</p>
+</div>
+<div id="ref-bayou-session">
+<p>[24] Terry, D.B., Demers, A.J., Petersen, K., Spreitzer, M.J., Theimer, M.M. and others Session guarantees for weakly consistent replicated data. <em>PDIS</em>, 1994.</p>
+</div>
+<div id="ref-wada">
+<p>[25] Wada, H., Fekete, A., Zhao, L., Lee, K. and Liu, A. Data consistency properties and the trade-offs in commercial cloud storage: The consumers&rsquo; perspective. <em>CIDR</em>, 2011.</p>
+</div>
+</div>
+
+
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

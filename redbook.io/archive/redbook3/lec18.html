@@ -1,0 +1,167 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<title>Distributed DBMS: Overview &amp; Concurrency Control</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+</font mstheme><table border="0" width="100%">
+  <tr>
+    <td width="9%"><font face="century gothic, arial, helvetica" mstheme><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></font mstheme></td>
+    <td width="91%"><font face="century gothic, arial, helvetica" mstheme><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></font mstheme></td>
+  </tr>
+</table><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+</font mstheme></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Distributed DBMS: Overview &amp; Concurrency Control</h1>
+
+<h3>Goal: a small-scale (dozens of sites) distributed DBMS</h3>
+
+<ol>
+  <li>Location transparency: users don&#146;t know where the data is</li>
+  <li>Performance transparency: performance independent of submission site</li>
+  <li>Copy transparency: objects can be copied, and copies are maintained automatically.
+    Critical for availability</li>
+  <li>Transaction transparency: looks like single-site xacts</li>
+  <li>Fragment &quot;transparency&quot;: tables can be fragmented to different sites</li>
+  <li>Schema change transparency: schema updates at a single site affect global schema</li>
+  <li>Local DBMS transparency: shouldn&#146;t matter what DBMS is running at each site (ha!)</li>
+</ol>
+
+<p>&nbsp; </p>
+
+<p>Nobody provides all of this (#7 &amp; #3 are still major research field) </p>
+
+<p>IBM Almaden&#146;s R* was the most &quot;real&quot; DDBMS prototype. 
+
+<ul>
+  <li>VTAM/CICS provided communication</li>
+  <li>Good optimizer, concurrency control</li>
+</ul>
+
+<p>Others: 
+
+<ul>
+  <li>SDD-1: done at CCA, never really ran. PDP-10&#146;s on Arpanet. Strange design decisions
+    based on unreasonably slow network.</li>
+  <li>Distributed INGRES: UCB, also never ran. Lack of UNIX networking software (pre TCP/IP!).</li>
+  <li>Commercial vendors beginning to provide this functionality</li>
+</ul>
+
+<h3>The R* Distributed DBMS</h3>
+
+<p>Goals 
+
+<ul>
+  <li>location transparency</li>
+  <li>local privacy &amp; control</li>
+  <li>local performance on local queries</li>
+  <li>no central dependencies: site autonomy</li>
+  <ul>
+    <li>no central catalogs</li>
+    <li>no central scheduler</li>
+    <li>no central deadlock detector</li>
+  </ul>
+</ul>
+
+<p>Tables can be 
+
+<ul>
+  <li>dispersed</li>
+  <li>replicated</li>
+  <li>partitioned:</li>
+  <ul>
+    <li>horizontal partitioning (by predicate)</li>
+    <li>vertical partitioning (but a key at each partition)</li>
+  </ul>
+  <li>snapshots</li>
+</ul>
+
+<p>Table names: user_name@user_site.object_name@birth_site </p>
+
+<p>Catalogs store info on local objects, and objects born locally (along with pointers to
+current sites) </p>
+
+<p>Remote catalog info is cached as hints: 
+
+<ul>
+  <ul>
+    <li>invalid cache entries are detected easily and updated</li>
+    <li>catalog entries have version numbers</li>
+  </ul>
+</ul>
+
+<p>a catalog entry for a table: 
+
+<ul>
+  <ul>
+    <li>System-Wide Name</li>
+    <li>type info</li>
+    <li>access paths</li>
+    <li>view definition (if it&#146;s a view)</li>
+    <li>optimizer stats</li>
+  </ul>
+</ul>
+
+<p>To find a catalog entry: 
+
+<ol>
+  <ol>
+    <li>check local catalog &amp; cache</li>
+    <li>check birth site</li>
+    <li>check the place the birth site points to</li>
+  </ol>
+</ol>
+
+<h3>An overview of Distributed CC:</h3>
+
+<p>Every transaction gets an xactno: site_name.time (or SN) </p>
+
+<p>deadlocks: shoot the youngest, largest-numbered xact </p>
+
+<p>Commit Protocol &#150; you can&#146;t just decide to commit: 
+
+<ul>
+  <ul>
+    <li>some site may not be able to</li>
+    <li>you can&#146;t distingush inability from slowness!</li>
+  </ul>
+</ul>
+<b>
+
+<p>Two Phase Commit (2PC):</b> 
+
+<ol>
+  <ol>
+    <li>coordinator says to participants: want to commit? (N-1 messages)</li>
+    <li>Participants all vote yea/nay (N-1 messages)</li>
+    <li>coordinator tells everyone to commit/abort (N-1 messages)</li>
+    <li>participants acknowledge message (N-1 messages)</li>
+  </ol>
+</ol>
+
+<p>This does the right thing, but it&#146;s pretty costly. Next paper improves this. </p>
+
+<p><b>Distributed Deadlock Detection:</b> 
+
+<ul>
+  <li>find and resolve local deadlocks</li>
+  <li>pass your waits-for graph around to detect global deadlocks</li>
+  <li>next paper does this more efficiently</li>
+</ul>
+
+<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/19/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

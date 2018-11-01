@@ -1,0 +1,446 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<title>Access Methods: B-trees, R-Trees &amp; GiSTs</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Access Methods: B-Trees, R-Trees &amp; GiSTs</h1>
+
+<h3>First, a Review of Disks</h3>
+
+<ul>
+  <li>hardware: platters, arms, spindle. Often a cache (often 1 track) -- very
+    device-specific.</li>
+  <li>data layout: sectors, blocks, tracks, cylinders</li>
+  <li>&quot;access time&quot;: ha!</li>
+  <li>seek time, rotational delay, transfer time</li>
+  <li>random vs. sequential I/O</li>
+  <li>Examples:</li>
+</ul>
+
+<ul>
+  <ul>
+    <li>Seagate Hawk 2XL (2.15Mb) -- 5.5 msec average rotation delay, 9 msec average seek time
+      (varies from 1 to 22 msec), 5MB/sec transfer rate</li>
+    <li>Note: average disk access time is about 10-15 msec, RAM access is more like 5 microsecs!</li>
+    <li>Another note: while transfer rate and capacity are growing wildly every year, seek time
+      is not shrinking nearly as fast!</li>
+  </ul>
+</ul>
+
+<h3>Access Methods: General Issues</h3>
+
+<ul>
+  <li>Come in two flavors: heap files and indexes</li>
+  <li>Support AMI interface:</li>
+  <ul>
+    <li>open (possibly with selection condition)</li>
+    <li>get_next</li>
+    <li>close</li>
+    <li>insert, delete, update_field</li>
+  </ul>
+  <li>indexes usually do two things:</li>
+  <ul>
+    <li>partition: partition a dataset or domain into buckets</li>
+    <li>label: provide a label for each bucket</li>
+    <li>this is sometimes done hierarchically (trees), sometimes not (hashing)</li>
+    <li>the whole game boils down to how you partition &amp; label!</li>
+  </ul>
+  <li>index's utility defined by queries, not data!</li>
+  <li>typically random I/O in index</li>
+  <li>Performance goals:</li>
+  <ul>
+    <li>cold vs. hot lookups</li>
+    <li># of I/Os vs. # of blocks worth of output</li>
+    <li>because of random vs. sequential, should always compare to heap file!</li>
+  </ul>
+  <li>Implementation issues:</li>
+  <ul>
+    <li>concurrency &amp; recovery</li>
+    <li>cost estimation</li>
+    <li>bulk loading</li>
+  </ul>
+</ul>
+
+<h3>The &quot;Ubiquitous&quot; B-tree</h3>
+
+<p>Query load: equality &amp; linear range predicates </p>
+
+<p>Basics 
+
+<ul>
+  <li>Basic B-tree properties: balanced, high fanout, some minimal fill factor (order)</li>
+  <ul>
+    <li>in practice, may want minimal fill factor to be less than 50% (delete at empty has been
+      shown good in TP applications)</li>
+  </ul>
+  <li>B-tree vs. B+-tree.&nbsp; Note that B+-tree internal keys simply &quot;direct
+    traffic&quot;; this is very useful.</li>
+  <li>intra-node operations</li>
+</ul>
+
+<p>Compression 
+
+<ul>
+  <li>rear &amp; front key compression</li>
+  <li>pointer compression</li>
+  <li>Very common in practice, since B+-tree is on critical path of TP apps</li>
+</ul>
+
+<p>Variable-length keys 
+
+<ul>
+  <li>not too hard -- fill factor now expressed in terms of bytes, not entries.</li>
+</ul>
+
+<p>Multiuser &amp; Recovery issues 
+
+<ul>
+  <li>tricky, solved problem</li>
+  <li>high concurrency locking: need not be 2PL</li>
+  <li>watch repeatable read, too!</li>
+  <li>we will revisit this issue in detail <a href="lec13.html">later</a></li>
+</ul>
+
+<p>Leaves usually contain record pointers (as in VSAM) </p>
+
+<p>VSAM 
+
+<ul>
+  <li>unified B+-tree-based implementation for a file-system (recall Stonebraker's gripe)</li>
+  <li>store sibling leaves and parent in one cylinder</li>
+  <li>replicate parent along one track to minimize rotation time</li>
+</ul>
+
+<p>&nbsp; </p>
+
+<h3>R-trees</h3>
+
+<p>Query load: Equality and Range predicates in n dimensions 
+
+<ul>
+  <li>point in polygon</li>
+  <li>polygon in polygon</li>
+  <li>Overlaps polygon</li>
+  <li>Contains polygon</li>
+</ul>
+
+<p>Applications: GIS, VLSI, n-d range queries over traditional data where n is typical </p>
+
+<p>Notation. </p>
+
+<p>R-tree 
+
+<ul>
+  <li>Structure: like a B+-tree, but keys are MBRs (rectilinear minimum bounding rectangles),
+    one key per pointer</li>
+  <li>Search: Traverse multiple paths! (DFS)</li>
+  <li>Insertion:</li>
+  <ul>
+    <li>Where: ChooseLeaf. Least enlargement. Ties broken by picking smallest key.</li>
+    <li>Node splitting as in B+-tree. Question: what goes left, what goes right?</li>
+    <li>AdjustTree required. Why not in B+-tree?</li>
+  </ul>
+  <li>Deletion:</li>
+  <ul>
+    <li>Seek and destroy</li>
+    <li>CondenseTree: throw entries from under-full pages back into tree. Make sure they end up
+      at same level. Why different from B+-tree?</li>
+  </ul>
+  <li>Update: delete, update, reinsert</li>
+  <li>Split algorithms:</li>
+  <ul>
+    <li>exhaustive</li>
+    <li>quadratic: start with most distant seeds, greedily add based on maximal preference</li>
+    <li>linear: like quadratic, but picks seeds differently</li>
+  </ul>
+  <li>Performance study</li>
+  <ul>
+    <li>RISC-II VLSI data set</li>
+    <li>In practice, people (Postgres &amp; SHORE) seem to use M/2, quadratic split</li>
+  </ul>
+</ul>
+
+<h3>R-Tree Variants</h3>
+
+<p>R*-tree (Beckman, et al., SIGMOD 90) 
+
+<ul>
+  <li>like R-tree, but 3 distinctions:</li>
+  <ul>
+    <li>insertion minimizes different badness metric (depends on tree level)</li>
+    <li>new &amp; improved split algorithm (nlogn, more effective)</li>
+    <li>forced reinsert of 30% most &quot;extreme&quot; entries</li>
+    <ul>
+      <li>decreases overlap of siblings</li>
+      <li>improves storage utilization</li>
+      <li>splits less often</li>
+      <li>shapes tend to be more quadratic (pack better, generate smaller parents, minimizes split
+        of associated pixels)</li>
+    </ul>
+  </ul>
+  <li>Popular, since it out-performs R-tree on search.&nbsp;&nbsp; Concurrency problems
+    because of reinsertion.</li>
+</ul>
+
+<p>R+-Tree (Sellis, et al, VLDB87) 
+
+<ul>
+  <li>instead of overlapping keys, use multiple inserts (i.e. replicate items in leaves)</li>
+  <li>speeds search, complicates insert/delete/update</li>
+  <li>buggy!</li>
+  <li>NOTE: data vs. space partitioning. R-trees partition data. R+-trees partition space.</li>
+  <li>other space-partitioning trees: K-D-B trees, Quad trees</li>
+</ul>
+
+<p>TV(telescopic vector)-tree (Lin, et al, VLDB Journal, 1994) 
+
+<ul>
+  <li>Goal: solve high-d problems</li>
+  <li>Keys: compressed (center, radius) pairs in n-d</li>
+  <li>compression &quot;telescopes&quot; out to only the appropriate dimensions at each level
+    (other dimensions are &quot;wildcards&quot;)</li>
+  <li>The &quot;dimensionality curse&quot; remains!&nbsp; (See discussion of indexability
+    below)</li>
+</ul>
+
+<p>hB (holey-brick B) trees (Lomet &amp; Salzburg, TODS 90) 
+
+<ul>
+  <li>solve three problems</li>
+  <ul>
+    <li>naturally handles swiss-cheese polygons</li>
+    <li>speeds intra-node search</li>
+    <li>space partitioning &amp; data partitioning</li>
+  </ul>
+  <li>idea: put a main-memory k-d tree (space-partitioning tree) on each node. This tree can
+    represent a holey brick!</li>
+  <li>Neat idea, pretty complicated. Not really a tree -- can be a DAG. Journal paper is
+    buggy.</li>
+  <li>Not necessarily more effective than R*-trees</li>
+</ul>
+
+<p>...and a recent flurry of new trees.&nbsp; In practice, most 2-d access methods have
+proved to be within 20-30% of each other, though no systematic benchmarking has been done.
+</p>
+
+<h3>Generalized Search Trees</h3>
+
+<p>Indexing in OO/OR Systems 
+
+<ul>
+  <li>Quick access to user-defined objects</li>
+  <li>Support queries natural to the objects</li>
+  <li>Two previous approaches</li>
+  <ul>
+    <li>Specialized Indices (&#147;ABCDEFG-trees&#148;)</li>
+    <ul>
+      <li>redundant code: most trees are very similar</li>
+      <li>concurrency control, etc. tricky!</li>
+    </ul>
+    <li>Extensible B-trees &amp; R-trees (Postgres/Illustra)</li>
+    <ul>
+      <li>B-tree or R-tree lookups only!</li>
+      <li>E.g. &#145;WHERE movie.video &lt; &#145;Terminator 2&#146;</li>
+    </ul>
+  </ul>
+</ul>
+
+<p>A Third Approach 
+
+<ul>
+  <li>A generalized search tree. Must be:</li>
+  <ul>
+    <li>Extensible in terms of queries</li>
+    <li>General (B+-tree, R-tree, etc.)</li>
+    <li>Easy to extend</li>
+    <li>Efficient (match specialized trees)</li>
+    <li>Highly concurrent, recoverable, etc.</li>
+  </ul>
+</ul>
+
+<p>Uses for GiSTs 
+
+<ul>
+  <li>New indexes needed for new apps...</li>
+  <ul>
+    <li>find all supersets of S</li>
+    <li>find all molecules that bind to M</li>
+    <li>your favorite query here (multimedia?)</li>
+  </ul>
+  <li>...and for new queries over old domains:</li>
+  <ul>
+    <li>find all points in region from 12 to 1 o&#146;clock</li>
+    <li>find all strings that match R. E.</li>
+  </ul>
+</ul>
+
+<p>Structure: balanced tree of (p, ptr) pairs 
+
+<ul>
+  <li>p is a key &#147;predicate&#148;</li>
+  <li>p holds for all objects below ptr</li>
+  <li>keys on a page may overlap</li>
+  <li>Key predicates: a user-defined class</li>
+  <ul>
+    <li>This is the only extensibility required!</li>
+  </ul>
+</ul>
+
+<p>Key Methods 
+
+<ul>
+  <li>Search</li>
+  <ul>
+    <li>Consistent(E,q): E.p &amp;&amp; q? (no/maybe)</li>
+  </ul>
+  <li>Labeling</li>
+  <ul>
+    <li>Union(P): new key that holds for all tuples in P</li>
+  </ul>
+  <li>Partitioning</li>
+  <ul>
+    <li>Penalty(E1,E2): penalty of inserting E2 in subtree E1</li>
+    <li>PickSplit(P): split P into two groups of entries</li>
+  </ul>
+</ul>
+
+<p>Search 
+
+<ul>
+  <li>General technique:</li>
+  <ul>
+    <li>traverse tree where Consistent is TRUE</li>
+  </ul>
+  <li>For fancier things, see <a href="http://s2k-ftp.cs.berkeley.edu:8000/postgres/papers/icde98-search.pdf">[Aoki98]</a>.</li>
+</ul>
+
+<p>Insert 
+
+<ul>
+  <li>descend tree along least increase in Penalty</li>
+  <li>if there&#146;s room at leaf, insert there</li>
+  <li>else split according to PickSplit</li>
+  <li>propagate changes using Union</li>
+  <li>Notes:</li>
+  <ul>
+    <li>on overflow, can do R*-tree style reinsert</li>
+  </ul>
+</ul>
+
+<p>Delete 
+
+<ul>
+  <li>find the entry via Search, and delete it</li>
+  <li>propagate changes using Union</li>
+  <li>on underflow:</li>
+  <ul>
+    <li>ordered keys, do B+-tree style borrow/coalesce</li>
+    <li>else reinsert stuff on page and delete page</li>
+  </ul>
+</ul>
+
+<p>GiSTS over (B+-trees) 
+
+<ul>
+  <li>Logically, keys represent ranges [x,y)</li>
+  <li>Queries:</li>
+  <ul>
+    <li>Contains([a,b), v)</li>
+  </ul>
+  <li>Consistent(E,q): (x&lt;b) &amp;&amp; (y &gt; a)</li>
+  <li>Union(P): [MIN(xi), MAX(yi))</li>
+  <li>Penalty(E1, E2): &#150; return MAX(y2 - y1, 0) + MAX(x1 - x2, 0)</li>
+  <ul>
+    <li>if E1 is leftmost or rightmost, drop a term</li>
+  </ul>
+  <li>PickSplit(P): split evenly in order</li>
+</ul>
+
+<p>Key Compression 
+
+<ul>
+  <li>Keys may take up too much room on a page</li>
+  <li>Two extra key methods:</li>
+  <ul>
+    <li>Compress(E)/Decompress(E)</li>
+    <li>Compression can be lossy: over-generalization OK</li>
+  </ul>
+  <li>B+-tree Compression</li>
+</ul>
+
+<ul>
+  <ul>
+    <li>Compress(E=([x,y), ptr)):</li>
+    <ul>
+      <li>if E is leftmost return NULL, else return x</li>
+    </ul>
+    <li>Decompress(E=(p, ptr)):</li>
+    <ul>
+      <li>if E is leftmost, let x = -infinity, else let x = p.</li>
+      <li>if E is rightmost, let y = infinity, else let y be the value stored in the next key on
+        the right.</li>
+      <li>if E is rightmost on a leaf page, let y = x+1.</li>
+    </ul>
+  </ul>
+</ul>
+
+<p>GiSTs over R2 (R-tree) 
+
+<ul>
+  <li>Logically, keys represent bounding boxes</li>
+  <li>Queries: Contains, Overlaps, Equals</li>
+  <li>Consistent(E,q): E.p overlap/contain q?</li>
+  <li>Union(P): bounding box of all entries</li>
+  <li>Compress(E): form bounding box</li>
+  <li>Decompress(E): identity function</li>
+  <li>Penalty(E,F): size(Union({E,F}) - size(E)</li>
+  <li>PickSplit(P): R-tree or R*-tree methods</li>
+</ul>
+
+<p>GiSTs over P(Z) (RD-tree) 
+
+<ul>
+  <li>Logically, keys represent bounding sets</li>
+  <li>Queries: Contains, Overlaps, Equals</li>
+  <li>Consistent(E,q):</li>
+  <li>Union(P): set-union of keys</li>
+  <li>Compress(E): Bloom filters, rangesets, etc.</li>
+  <li>Decompress(E): match compress</li>
+  <li>Penalty(E,F): |E.p U F.p| - |E.p|</li>
+  <li>PickSplit(P): R-tree algorithms</li>
+</ul>
+
+<p>Research Issues 
+
+<ul>
+  <li>Concurrency, Recovery, Consistency &#150; <a href="http://s2k-ftp.cs.berkeley.edu:8000/postgres/papers/sigmod97-gist.pdf">Kornacker, et
+    al '97</a></li>
+  <li>Generalizing Search -- <a href="http://s2k-ftp.cs.berkeley.edu:8000/postgres/papers/icde98-search.pdf">Aoki '98</a></li>
+  <li>Indexability -- <a href="http://s2k-ftp.cs.berkeley.edu:8000/postgres/papers/pods97-index.pdf">Hellerstein/Papadimitriou/Koutsoupias
+    '97</a>, Koutsoupias/Taylor '98, Tsamoladas/Miranker '98</li>
+  <li>AM development tools: amdb (Kornacker/Shah, demo at SIGMOD '98)</li>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

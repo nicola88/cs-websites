@@ -1,0 +1,275 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<title>POSTGRES Storage System &amp; Complex Transactions</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>POSTGRES Storage System</h1>
+
+<h3>One More Concurrency Control Technique </h3>
+
+<p>Time Stamping: Bernstein TODS &#146;79 (see also paper in Stonebraker book) </p>
+
+<p>&nbsp; </p>
+
+<table BORDER="1" CELLPADDING="7" WIDTH="252">
+  <tr>
+    <td VALIGN="TOP" WIDTH="50%"><p align="center">record </td>
+    <td VALIGN="TOP" WIDTH="26%">Write TS</td>
+    <td VALIGN="TOP" WIDTH="24%">Read TS</td>
+  </tr>
+</table>
+
+<p>&nbsp; 
+
+<ul>
+  <li>Every xact gets a unique timestamp at startup</li>
+  <li>on Read: OK if Xact TS &gt; WTS. Install new RTS if xact TS &gt; RTS.</li>
+  <li>on Write: OK if xact TS &gt; MAX(RTS, WTS). Install new WTS.</li>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>Problems: 
+
+<ol>
+  <li>forces time-stamp order (tighter restriction than other schemes)</li>
+  <li>cascaded aborts (no isolation)</li>
+</ol>
+
+<p>&nbsp; </p>
+
+<p>Multi-version timestamping techniques: 
+
+<ul>
+  <li>Reed&#146;s PhD, MIT &#145;78</li>
+  <ul>
+    <li>reads get the appropriate version</li>
+    <li>writes are a bit trickier &#150; can be added if nobody read object between the new
+      write and any &quot;later&quot; writes</li>
+  </ul>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>Timestamping is not dead, but it is not popular, either. <br>
+&nbsp; </p>
+
+<h2>POSTGRES Storage System</h2>
+
+<p>An extremely simple solution to the complex recovery problem. </p>
+
+<p><b>Problem:</b> 
+
+<ul>
+  <li>WAL recovery code is really complicated (witness ARIES)</li>
+  <li>recovery code must be flawless</li>
+  <li>failures can be arbitrary &#150; testing is hard to pull off</li>
+</ul>
+
+<p>What&#146;s wrong with this picture?&nbsp;<br>
+</p>
+
+<pre>
+          &nbsp;________________
+          |&nbsp;&nbsp;&nbsp;&nbsp; DBMS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
+          &nbsp;----------------
+          &nbsp;&nbsp;&nbsp;&nbsp; /&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; \
+          &nbsp;&nbsp;&nbsp; /&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; \
+          &nbsp;-----&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -----
+          &nbsp; DB&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Log
+          &nbsp;-----&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -----
+</pre>
+
+<p><br>
+<b>Alternative</b>: A no-overwrite storage system. 
+
+<ol>
+  <li>Time travel comes for free</li>
+  <li>instantaneous recovery</li>
+  <li>no crash recovery code</li>
+</ol>
+<b>
+
+<p>Details</b> 
+
+<ul>
+  <li>Life of a xact:</li>
+  <ul>
+    <li>increment and grab current global XID</li>
+    <li>do processing</li>
+    <li>change status to committed in log (more on this below)</li>
+    <li>force data &amp; log to stable storage (in that order!)</li>
+  </ul>
+  <li>There is a log:</li>
+</ul>
+
+<ul>
+  <ul>
+    <li>tail of log (oldest active xact to present) needs 2 bits per transaction to record state
+      (committed, aborted, in progress)</li>
+    <li>body of log needs only 1 bit per xact (committed or aborted)</li>
+    <li>at 1 xact per second, 1 year of transactions fits in 4Mb log space!</li>
+    <li>Detail: if this is still too big, use a Bloom filter to represent aborted xacts (lossy
+      compression)</li>
+    <li>with just a little NVRAM, the log essentially never needs forcing</li>
+  </ul>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>Each tuple has a bunch of system fields: 
+
+<ul>
+  <li>OID: a database-wide unique ID across all time</li>
+  <li>Xmin: XID of inserter</li>
+  <li>Tmin: commit time of Xmin</li>
+  <li>Cmin: command ID of inserter</li>
+  <li>Xmax: XID of deleter (if any)</li>
+  <li>Tmax: commit time of Xmax (if any)</li>
+  <li>Cmax: command ID of deleter (if any)</li>
+  <li>PTR: pointer to chain of deltas</li>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>Updates work as follows: 
+
+<ol>
+  <li>Xmax &amp; Cmax set to updater&#146;s XID</li>
+  <li>new replacement tuple appended to DB with:</li>
+</ol>
+
+<ul>
+  <ul>
+    <li>OID of old record</li>
+    <li>Xmin &amp; Cmin = XID of updater</li>
+    <li>in fact, store this as delta off original tuple</li>
+  </ul>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>Deleters simply set Xmax &amp; Cmax to their XID </p>
+
+<p>The first version of a record is called the Anchor Point, which has a chain of
+associated delta records </p>
+
+<p>&quot;Hopefully&quot;, delta records fit on the same page as their anchor point. <br>
+&nbsp; </p>
+
+<h3>CC, Timestamps, Archiving:</h3>
+
+<p>If we actually got timestamps at xact start, we&#146;d get timestamp ordering CC. </p>
+
+<p>Instead, do 2PL, and get timestamp at commit time. </p>
+
+<p>How to set Tmin and Tmax if you don&#146;t have the commit time? 
+
+<ul>
+  <li>XID is taken as an oid from the TIME relation</li>
+  <li>at commit:</li>
+  <ul>
+    <li>update your appropriate TIME tuple with the wall-clock time.</li>
+    <li>then force data pages to stable storage, change status to committed in tail of log</li>
+  </ul>
+  <li>3 levels of archiving</li>
+</ul>
+
+<ol>
+  <ol>
+    <li>no archive: old versions not needed</li>
+    <li>light archive: old versions not to be accessed often</li>
+    <li>heavy archive: old versions to be accessed regularly</li>
+  </ol>
+</ol>
+
+<ul>
+  <li>on first access to a tuple from a &quot;heavy archive&quot; relation, you update the
+    OIDs in Tmin and Tmax with values from the TIME relation</li>
+</ul>
+
+<h3>Time Travel</h3>
+
+<p>Allows queries over a table as of some wall-clock time in the past. </p>
+
+<p>Rewrite queries to handle the system fields in tuples </p>
+
+<p>Reading a Record: get record, follow delta chain until you&#146;ve got the appropriate
+version constructed. </p>
+
+<p>Indexes all live on disk, and are updated in place (overwrites here) </p>
+
+<h3>Archiving</h3>
+
+<ul>
+  <li>historical data can be forced to archive via the vacuum cleaner</li>
+</ul>
+
+<ol>
+  <ol>
+    <li>write archive record(s)</li>
+    <li>write new anchor record</li>
+    <li>reclaim space of old anchor/deltas</li>
+  </ol>
+</ol>
+
+<ul>
+  <li>crash during vacuum?</li>
+  <ul>
+    <li>indexes may lose archive records: this will be discovered at runtime and fixed via a
+      Seq. Scan</li>
+    <li>duplicate records may be forced to archive: OK because POSTGRES doesn&#146;t do
+      multisets</li>
+  </ul>
+  <li>Can build R-trees over lifetime intervals of data on archive</li>
+</ul>
+
+<h3>Performance Study vs. WAL</h3>
+<b>
+
+<p>Assumptions:</b> 
+
+<ul>
+  <li>records fit on a single page</li>
+  <li>deltas live on the same page as anchors</li>
+  <li>single-record xacts</li>
+  <li>update-only workload (?!)</li>
+</ul>
+
+<p>NVRAM required to make POSTGRES compete on this benchmark. </p>
+
+<p><b>The Real Story</b> 
+
+<ul>
+  <li>Illustra never claimed to be a TP competitor</li>
+  <li>Informix replaced Illustra&#146;s no-overwrite storage manager with Informix&#146;s WAL</li>
+  <li>List of Problems (to be discussed in class)</li>
+  <li>Tuple differencing never implemented</li>
+  <li>R-trees over archive not used</li>
+  <li>Tie-ins with LFS. What makes LFS more viable (if anything??)</li>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

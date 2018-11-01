@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 5: Large-Scale Dataflow Engines</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch6-isolation.html">Next Chapter</a></div>
+<div class="headerlink"><a href="ch4-newdbms.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch5-dataflow.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch5-dataflow">Chapter 5: Large-Scale Dataflow Engines</div>
+	<div class="introauthor">Introduced by Peter Bailis</div>
+
+      <div class="paperchoicebox">
+	<div class="paperchoicetitle">Readings:</div>
+	<div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=10940266603640308767" target="_blank">Jeff Dean and Sanjay Ghemawat. <span class="papertitle">MapReduce: Simplified Data Processing on Large Clusters</span>. <span class="papervenue">OSDI</span>, 2004.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=3662601067977846800" target="_blank">Yuan Yu, Michael Isard, Dennis Fetterly, Mihai Budiu. <span class="papertitle">DryadLINQ: A System for General-Purpose Distributed Data-Parallel Computing Using a High-Level Language</span>. <span class="papervenue">OSDI</span>, 2008.</a></div>
+      </div>
+
+    
+
+      <div class="intro">
+      <p>Of the many developments in data management over the past decade, MapReduce and subsequent large-scale data processing systems have been among the most disruptive and the most controversial. Cheap commodity storage and rising data volumes led many Internet service vendors to discard conventional database systems and data warehouses and build custom, home-grown engines instead. Google&rsquo;s string of publications on their large-scale systems, including Google File System&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-gfs">11</a>]</span>, MapReduce, Chubby&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-chubby">6</a>]</span>, and BigTable&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-bigtable">7</a>]</span>, are perhaps the most famous and influential in the market. In almost all cases, these new, homegrown systems implemented a small subset of the features found in conventional databases, including high-level languages, query optimizers, and efficient execution strategies. However, these systems and the resulting open source Hadoop ecosystem proved highly popular with many developers. This led to considerable investment, marketing, research interest, and development on these platforms, which, today are in flux, but, as an ecosystem, have come to resemble traditional data warehouses&mdash;with some important modifications. We reflect on these trends here.</p>
+<div id="history-and-successors" class="bodysection">History and Successors</div>
+<p>Our first reading is the original Google MapReduce paper from 2004. MapReduce was a library built for simplifying parallel, distributed computation over distributed data at Google&rsquo;s scale&mdash;particularly, the batch rebuild of web search indexes from crawled pages. It is unlikely that, at the time, a traditional data warehouse could have handled this workload. However, compared to a conventional data warehouse, MapReduce provides a very low-level interface (two-stage dataflow) that is closely tied to a fault-tolerant execution strategy (intermediate materialization between two-stage dataflow). Equally importantly, MapReduce was designed as a library for parallel programming rather than an end-to-end data warehousing solution; for example, MapReduce delegates storage to Google File System. At the time, members of the database community decried the architecture as simplistic, inefficient, and of limited use&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-mr-majorstep">8</a>]</span>.</p>
+<p>While the original MapReduce paper was released in 2003, there was relatively little additional activity external to Google until 2006, when Yahoo! open-sourced the Hadoop MapReduce implementation. Subsequently, there was an explosion of interest: within a year, a range of projects including Dryad (Microsoft)&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-dryad">15</a>]</span>, Hive (Facebook)&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-hive">26</a>]</span>, Pig (Yahoo)&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-pig">22</a>]</span> were all under development. These systems, which we will call post-MapReduce systems, gained considerable traction with developers&mdash;who were largely concentrated in Silicon Valley&mdash;as well as serious VC investment. A multitude of research spanning the systems, databases, and networking communities investigated issues including scheduling, straggler mitigation, fault tolerance, UDF query optimization, and alternative programming models&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-fnt-mr">5</a>]</span>.</p>
+<p>Almost immediately, post-MapReduce systems expanded their interface and functionality to include more sophisticated declarative interfaces, query optimization strategies, and efficient runtimes. Today&rsquo;s post-MapReduce systems have come to implement a growing proportion of the feature set of conventional RDBMSs. The latest generation of data processing engines such as Spark&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-spark">27</a>]</span>, F1&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-f1">24</a>]</span>, Impala&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-impala">16</a>]</span>, Tez&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-tez">3</a>]</span>, Naiad&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-naiad">21</a>]</span>, Flink/Stratosphere&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-stratosphere">1</a>]</span>, AsterixDB&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-asterixdb">2</a>]</span>, and Drill&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-drill">14</a>]</span> frequently i) expose higher-level query languages such as SQL, ii) more advanced execution strategies, including the ability to process general graphs of operators, and iii) use indexes and other functionality of structured input data sources when possible. In the Hadoop ecosystem, dataflow engines have become the substrate for a suite of higher-level functionality and declarative interfaces, including SQL&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-sparksql">4</a>, <a href="ch5-dataflow.html#ref-hive">26</a>]</span>, graph processing&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-graphx">13</a>, <a href="ch5-dataflow.html#ref-pregel">19</a>]</span>, and machine learning&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-systemml">12</a>, <a href="ch5-dataflow.html#ref-mllib">25</a>]</span>. There is also increasing interest in stream processing functionality, revisiting many of the concepts pioneered in the database community in the 2000s. A growing commercial and open source ecosystem has developed &ldquo;connectors&rdquo; to various structured and semi-structured data sources, catalog functionality (e.g., HCatalog), and data serving and limited transactional capabilities (e.g., HBase). Much of this functionality, such as the typical query optimizers in these frameworks, is rudimentary compared to many mature commercial databases but is quickly evolving.</p>
+<p>DryadLINQ, our second selected reading for this section, is perhaps most interesting for its interface: a set of embedded language bindings for data processing that integrates seamlessly with Microsoft&rsquo;s .NET LINQ to provide a parallelized collections library. DryadLINQ executes queries via the earlier Dryad system&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-dryad">15</a>]</span>, which implemented a runtime for arbitrary dataflow graphs using a replay-based fault tolerance. While DryadLINQ still restricts programmers to a set of side-effect free dataset transformations (including &ldquo;SQL-like&rdquo; operations), it presents a considerably higher-level interface than Map Reduce. DryadLINQ&rsquo;s language integration, lightweight fault tolerance, and basic query optimization techniques proved influential in later dataflow systems, including Apache Spark&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-spark">27</a>]</span> and Microsoft&rsquo;s Naiad&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-naiad">21</a>]</span>.</p>
+<div id="impact-and-legacy" class="bodysection">Impact and Legacy</div>
+<p>There are at least three lasting impacts of the MapReduce phenomenon that might not have occurred otherwise. These ideas are - like distributed dataflow itself - not necessarily novel, but the ecosystem of post-MapReduce dataflow and storage systems have broadly increased their impact:</p>
+<p>1.) <em>Schema flexibility.</em> Perhaps most importantly, traditional data warehouse systems are walled gardens: ingested data is pristine, curated, and has structure. In contrast, MapReduce systems process arbitrarily structured data, whether clean or dirty, curated or not. There is no loading step. This means users can store data first and consider what to do with it later. Coupled with the fact that storage (e.g., in the Hadoop File System) is considerably cheaper than in a traditional data warehouse, users can afford to retain data for longer and longer. This is a major shift from traditional data warehouses and is a key factor behind the rise and gathering of &ldquo;Big Data.&rdquo; A growing number of storage formats (e.g., Avro, Parquet, RCFile) marry semi-structured data and advances in storage such as columnar layouts. In contrast with XML, this newest wave of semi-structured data is even more flexible. As a result, extract-transform-load (ETL) tasks are major workload for post-MapReduce engines. It is difficult to overstate the impact of schema flexibility on the modern practice of data management at all levels, from analyst to programmer and analytics vendor, and we believe it will become even more important in the future. However, this heterogeneity is not free: curating such &ldquo;data lakes&rdquo; is expensive (much more than storage) and is a topic we consider in depth in <a href="ch12-dataintegration.html">Chapter 12</a>.</p>
+<p>2.) <em>Interface flexibility.</em> Today, most all users interact with Big Data engines in SQL-like languages. However, these engines also allow users to program using a combination of paradigms. For example, an organization might use imperative code to perform file parsing, SQL to project a column, and machine learning subroutines to cluster the results - all within a single framework. Tight, idiomatic language integration as in DryadLINQ is commonplace, further improving programmability. While traditional database engines historically supported user-defined functions, these new engines&rsquo; interfaces make user-defined computations simpler to express and also make it easier to integrate the results of user-defined computations with the results of queries expressed using traditional relational constructs like SQL. Interface flexibility and integration is a strong selling point for data analytics offerings; the ability to combine ETL, analytics, and post-processing in a single system is remarkably convenient to programmers &mdash; but not necessarily to users of traditional BI tools, which make use of traditional JDBC interfaces.</p>
+<p>3.) <em>Architectural flexibility.</em> A common critique of RDBMSs is that their architecture is too tightly coupled: storage, query processing, memory management, transaction processing, and so on are closely intertwined, with a lack of clear interfaces between them in practice. In contrast, as a result of its bottom-up development, the Hadoop ecosystem has effectively built a data warehouse as a series of modules. Today, organizations can write and run programs against the raw file system (e.g., HDFS), any number of dataflow engines (e.g., Spark), using advanced analytics packages (e.g., GraphLab&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-graphlab">18</a>]</span>, Parameter Server&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-parameterserver">17</a>]</span>), or via SQL (e.g., Impala&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-impala">16</a>]</span>). This flexibility adds performance overhead, but the ability to mix and match components and analytics packages is unprecedented at this scale. This architectural flexibility is perhaps most interesting to systems builders and vendors, who have additional degrees of freedom in designing their infrastructure offerings.</p>
+<p>To summarize, a dominant theme in today&rsquo;s distributed data management infrastructure is flexibility and heterogeneity: of storage formats, of computation paradigms, and of systems implementations. Of these, storage format heterogeneity is probably the highest impact by an order of magnitude or more, simply because it impacts novices, experts, and architects alike. In contrast, heterogeneity of computation paradigms most impacts experts and architects, while heterogeneity of systems implementations most impacts architects. All three are relevant and exciting developments for database research, with lingering questions regarding market impact and longevity.</p>
+<div id="looking-ahead" class="bodysection">Looking Ahead</div>
+<p>In a sense, MapReduce was a short-lived, extreme architecture that blew open a design space. The architecture was simple and highly scalable, and its success in the open source domain led many to realize that there was demand for alternative solutions and the principle of flexibility that it embodied (not to mention a market opportunity for cheaper data warehousing solutions based on open source). The resulting interest is still surprising to many and is due to many factors, including community zeitgeist, clever marketing, economics, and technology shifts. It is interesting to consider which differences between these new systems and RDBMSs are fundamental and which are due to engineering improvements.</p>
+<p>Today, there is still debate about the appropriate architecture for large-scale data processing. As an example, Rasmussen et al. provide a strong argument for why intermediate fault tolerance is not necessary except in very large (100+ node) clusters&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-themismr">23</a>]</span>. As another example, McSherry et al. have colorfully illustrated that many workloads can be efficiently processed using a single server (or thread!), eliminating the need for distribution at all&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-cost">20</a>]</span>. Recently, systems such as the GraphLab project&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-graphlab">18</a>]</span> suggested that domain-specific systems are necessary for performance; later work, including Grail&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-grail">9</a>]</span> and GraphX&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-graphx">13</a>]</span>, argued this need not be the case. A further wave of recent proposals have also suggested new interfaces and systems for stream processing, graph processing, asynchronous programming, and general-purpose machine learning. Are these specialized systems actually required, or can one analytics engine rule them all? Time will tell, but I perceive a push towards consolidation.</p>
+<p>Finally, we would be remiss not to mention Spark, which is only six years old but is increasingly popular with developers and is very well supported both by VC-backed startups (e.g., Databricks) and by established firms such as Cloudera and IBM. While we have included DryadLINQ as an example of a post-MapReduce system due to its historical significance and technical depth, the Spark paper&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-spark">27</a>]</span>, written in the early days of the project, and recent extensions including SparkSQL&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-sparksql">4</a>]</span>, are worthwhile additional reads. Like Hadoop, Spark rallied major interest at a relatively early stage of maturity. Today, Spark still has a ways to go before its feature set rivals that of a traditional data warehouse. However, its feature set is rapidly growing and expectations of Spark as the successor to MapReduce in the Hadoop ecosystem are high; for example, Cloudera is working to replace MapReduce with Spark in the Hadoop ecosystem&nbsp<span class="citationlink">[<a href="ch5-dataflow.html#ref-cloudera-spark">10</a>]</span>. Time will tell whether these expectations are accurate; in the meantime, the gaps between traditional warehouses and post-MapReduce systems are quickly closing, resulting in systems that are as good at data warehousing as traditional systems, but also much more.</p>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-stratosphere">
+<p>[1] Alexandrov, A., Bergmann, R., Ewen, S., Freytag, J.-C., Hueske, F., Heise, A., Kao, O., Leich, M., Leser, U., Markl, V. and others The Stratosphere platform for big data analytics. <em>The VLDB Journal</em>. 23, 6 (2014), 939-964.</p>
+</div>
+<div id="ref-asterixdb">
+<p>[2] Alsubaiee, S., Altowim, Y., Altwaijry, H., Behm, A., Borkar, V., Bu, Y., Carey, M., Cetindil, I., Cheelangi, M., Faraaz, K. and others Asterixdb: A scalable, open source bDMS. <em>VLDB</em>, 2014.</p>
+</div>
+<div id="ref-tez">
+<p>[3] Apache Tez: Apache Tez. <a href="https://tez.apache.org/" class="uri">https://tez.apache.org/</a>.</p>
+</div>
+<div id="ref-sparksql">
+<p>[4] Armbrust, M., Xin, R.S., Lian, C., Huai, Y., Liu, D., Bradley, J.K., Meng, X., Kaftan, T., Franklin, M.J., Ghodsi, A. and others Spark SQL: Relational data processing in spark. <em>SIGMOD</em>, 2015.</p>
+</div>
+<div id="ref-fnt-mr">
+<p>[5] Babu, S. and Herodotou, H. Massively parallel databases and MapReduce systems. <em>Foundations and Trends in Databases</em>. 5, 1 (2013), 1-104.</p>
+</div>
+<div id="ref-chubby">
+<p>[6] Burrows, M. The chubby lock service for loosely-coupled distributed systems. <em>OSDI</em>, 2006.</p>
+</div>
+<div id="ref-bigtable">
+<p>[7] Chang, F., Dean, J., Ghemawat, S., Hsieh, W.C., Wallach, D.A., Burrows, M., Chandra, T., Fikes, A. and Gruber, R.E. Bigtable: A distributed storage system for structured data. <em>OSDI</em>, 2006.</p>
+</div>
+<div id="ref-mr-majorstep">
+<p>[8] DeWitt, D. and Stonebraker, M. MapReduce: A major step backwards. <em>The Database Column</em>. (2008).</p>
+</div>
+<div id="ref-grail">
+<p>[9] Fan, J., Gerald, A., Raj, S. and Patel, J.M. The case against specialized graph analytics engines. <em>CIDR</em>, 2015.</p>
+</div>
+<div id="ref-cloudera-spark">
+<p>[10] Forbes: Why Cloudera is saying &rsquo;Goodbye, MapReduce&rsquo; and &rsquo;Hello, Spark&rsquo;: Forbes: Why Cloudera is saying &rsquo;Goodbye, MapReduce&rsquo; and &rsquo;Hello, Spark&rsquo;. 2015. <a href="http://fortune.com/2015/09/09/cloudera-spark-mapreduce/" class="uri">http://fortune.com/2015/09/09/cloudera-spark-mapreduce/</a>.</p>
+</div>
+<div id="ref-gfs">
+<p>[11] Ghemawat, S., Gobioff, H. and Leung, S.-T. The google file system. <em>SOSP</em>, 2003.</p>
+</div>
+<div id="ref-systemml">
+<p>[12] Ghoting, A., Krishnamurthy, R., Pednault, E., Reinwald, B., Sindhwani, V., Tatikonda, S., Tian, Y. and Vaithyanathan, S. SystemML: Declarative machine learning on mapReduce. <em>ICDE</em>, 2011.</p>
+</div>
+<div id="ref-graphx">
+<p>[13] Gonzales, J.E., Xin, R.S., Crankshaw, D., Dave, A., Franklin, M.J. and Stoica, I. GraphX: Unifying data-parallel and graph-parallel analytics. <em>OSDI</em>, 2014.</p>
+</div>
+<div id="ref-drill">
+<p>[14] Hausenblas, M. and Nadeau, J. Apache Drill: Interactive ad-hoc analysis at scale. <em>Big Data</em>. 1, 2 (2013), 100-104.</p>
+</div>
+<div id="ref-dryad">
+<p>[15] Isard, M., Budiu, M., Yu, Y., Birrell, A. and Fetterly, D. Dryad: Distributed data-parallel programs from sequential building blocks. <em>EuroSys</em>, 2007.</p>
+</div>
+<div id="ref-impala">
+<p>[16] Kornacker, M., Behm, A., Bittorf, V., Bobrovytsky, T., Ching, C., Choi, A., Erickson, J., Grund, M., Hecht, D., Jacobs, M. and others Impala: A modern, open-source sQL engine for hadoop. <em>CIDR</em>, 2015.</p>
+</div>
+<div id="ref-parameterserver">
+<p>[17] Li, M., Andersen, D.G., Park, J.W., Smola, A.J., Ahmed, A., Josifovski, V., Long, J., Shekita, E.J. and Su, B.-Y. Scaling distributed machine learning with the parameter server. <em>OSDI</em>, 2014.</p>
+</div>
+<div id="ref-graphlab">
+<p>[18] Low, Y., Bickson, D., Gonzalez, J., Guestrin, C., Kyrola, A. and Hellerstein, J.M. Distributed graphLab: A framework for machine learning and data mining in the cloud. <em>VLDB</em>, 2012.</p>
+</div>
+<div id="ref-pregel">
+<p>[19] Malewicz, G., Austern, M.H., Bik, A.J., Dehnert, J.C., Horn, I., Leiser, N. and Czajkowski, G. Pregel: A system for large-scale graph processing. <em>SIGMOD</em>, 2010.</p>
+</div>
+<div id="ref-cost">
+<p>[20] McSherry, F., Isard, M. and Murray, D.G. Scalability! But at what COST? <em>HotOS</em>, 2015.</p>
+</div>
+<div id="ref-naiad">
+<p>[21] Murray, D.G., McSherry, F., Isaacs, R., Isard, M., Barham, P. and Abadi, M. Naiad: A timely dataflow system. <em>SOSP</em>, 2013.</p>
+</div>
+<div id="ref-pig">
+<p>[22] Olston, C., Reed, B., Srivastava, U., Kumar, R. and Tomkins, A. Pig latin: A not-so-foreign language for data processing. <em>SIGMOD</em>, 2008.</p>
+</div>
+<div id="ref-themismr">
+<p>[23] Rasmussen, A., Lam, V.T., Conley, M., Porter, G., Kapoor, R. and Vahdat, A. Themis: An i/O-efficient mapReduce. <em>SoCC</em>, 2012.</p>
+</div>
+<div id="ref-f1">
+<p>[24] Shute, J., Vingralek, R., Samwel, B., Handy, B., Whipkey, C., Rollins, E., Oancea, M., Littlefield, K., Menestrina, D., Ellner, S. and others F1: A distributed sQL database that scales. <em>VLDB</em>, 2013.</p>
+</div>
+<div id="ref-mllib">
+<p>[25] Sparks, E.R., Talwalkar, A., Smith, V., Kottalam, J., Pan, X., Gonzalez, J., Franklin, M.J., Jordan, M., Kraska, T. and others MLI: An aPI for distributed machine learning. <em>ICDM</em>, 2013.</p>
+</div>
+<div id="ref-hive">
+<p>[26] Thusoo, A., Sarma, J.S., Jain, N., Shao, Z., Chakka, P., Anthony, S., Liu, H., Wyckoff, P. and Murthy, R. Hive: A warehousing solution over a map-reduce framework. <em>VLDB</em>, 2009.</p>
+</div>
+<div id="ref-spark">
+<p>[27] Zaharia, M., Chowdhury, M., Das, T., Dave, A., Ma, J., McCauley, M., Franklin, M.J., Shenker, S. and Stoica, I. Resilient distributed datasets: A fault-tolerant abstraction for in-memory cluster computing. <em>NSDI</em>, 2012.</p>
+</div>
+</div>
+
+<div class="comments"><h3 class="comment-header" class="numcomments">Comments</h3>
+            <div class="div-comment">
+              <ul class="comment-meta">
+                <li class="comment-author vcard">
+                  <div class="fn">
+                    Michael Stonebraker
+                  </div>
+                </li>
+                <li>
+                  26 October 2015
+                </li>
+              </ul>
+              <div class="comment-content">
+                <p>Recently, there has been considerable interest in data analytics as part of the marketing moniker &ldquo;big data&rdquo;. Historically, this meant business intelligence (BI) analytics and was serviced by BI applications (Cognos, Business Objects, etc.) talking to a relational data warehouse (such as Teradata, Vertica, Red Shift, Greenplum, etc.). More recently it has become associated with &ldquo;data science&rdquo;. In this context, let&rsquo;s start ten years ago with Map-Reduce, which was purpose-built by Google to support their web crawl data base. Then, the marketing guys took over with the basic argument: &ldquo;Google is smart; Map-Reduce is Google&rsquo;s next big thing, so it must be good&rdquo;. Cloudera, Hortonworks and Facebook were in the vanguard in hyping Map-Reduce (and its open source look-alike Hadoop). A few years ago, the market was abuzz drinking the Map-Reduce koolaid. About the same time, Google stopped using Map-Reduce for the application that it was purpose-built for, moving instead to Big Table. With a delay of about 5 years, the rest of the world is seeing what Google figured out earlier; Map-Reduce is not an architecture with any broad scale applicability.</p>
+<p>In effect Map-Reduce suffers from the following two problems:</p>
+<ol>
+<li><p>It is inappropriate as a platform on which to build data warehouse products. There is no interface inside any commercial data warehouse product which looks like Map-Reduce, and for good reason. Hence, DBMSs do not want this sort of platform.</p></li>
+<li><p>It is inappropriate as a platform on which to build distributed applications. Not only is the Map-Reduce interface not flexible enough for distributed applications but also a message passing system that uses the file system is way too slow to be interesting.</p></li>
+</ol>
+<p>Of course, that has not stopped the Map-Reduce vendors. They have simply rebranded their platform to be HDFS (a file system) and have built products based on HDFS that do not include Map-Reduce. For example, Cloudera has recently introduced Impala, which is a SQL engine, not built on Map-Reduce. In point of fact, Impala does not really use HDFS either, choosing to drill through that layer to read and write the underlying local Linux files directly. HortonWorks and Facebook have similar projects underway. As such the Map-Reduce crowd has turned into a SQL crowd and Map-Reduce, as an interface, is history. Of course, HDFS has serious problems when used by a SQL engine, so it is not clear that it will have any legs, but that remains to be seen. In any case, the Map-Reduce-HDFS market will merge with the SQL-data warehouse market; and may the best systems prevail. In summary, Map-Reduce has failed as a distributed systems platform, and vendors are using HDFS as a file system under data warehouse products.</p>
+<p>This brings us to Spark. The original argument for Spark is that it is a faster version of Map-Reduce. It is a main memory platform with a fast message passing interface. Hence, it should not suffer from the performance problems of Map-Reduce when used for distributed applications. However, according to Spark&rsquo;s lead author Matei Zaharia, more than 70% of the Spark accesses are through SparkSQL. In effect, Spark is being used as a SQL engine, not as a distributed applications platform! In this context Spark has an identity problem. If it is a SQL platform, then it needs some mechanism for persistence, indexing, sharing of main memory between users, meta data catalogs, etc. to be competitive in the SQL/data warehouse space. It seems likely that Spark will turn into a data warehouse platform, following Hadoop along the same path.</p>
+<p>On the other hand, 30% of Spark accesses are not to SparkSQL and are primarily from Scala. Presumably this is a distributed computing load. In this context, Spark is a reasonable distributed computing platform. However, there are a few issues to consider. First, the average data scientist does a mixture of data management and analytics. Higher performance comes from tightly coupling the two. In Spark there is no such coupling, since Spark&rsquo;s data formats are not necessarily common across these two tasks. Second, Spark is main memory-only (at least for now). Scalability requirements will presumably get this fixed over time. As such, it will be interesting to see how Spark evolves off into the future.</p>
+<p>In summary, I would like to offer the following takeaways:</p>
+<ul>
+<li><p>Just because Google thinks something is a good idea does not mean you should adopt it.</p></li>
+<li><p>Disbelieve all marketing spin, and figure out what benefit any given product actually has. This should be especially applied to performance claims.</p></li>
+<li><p>The community of programmers has a love affair with &ldquo;the next shiny object&rdquo;. This is likely to create &ldquo;churn&rdquo; in your organization, as the &ldquo;half-life&rdquo; of shiny objects may be quite short.</p></li>
+</ul>
+
+
+             </div>
+            </div><!-- /.div-comment -->
+          </div>
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

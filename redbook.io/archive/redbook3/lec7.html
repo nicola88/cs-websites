@@ -1,0 +1,429 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<title>SQL Query Optimization</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>SQL Query Optimization</h1>
+
+<h2>Basics</h2>
+<b>
+
+<p>Given</b>: A query joining <em>n</em> tables <br>
+<b>The &quot;Plan Space&quot;: </b>Huge number of alternative, semantically equivalent
+plans. <br>
+<b>The Perils of Error</b>: Running time of plans can vary by many orders of magnitude <br>
+<b>Ideal Goal</b>: Map a declarative query to the most efficient plan tree. <br>
+<b>Conventional Wisdom</b>: You&#146;re OK if you avoid the rotten plans. <br>
+<b>Industrial State of the art</b>: Most optimizers use System R technique and work
+&quot;OK&quot; up to about 10 joins. 
+
+<ul>
+  <p>Wide variability in handling complex queries with aggregation, subqueries, etc. Wait
+  for rewrite paper.</p>
+</ul>
+
+<h3>Approach 1: The Optimization Oracle</h3>
+
+<p>(<i>definitely </i>not to be confused with the company of the same name) <br>
+You&#146;d like to get the following information, but in 0 time: 
+
+<ul>
+  <li>Consider each possible plan in turn.</li>
+  <li>Run it &amp; measure performance.</li>
+  <li>The one that was fastest is the keeper.</li>
+</ul>
+
+<h3>Approach 2: Make Up a Heuristic &amp; See if it Works</h3>
+
+<p>University INGRES 
+
+<ul>
+  <li>always use NL-Join (indexed inner whenever possible)</li>
+  <li>order relations from smallest to biggest</li>
+</ul>
+
+<p>Oracle 6 
+
+<ul>
+  <li>&quot;Syntax-based&quot; optimization</li>
+</ul>
+
+<h3>OK,OK. Approach 3: Think!</h3>
+
+<p>Three issues: 
+
+<ul>
+  <li>define plan space to search</li>
+  <li>do cost estimation for plans</li>
+  <li>find an efficient algorithm to search through plan space for &quot;cheapest&quot; plan</li>
+</ul>
+
+<p>Selinger &amp; the System R crowd the first to do this right. The Bible of Query
+Optimization. <br>
+&nbsp; </p>
+
+<h3>SQL Refresher</h3>
+
+<pre><tt>SELECT {DISTINCT} &lt;list of columns&gt;</tt>  
+<tt>FROM &lt;list of tables&gt;</tt>  
+<tt>{WHERE &lt;list of &quot;Boolean Factors&quot; (predicates in CNF)&gt;}</tt>  
+<tt>{GROUP BY &lt;list of columns&gt;</tt>  
+<tt>{HAVING &lt;list of Boolean Factors&gt;}}</tt>  
+<tt>{ORDER BY &lt;list of columns&gt;};</tt>  </pre>
+
+<p>Semantics are: </p>
+
+<blockquote>
+  <ol>
+    <li>take Cartesian product (a/k/a cross-product) of tables in FROM clause, projecting to
+      only those columns that appear in other clauses</li>
+    <li>if there&#146;s a WHERE clause, apply all filters in it</li>
+    <li>if there&#146;s a GROUP BY clause, form groups on the result</li>
+    <li>if there&#146;s a HAVING clause, filter groups with it</li>
+    <li>if there&#146;s an ORDER BY clause, make sure output is in the right order</li>
+    <li>if there&#146;s a DISTINCT modifier, remove dups</li>
+  </ol>
+</blockquote>
+
+<p>Of course the plans don&#146;t do this exactly; query optimization interleaves 1 &amp;
+2 into a plan tree. GROUP BY, HAVING, DISTINCT and ORDER BY are applied at the end, pretty
+much in that order. <br>
+&nbsp; </p>
+
+<h3>Plan Space</h3>
+
+<p>All your favorite query processing algorithms: 
+
+<ul>
+  <li>sequential &amp; index (clustered/unclustered) scans</li>
+  <li>NL-join, (sort)-merge join, hash join</li>
+  <li>sorting &amp; hash-based grouping</li>
+  <li>plan flows in a non-blocking fashion with get-next iterators</li>
+</ul>
+
+<p>Note some assumptions folded in here: 
+
+<ul>
+  <li>selections are &quot;pushed down&quot;</li>
+  <li>projections are &quot;pushed down&quot;</li>
+  <li>all this is only for single query blocks</li>
+</ul>
+
+<p>Some other popular assumptions (System R) 
+
+<ul>
+  <li>only left-deep plan trees</li>
+  <li>avoid Cartesian products</li>
+</ul>
+
+<h3>Cost Estimation</h3>
+
+<p>The soft underbelly of query optimization. </p>
+
+<p>Requires: 
+
+<ul>
+  <li>estimation of costs for each operator based on input cardinalities</li>
+  <ul>
+    <li>both I/O &amp; CPU costs to some degree of accuracy</li>
+  </ul>
+  <li>estimation of predicate selectivities to compute cardinalities for next step</li>
+  <li>assumption of independence across predicates</li>
+  <li>decidedly an inexact science.</li>
+  <li>&quot;Selingerian&quot; estimation (no longer state of the art, but not really so far
+    off.)</li>
+  <ul>
+    <li># of tuples &amp; pages</li>
+    <li># of values per column (only for indexed columns)</li>
+    <ul>
+      <li>These estimations done periodically (why not all the time?)</li>
+    </ul>
+    <li>back of envelope calculations: CPU cost is based on # of RSS calls, no distinction
+      between Random and Sequential IO</li>
+    <li>when you can&#146;t estimate, use the &quot;wet finger&quot; technique</li>
+  </ul>
+  <li>New alternative approaches:</li>
+  <ul>
+    <li>Sampling: so far only concrete results for base relations</li>
+    <li>Histograms: getting better. Common in industry, some interesting new research.</li>
+    <li>Controlling &quot;error propagation&quot;</li>
+  </ul>
+</ul>
+
+<h3>Searching the Plan Space</h3>
+
+<ul>
+  <li>Exhaustive search</li>
+  <li>Dynamic Programming (prunes useless subtrees): System R</li>
+  <li>Top-down, transformative version of DP: Volcano, Cascades (used in MS SQL Server?)</li>
+  <li>Randomized search algorithms (e.g. Ioannidis &amp; Kang)</li>
+  <li>Job Scheduling techniques</li>
+  <li>In previous years we read many of these (they're fun!), but it is arguably more relevant
+    to talk about query rewriting.</li>
+</ul>
+
+<h2>The System R Optimizer&#146;s Search Algorithm</h2>
+
+<p>Look only at left-deep plans: there are <em>n!</em> plans (not factoring in choice of
+join method) <br>
+<b>Observation</b>: many of those plans share common prefixes, so don&#146;t enumerate all
+of them <br>
+Sounds like a job for &#133; Dynamic Programming! 
+
+<ol>
+  <li>Find all plans for accessing each base relation</li>
+  <ul>
+    <li>Include index scans when available on &quot;SARGable&quot; predicates</li>
+  </ul>
+</ol>
+
+<ol start="2">
+  <li>For each relation, save cheapest unordered plan, and cheapest plan for each
+    &quot;interesting order&quot;. Discard all others.</li>
+  <li>Now, try all ways of joining all pairs of 1-table plans saved so far. Save cheapest
+    unordered 2-table plans, and cheapest &quot;interesting ordered&quot; 2-table plans.</li>
+  <ul>
+    <li>note: secondary join predicates are just like selections that can&#146;t be pushed down</li>
+  </ul>
+</ol>
+
+<ol start="4">
+  <li>Now try all ways of combining a 2-table plan with a 1-table plan. Save cheapest
+    unordered and interestingly ordered 3-way plans. You can now throw away the 2-way plans.</li>
+  <li>Continue combining <em>k</em>-way and 1-way plans until you have a collection of full
+    plan trees</li>
+  <li>At top, satisfy GROUP BY and ORDER BY either by using interestingly ordered plan, or by
+    adding a sort node to unordered plan, whichever is cheapest.</li>
+</ol>
+
+<p>&nbsp; <br>
+Some additional details: 
+
+<ul>
+  <li>don&#146;t combine a <em>k</em>-way plan with a 1-way plan if there&#146;s no predicate
+    between them, unless all predicates have been used up (i.e. postpone Cartesian products)</li>
+  <li>Cost of sort-merge join takes existing order of inputs into account.</li>
+</ul>
+<b>
+
+<p>Evaluation:</b> 
+
+<ul>
+  <li>Only brings complexity down to about <em>n</em>2<sup><em>n-</em>1</sup>, and you
+    store&nbsp;<img SRC="images/Image1.gif" WIDTH="43" HEIGHT="62"> plans</li>
+  <li>But no-Cartesian-products rule can make a big difference for some queries.</li>
+  <li>For worst queries, DP dies at 10-15 joins</li>
+  <li>adding parameters to the search space makes things worse (e.g. expensive predicates,
+    distribution, parallelism, etc.)</li>
+</ul>
+
+<p>Simple variations to improve plan quality: 
+
+<ul>
+  <li>bushy trees:&nbsp;<img SRC="images/Image2.gif" WIDTH="72" HEIGHT="43"> plans, DP complexity is 3<em><sup>n</sup></em>
+    - 2<sup><em>n</em> + 1</sup> + <em>n</em> + 1 need to store 2<em><sup>n</sup></em> plans
+    (actually it&#146;s worse for subtle reasons)</li>
+  <li>consider cross products: maximizes optimization time</li>
+</ul>
+<b>
+
+<p>Subqueries 101: </b>Selinger does a very complete job with the basics. 
+
+<ul>
+  <li>subqueries optimized separately</li>
+  <li>uncorrelated vs. correlated subqueries</li>
+  <ul>
+    <li>uncorrelated subqueries are basically constants to be computed once in execution</li>
+    <li>correlated subqueries are like function calls</li>
+  </ul>
+</ul>
+
+<h2>SQL Query Rewrite &amp; Decorrelation</h2>
+
+<p>&nbsp;<b>Problem:</b> Nested SQL queries are not really declarative!&nbsp; Contributing
+factors: 
+
+<ul>
+  <li>SQL is not the relational algebra:</li>
+  <ul>
+    <li>duplicate semantics</li>
+    <li>NULLs</li>
+    <li>grouping and aggregation</li>
+    <li>subqueries and correlation</li>
+  </ul>
+  <li>Selinger-style optimization is based on relational algebra (in fact, just
+    select-project-join)</li>
+</ul>
+<b>
+
+<p>Solutions:</b> 
+
+<ul>
+  <li>Toss out SQL</li>
+  <li>Solve the whole optimization enchilada</li>
+  <li>Decompose the problem and solve greedily:</li>
+  <ul>
+    <li>query rewrite to do &quot;stable&quot; rewrite optimizations</li>
+    <li>Selinger per block (or Selinger++)</li>
+    <li>execution techniques to minimize the cross-block costs</li>
+  </ul>
+</ul>
+<b>
+
+<p>Rewrite Engine Architecture</b> 
+
+<ul>
+  <li>An endless supply of rewrite tricks?</li>
+  <li>A perfect application of rule systems</li>
+</ul>
+<b>
+
+<p>Query Representations</b> 
+
+<ul>
+  <li>SQL Parse Tree</li>
+  <li>QGM: IBM's Query Graph Model</li>
+  <li>KOLA: a combinator (&quot;variable-free&quot;) algebra</li>
+</ul>
+
+<h3>The &quot;Notorious&quot; COUNT bug</h3>
+
+<p>Won Kim paper on rewrite published in TODS back in '82 perpetrated the following error,
+exposed by Ganski &amp; Wong, SIGMOD '87: <br>
+&nbsp; </p>
+
+<pre>SELECT D.Name  
+  FROM DEPT D  
+ WHERE D.Budget &lt;=  
+&nbsp;&nbsp;&nbsp; SELECT COUNT(E.eno)*100000  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FROM EMP E  
+ &nbsp;&nbsp;&nbsp; WHERE E.Dno = D. Dno;  </pre>
+
+<pre>==&gt;  </pre>
+
+<pre>SELECT D.Name  
+  FROM DEPT D, EMP E  
+&nbsp;WHERE D.Dno = E.Dno  
+&nbsp;&nbsp; AND D.Budget &lt;= COUNT(E.Eno)  
+GROUP BY D.Name  </pre>
+
+<p>What's wrong here?</p>
+
+<p>Note: Won Kim is a smart guy.&nbsp; This is just tricky, picky stuff!&nbsp; (BTW, this
+is an example of &quot;decorrelation&quot;!) </p>
+
+<p><b>QGM on One Foot</b> <br>
+Note: QGM started out as a wacky research idea.&nbsp; It is now IBM corporate religion
+(i.e. a research success!) <br>
+If you think this is confusing, imagine it in C++! <br>
+Yet IBM product division was convinced that the benefits outweigh the cost of complexity. 
+
+<ul>
+  <li>&quot;boxes&quot; have head (declarative description of output) and body (high-level
+    implementation details)</li>
+  <li>The standard box is the &quot;SELECT&quot; (actually, select/project/join + format
+    output + optionally remove dups)</li>
+  <ul>
+    <li>other boxes are mostly trivial (UNION, INTERSECT, EXCEPT, GROUPBY)</li>
+    <li>can always add boxes (e.g. OUTERJOIN)</li>
+  </ul>
+  <li>body contains &quot;quantifiers&quot; ranging over other boxes</li>
+  <ul>
+    <li><b>F</b> (&quot;ForEach&quot;): really an iterator.&nbsp; F quantifiers over SELECT
+      boxes are like views (query in FROM clause)</li>
+    <li><b>E</b> (Existential): the existential quantifier.&nbsp; like subqueries (in WHERE
+      clause) -- which?</li>
+    <li><b>A </b>(&quot;All&quot;): the universal quantifier: like subqueries (in WHERE clause)
+      -- which?</li>
+  </ul>
+  <li>quantifiers are connected in a hypergraph</li>
+  <ul>
+    <li>in a SELECT box, hyperedges are Boolean Factors</li>
+  </ul>
+  <li>body has a DISTINCT property (Enforce/Preserve/Permit) to describe how to process dups
+    (Permit=&quot;don't care&quot;)</li>
+  <li>head has a DISTINCT property (T/F) to specify whether or not the output contains dups</li>
+  <li>quantifiers have DISTINCT property (Enforce/Preserve/Permit) to describe whether they
+    require their input to remove or keep dups</li>
+  <li>body has a list of &quot;head expressions&quot; to generate output</li>
+  <li>head has a list of output columns (schema info)</li>
+</ul>
+
+<h3>Query Rewrite Rules</h3>
+
+<p>Should go from one valid QGM to another, semantically equivalent QGM.&nbsp; Should be
+&quot;stable&quot;, i.e. never raise cost of final plan. </p>
+
+<h3>The Main Rewrite Rule: Merge SELECT boxes</h3>
+
+<p>This is essentially INGRES' query modification for merging views, updated to handle SQL
+duplicate semantics. 
+
+<ul>
+  <pre>if (in a SELECT box (upper)
+&nbsp;&nbsp;&nbsp; a quantifier has type F
+&nbsp;&nbsp;&nbsp; and ranges over a SELECT box (lower)
+&nbsp;&nbsp;&nbsp; and no other quantifier ranges over lower
+&nbsp;&nbsp;&nbsp; and (upper.head.distinct = TRUE ||
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; upper.body.distinct = PERMIT ||
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lower.body.distinct != ENFORCE))
+&nbsp; {
+&nbsp;&nbsp;&nbsp; merge lower box into upper;
+&nbsp;&nbsp;&nbsp; if (lower.body.distinct = ENFORCE &amp;&amp; upper.body.distinct != PERMIT)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; upper.body.distinct = ENFORCE;
+&nbsp; }  </pre>
+</ul>
+
+<p>Most of the other rules in the first section exist only to make the &quot;if&quot; here
+evaluate to TRUE as often as possible, being <i>very</i> careful about duplicate semantics
+and NULLs (thus avoiding the notorious COUNT bug.) <br>
+&nbsp; </p>
+
+<h3>Decorrelation</h3>
+
+<p>Sometimes you can't flatten subqueries.&nbsp; In that case, you should at least
+decorrelate: 
+
+<ul>
+  <li>correlated query can be executed just once</li>
+  <li>better for parallelism</li>
+</ul>
+
+<p>Magic Decorrelation details are tricky.&nbsp; The basic idea is simple: 
+
+<ol>
+  <li>order the joins in the upper box (how?&nbsp; when?&nbsp; See Seshadri, et al., SIGMOD
+    '96)</li>
+  <li>generate a subquery containing the &quot;magic&quot; set of correlation-variable
+    bindings</li>
+  <li>this subquery is shared by rest of upper query and by new, decorrelated version of lower
+    query</li>
+</ol>
+
+<p>The complexity comes from making this general (intervening boxes of various sorts), and
+stepwise (i.e. never generates a bad or non-equivalent QGM.) 
+<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

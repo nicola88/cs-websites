@@ -13,3 +13,9 @@ A short introduction to operating systems - Mark Burgess
 Last update: 2018-11-01
 
 Computer architecture - Lois Wright Hawkes
+
+## redbook.io
+
+Last update: 2018-11-01
+
+Readings in Database Systems, 5th Edition - Peter Bailis, Joseph M. Hellerstein, Michael Stonebraker, editors

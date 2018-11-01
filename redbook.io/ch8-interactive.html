@@ -1,0 +1,118 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 8: Interactive Analytics</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch9-languages.html">Next Chapter</a></div>
+<div class="headerlink"><a href="ch7-queryoptimization.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch8-interactive.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch8-interactive">Chapter 8: Interactive Analytics</div>
+	<div class="introauthor">Introduced by Joe Hellerstein</div>
+
+      <div class="paperchoicebox">
+	<div class="paperchoicetitle">Readings:</div>
+	<div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=9112921129698038148" target="_blank">Venky Harinarayan, Anand Rajaraman, Jeffrey D. Ullman. <span class="papertitle">Implementing Data Cubes Efficiently</span>. <span class="papervenue">SIGMOD</span>, 1996.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=1761772586638103323" target="_blank">Yihong Zhao, Prasad M. Deshpande, Jeffrey F. Naughton. <span class="papertitle">An Array-Based Algorithm for Simultaneous Multidimensional Aggregates</span>. <span class="papervenue">SIGMOD</span>, 1997.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=1434575511619007556" target="_blank">Joseph M. Hellerstein, Ron Avnur, Vijayshankar Raman. <span class="papertitle">Informix under CONTROL: Online Query Processing</span>. <span class="papervenue">Data Mining and Knowledge Discovery</span>, 4(4), 2000, 281-314.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=4916926405792203059" target="_blank">Sameer Agarwal, Barzan Mozafari, Aurojit Panda, Henry Milner, Samuel Madden, Ion Stoica. <span class="papertitle">BlinkDB: Queries with Bounded Errors and Bounded Response Times on Very Large Data</span>. <span class="papervenue">EuroSys</span>, 2013.</a></div>
+      </div>
+
+    
+
+      <div class="intro">
+      <p>For decades, most database workloads have been partitioned into two categories: (1) many small &ldquo;transaction processing&rdquo; queries that do lookups and updates on a small number of items in a large database, and (2) fewer big &ldquo;analytic&rdquo; queries that summarize large volumes of data for analysis. This section is concerned with ideas for accelerating the second category of queries&mdash;particularly to answer them at interactive speeds, and allow for summarization, exploration and visualization of data.</p>
+<p>Over the years there has been a great deal of buzzword bingo in industry to capture some or all of this latter workload, from &ldquo;Decision Support Systems&rdquo; (DSS) to &ldquo;Online Analytic Processing&rdquo; (OLAP) to &ldquo;Business Intelligence&rdquo; (BI) to &ldquo;Dashboards&rdquo; and more generally just &ldquo;Analytics&rdquo;. Billions of dollars of revenue have been associated with these labels over time, so marketers and industry analysts worked hard over the years to define, distinguish and sometimes try to subvert them. By now it&rsquo;s a bit of a mess of nomenclature. The interested reader can examine Wikipedia and assess conventional wisdom on what these buzzwords came to mean and how they might be different; be warned that it will not be a scientifically satisfying exercise.</p>
+<p>Here, I will try to keep things simple and somewhat technically grounded.</p>
+<p>Human cognition cannot process large amounts of raw data. In order for a human to make sense of data, the data has to be &ldquo;distilled&rdquo; in some way to a relatively small set of records or visual marks. Typically this is done by partitioning the data and running simple arithmetic aggregation functions on the partitions &mdash; think of SQL&rsquo;s &ldquo;GROUP BY&rdquo; functionality as a canonical pattern<a href="ch8-interactive.html#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. Subsequently the data typically needs to be visualized for users to relate it to their task at hand.</p>
+<p>The primary challenge we address in this chapter is to make large-scale grouping/aggregation queries run at interactive speeds&mdash;even in cases where it is not feasible to iterate through all the data associated with the query.</p>
+<p>How do we make a query run in less time than it takes to look at the data? There is really only one answer: we answer the query without looking at (all) the data. Two variants of this idea emerge:</p>
+<p>Precomputation: If we know something about the query workload in advance, we can distill the data in various ways to allow us to support quick answers (either accurate or approximate) to certain queries. The simplest version of this idea is to precompute the answers to a set of queries, and only support those queries. We discuss more sophisticated answers below. Sampling: If we cannot anticipate the queries well in advance, our only choice is to look at a subset of the data at query time. This amounts to sampling from the data, and approximating the true answer based on the sample.</p>
+<p>The papers in this section focus on one or both of these approaches.</p>
+<p>Our first two papers address what the database community dubbed &ldquo;data cubes&rdquo; [DataCubes]. Data cubes were originally supported by standalone query/visualization tools called On Line Analytic Processing (OLAP) systems. The name is due to relational pioneer Ted Codd, who was hired as a consultant to promote an early OLAP vendor called Essbase (subsequently bought by Oracle). This was not one of Codd&rsquo;s more scholarly endeavors.</p>
+<p>Early OLAP tools used a pure &ldquo;precomputation&rdquo; approach. They ingested a table, and computed and stored the answers to a family of GROUP BY queries over that table: each query grouped on a different subset of the columns, and computed summary aggregates over the non-grouped numerical columns. For example, in a table of car sales, it might show total sales by Make, total sales by Model, total sales by Region, and total sales by combinations of any 2 or 3 of those attributes. A graphical user interface allowed users to navigate the resulting space of group-by queries interactively&mdash;this space of queries is what became known as a data cube<a href="ch8-interactive.html#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. Originally, OLAP systems were pitched as standalone &ldquo;Multidimensional Databases&rdquo; that were fundamentally different than relational databases. However, Jim Gray and a consortium of authors in the relational industry explained how the notion of a data cube can fit in the relational context&nbsp<span class="citationlink">[<a href="ch8-interactive.html#ref-gray-cube">4</a>]</span>, and the concept subsequently migrated into the SQL standard as a single query construct: &ldquo;CUBE BY&rdquo;. There is also a standard alternative to SQL called MDX that is less verbose for OLAP purposes. Some of the terminology from data cubes has become common parlance&mdash;in particular, the idea of &ldquo;drilling down&rdquo; into details and &ldquo;rolling up&rdquo; to coarser summaries.</p>
+<p>A naive relational precomputation approach for precomputing a full data cube does not scale well. For a table with k potential grouping columns, such an approach would have to run and store the results for <span class="math inline">2<sup><em>k</em></sup></span> GROUP BY queries, one for each subset of the columns. Each query would require a full pass of the table.</p>
+<p>Our first paper by Harinarayan, Rajaraman and Ullman reduces this space: it chooses a judicious subset of queries in the cube that are worthy of precomputation; it then uses the results of those queries to compute the results to any other query in the cube. This paper is one of the most-cited papers in the area, in part because it was early in observing that the structure of the data cube problem is a set-containment lattice. This lattice structure underlies their solution, and recurs in many other papers on data cubes (including our next paper), as well as on certain data mining algorithms like Association Rules (a.k.a. Frequent Itemsets)&nbsp<span class="citationlink">[<a href="ch8-interactive.html#ref-associationrules">2</a>]</span>. Everyone working in the OLAP space should have read this paper.</p>
+<p>Our second paper by Zhao, Deshpande and Naughton focuses on the actual computation of results in the cube. The paper uses an &ldquo;array-based&rdquo; approach: that is, it assumes the data is stored in an Essbase-like sparse array structure, rather than a relational table structure, and presents a very fast algorithm that exploits that structure. However, it makes the surprising observation that even for relational tables, it is worthwhile to convert tables to arrays in order to run this algorithm, rather than to run a (far less efficient) traditional relational algorithm. This substantially widens the design space for query engines. The implication is that you can decouple your data model from the internal model of your query engine. So a special-purpose &ldquo;engine&rdquo; (Multidimensional OLAP in this case) may add value by being embedded in a more general-purpose engine (Relational in this case). Some years after the OLAP wars, Stonebraker started arguing that &ldquo;one size doesn&rsquo;t fit all&rdquo; for database engines, and hence that specialized database engines (not unlike Essbase) are indeed important&nbsp<span class="citationlink">[<a href="ch8-interactive.html#ref-onesize">6</a>]</span>. This paper is an example of how that line of reasoning sometimes plays out: clever specialized techniques get developed, and if they&rsquo;re good enough they can pay off in more general contexts as well. Innovating on both sides of that line&mdash;specialization and generalization&mdash;has led to good research results over the years. Meanwhile, anyone building a query engine should keep in mind the possibility that the internal representations of data and operations can be a superset of the representations of the API.</p>
+<p>Related to this issue is the fact that analytic databases have become much more efficient in the last decade due to in-database compression, and the march of Moore&rsquo;s Law. Stonebraker has asserted to me that column stores make OLAP accelerators irrelevant. This is an interesting argument to consider, though hasn&rsquo;t been validated by the market. Vendors still build cubing engines, and BI tools commonly implement them as accelerators on top of relational databases and Hadoop. Certainly the caching techniques of our first paper remain relevant. But the live query processing tradeoffs between high-performance analytic database techniques and data cubing techniques may deserve a revisit.</p>
+<p>Our third paper on &ldquo;online aggregation&rdquo; starts exploring from the opposite side of the territory from OLAP, attempting to handle ad-hoc queries quickly without precomputation by producing incrementally refining approximate answers. The paper was inspired by the kind of triage that people perform every day in gathering evidence to make decisions; rather than pre-specifying hard deadlines, we often make qualitative decisions about when to stop evaluating and to act. Specific data-centric examples include the &ldquo;early returns&rdquo; provided in election coverage, or the multiresolution delivery of images over low-bandwidth connections&mdash;in both cases we have a good enough sense of what is likely to happen long before the process completed.</p>
+<p>Online aggregation typically makes use of sampling to achieve incrementally refining results. This is not the first (or last!) use of database sampling to provide approximate query answers. (Frank Olken&rsquo;s thesis&nbsp<span class="citationlink">[<a href="ch8-interactive.html#ref-olken-phd">5</a>]</span> is a good early required reference for database sampling.) But online aggregation helped kick off an ongoing sequence of work on approximate query processing that has persisted over time, and is of particular interest in the current era of Big Data and structure-on-use.</p>
+<p>We include the first paper on online aggregation here. To appreciate the paper, it&rsquo;s important to remember that databases at the time had long operated under a mythology of &ldquo;correctness&rdquo; that is a bit hard to appreciate in today&rsquo;s research environment. Up until approximately the 21st century, computers were viewed by the general populace&mdash;and the business community&mdash;as engines of accurate, deterministic calculation. Phrases like &ldquo;Garbage In, Garbage Out&rdquo; were invented to remind users to put &ldquo;correct&rdquo; data into the computer, so it could do its job and produce &ldquo;correct&rdquo; outputs. In general, computers weren&rsquo;t expected to produce &ldquo;sloppy&rdquo; approximate results.</p>
+<p>So the first battle being fought in this paper is the idea that the complete accuracy in large-scale analytics queries is unimportant, and that users should be able to balance accuracy and running time in a flexible way. This line of thinking quickly leads to three research directions that need to work in harmony: fast query processing, statistical approximation, and user interface design. The inter-dependencies of these three themes make for an interesting design space that researchers and products are still exploring today.</p>
+<p>The initial paper we include here explores how to embed this functionality in a traditional DBMS. It also provides statistical estimators for standard SQL aggregates over samples, and shows how stratified sampling can be achieved using standard B-trees via &ldquo;index striding&rdquo;, to enable different groups in a GROUP BY query to be sampled at different rates. Subsequent papers in the area have explored integrating online aggregation with many of the other standard issues in query processing, many of which are surprisingly tricky: joins, parallelism, subqueries, and more recently the specifics of recent Big Data systems like MapReduce and Spark.</p>
+<p>Both IBM and Informix pursued commercial efforts for online aggregation in the late 1990s, and Microsoft also had a research agenda in approximate query processing as well. None of these efforts came to market. One reason for this at the time was the hidebound idea that &ldquo;database customers won&rsquo;t tolerate wrong answers&rdquo;<a href="ch8-interactive.html#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>. A more compelling reason related to the coupling of user interface with query engine and approximation. At that time, many of the BI vendors were independent of the database vendors. As a result, the database vendors didn&rsquo;t &ldquo;own&rdquo; the end-user experience in general, and could not deliver the online aggregation functionality directly to users via standard APIs. For example, traditional query cursor APIs do not allow for multiple approximations of the same query, nor do they support confidence intervals associated with aggregate columns. The way the market was structured at the time did not support aggressive new technology spanning both the back-end and front-end.</p>
+<p>Many of these factors have changed today, and online aggregation is getting a fresh look in research and in industry. The first motivation, not surprisingly, is the interest in Big Data. Big Data is not only large in volume, but also has wide &ldquo;variety&rdquo; of formats and uses which means that it may not be parsed and understood until users want to analyze. For exploratory analytics on Big Data, the combination of large volumes and schema-on-use makes precomputation unattractive or impossible. But sampling on-the-fly remains cheap and useful.</p>
+<p>In addition, the structure of the industry and its interfaces has changed since the 1990s. From the bottom up, query engine standards today often emerge and evolve through open source development, and the winning projects (e.g., Hadoop and Spark) become close enough to monopolies that their APIs can dictate client design. At the same time from the top down, hosted data visualization products in the cloud are often vertically integrated: the front-end experience is the primary concern, and is driven by a (often special-purpose) back-end implementation without concern for standardization. In both cases, it&rsquo;s possible to deliver a unique feature like online aggregation through the stack from engine to applications.</p>
+<p>In that context we present one of the more widely-read recent papers in the area, on BlinkDB. The system makes use of what Olken calls &ldquo;materialized sample views&rdquo;: precomputed samples over base tables, stored to speed up approximate query answering. Like the early OLAP papers, BlinkDB makes the case that only a few GROUP BY clauses need to be precomputed to get good performance on (stable) workloads. Similar arguments are made by the authors of the early AQUA project on approximate queries&nbsp<span class="citationlink">[<a href="ch8-interactive.html#ref-aqua">1</a>]</span>, but they focused on precomputed synopses (&ldquo;sketches&rdquo;) rather than materialized sample views as their underlying approximation mechanism. The BlinkDB paper also makes the case for stratification in its views to capture small groups, reminiscent of the Index Striding in the online aggregation paper. BlinkDB has received interest in industry, and the Spark team has recently proposed augmenting its precomputed samples with sampling on the fly&mdash;a sensible mixture of techniques to achieve online aggregation as efficiently as possible. Recent commercial BI tools like ZoomData seem to use online aggregation as well (they call it &ldquo;query sharpening&rdquo;).</p>
+<p>With all this discussion of online aggregation, it&rsquo;s worth taking a snapshot of current market realities. In the 25 years since it was widely introduced, OLAP-style precomputation has underpinned what is now a multi-billion dollar BI industry. By contrast, approximation at the user interface is practically non-existent. So for those of you keeping score at home based on revenue generation, the simple solution of precomputation is the current winner by a mile. It&rsquo;s still an open question when and if approximation will become a bread-and-butter technique in practice. At a technical level, the fundamental benefits of sampling seem inevitably useful, and the technology trends around data growth and exploratory analytics make it compelling in the Big Data market. But today this is still a technology that is before its time.</p>
+<p>A final algorithmic note: approximate queries via sketches are in fact very widely used by engineers and data scientists in the field today as building blocks for analysis. Outside of the systems work covered here, well-read database students should be familiar with techniques like CountMin sketches, HyperLogLog sketches, Bloom filters, and so on. A comprehensive survey of the field can be found in&nbsp<span class="citationlink">[<a href="ch8-interactive.html#ref-fnt-sketch">3</a>]</span>; implementations of various sketches can be found in a number of languages online, including as user-defined functions in the MADlib library mentioned in <a href="ch11-complexanalytics.html">Chapter 11</a>.</p>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-aqua">
+<p>[1] Acharya, S., Gibbons, P.B., Poosala, V. and Ramaswamy, S. The Aqua approximate query answering system. <em>SIGMOD</em>, 1999.</p>
+</div>
+<div id="ref-associationrules">
+<p>[2] Agrawal, R., Imieli&#324;ski, T. and Swami, A. Mining association rules between sets of items in large databases. <em>SIGMOD</em>, 1993.</p>
+</div>
+<div id="ref-fnt-sketch">
+<p>[3] Cormode, G., Garofalakis, M., Haas, P.J. and Jermaine, C. Synopses for massive data: Samples, histograms, wavelets, sketches. <em>Foundations and Trends in Databases</em>. 4, 1-3 (2012), 1-294.</p>
+</div>
+<div id="ref-gray-cube">
+<p>[4] Gray, J., Chaudhuri, S., Bosworth, A., Layman, A., Reichart, D., Venkatrao, M., Pellow, F. and Pirahesh, H. Data cube: A relational aggregation operator generalizing group-by, cross-tab, and sub-totals. <em>Data Mining and Knowledge Discovery</em>. 1, 1 (1997), 29-53.</p>
+</div>
+<div id="ref-olken-phd">
+<p>[5] Olken, F. <em>Random sampling from databases</em>. Ph.D. Thesis, University of California at Berkeley, 1993.</p>
+</div>
+<div id="ref-onesize">
+<p>[6] Stonebraker, M. and &Ccedil;etintemel, U. &ldquo;One size fits all&rdquo;: An idea whose time has come and gone. <em>ICDE</em>, 2005.</p>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Database-savvy folks take GROUP BY and aggregation for granted. In statistical programming packages (e.g., R&rsquo;s plyr library, or Python&rsquo;s pandas), this is apparently a relatively new issue, referred to as the &ldquo;Split-Apply-Combine Strategy&rdquo;. A wrinkle in that context is the need to support both array and table notation.<a href="ch8-interactive.html#fnref1">&#8617;</a></p></li>
+<li id="fn2"><p>Note that this idea did not originate in databases. In statistics, and later in spreadsheets, there is an old, well-known idea of a contingency table or cross tabulation (crosstab).<a href="ch8-interactive.html#fnref2">&#8617;</a></p></li>
+<li id="fn3"><p>This was particularly ironic given that the sampling support provided by some of the vendors was biased (by sampling blocks instead of tuples).<a href="ch8-interactive.html#fnref3">&#8617;</a></p></li>
+</ol>
+</div>
+
+
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

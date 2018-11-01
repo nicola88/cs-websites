@@ -1,0 +1,121 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+
+<title>DB/OS Interface</title>
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>DB/OS Interface</h1>
+
+<h3>Stonebraker's OS dump</h3>
+
+<p>What do Operating Systems do that force DBMS designers to start from scratch? Can the
+OS take over some of this stuff? </p>
+
+<p><b>Note</b>: Some of these gripes have been fixed in commercial OS'es.&nbsp; Some in
+research OS'es. Many remain as artifacts of the distinction between OS'es and DBMSs. </p>
+
+<p>Buffer Pool 
+
+<ul>
+  <li>Performance problems</li>
+  <ul>
+    <li>getting a page from the OS to user space is a system call (process switch) and a copy</li>
+  </ul>
+  <li>Replacement policy control</li>
+  <ul>
+    <li>LRU/clock/etc. often ineffective (stochastic, based on non-DB workloads)</li>
+    <li>we will see this in detail when we discuss buffer management</li>
+    <li>DBMS knows access pattern in advance - should dictate policy</li>
+    <li>This is a major OS/DBMS distinction!</li>
+  </ul>
+  <li>Prefetch: note that DBMS knows of multiple &quot;orders&quot; for a set of records, OS
+    only knows physical order</li>
+  <li>Crash Recovery: requires page-level control of flushing (examples are out of date, but
+    point remains)</li>
+</ul>
+
+<p>File System 
+
+<ul>
+  <li>lack of clustering (translate: block granularity problem. Want segments.)</li>
+  <li>multiple trees: (dir, file, database). Unify?</li>
+  <li>put DBMS below file system (Inversion)? Perhaps integrate RSS and file system (SHORE)?</li>
+</ul>
+
+<p>Scheduling, IPC 
+
+<ul>
+  <li>process-per-user vs. server tradeoffs</li>
+  <li>Convoys (also mentioned in System R retrospective).&nbsp; System R's solution? Not a
+    problem in a single-server model (why?)</li>
+  <li>I/O process model</li>
+  <ul>
+    <li>Expensive messages?</li>
+    <li>Some systems do this now &amp; get good performance.</li>
+  </ul>
+</ul>
+
+<p>Consistency/Locking 
+
+<ul>
+  <li>OS locking granularity fixed (pages)</li>
+  <li>byte-level recover (fsck) doesn't help with transactions</li>
+  <li>locking, recovery &amp; buffer management interact</li>
+  <ul>
+    <li>e.g.: must write log pages in order, so must be able to flush individual pages.&nbsp;
+      can't release locks until commit is logged.</li>
+    <li>if any of these is missing from OS, DBMS must implement all of them</li>
+    <li>Note: one of the problems in &quot;modular DB design&quot;. It's even worse than this --
+      Access Methods also tie in!</li>
+  </ul>
+</ul>
+
+<p>Should virtual memory (mmap) be used for database? 
+
+<ul>
+  <li>address space big enough?</li>
+  <ul>
+    <li>2^32 = 4 Gb</li>
+    <li>2^64 = 16,777,216 Tb = 16,384 Petabytes = 16 Exabytes (10^18)</li>
+  </ul>
+  <li>Page table overhead (4 byte overhead per page?)</li>
+  <ul>
+    <li>2 page faults per I/O, or pin page table in memory</li>
+    <li>disk segments use start/offset notation for compactness</li>
+  </ul>
+  <li>Alternative: bind file chunks into address space</li>
+  <ul>
+    <li>bookkeeping</li>
+    <li>cost of bind/unbind = cost of file open?</li>
+  </ul>
+  <li>Buffering &amp; virtual memory?</li>
+</ul>
+
+<p>Annotated references! 
+
+<ul>
+  <p>&nbsp;</p>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

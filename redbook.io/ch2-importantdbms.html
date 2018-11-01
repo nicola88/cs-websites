@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 2: Traditional RDBMS Systems</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch3-techniques.html">Next Chapter</a></div>
+<div class="headerlink"><a href="ch1-background.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch2-importantdbms.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch2-importantdbms">Chapter 2: Traditional RDBMS Systems</div>
+	<div class="introauthor">Introduced by Michael Stonebraker</div>
+
+      <div class="paperchoicebox">
+	<div class="paperchoicetitle">Readings:</div>
+	<div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=15466550502837111601" target="_blank">Morton M. Astrahan, Mike W. Blasgen, Donald D. Chamberlin, Kapali P. Eswaran, Jim Gray, Patricia P. Griffiths, W. Frank King III, Raymond A. Lorie, Paul R. McJones, James W. Mehl, Gianfranco R. Putzolu, Irving L. Traiger, Bradford W. Wade, Vera Watson. <span class="papertitle">System R: Relational Approach to Database Management</span>. <span class="papervenue">ACM Transactions on Database Systems</span>, 1(2), 1976, 97-137.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=7945977557090027847" target="_blank">Michael Stonebraker and Lawrence A. Rowe. <span class="papertitle">The design of POSTGRES</span>. <span class="papervenue">SIGMOD</span>, 1986.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=8912521541627865753" target="_blank">David J. DeWitt, Shahram Ghandeharizadeh, Donovan Schneider, Allan Bricker, Hui-I Hsiao, Rick Rasmussen. <span class="papertitle">The Gamma Database Machine Project</span>. <span class="papervenue">IEEE Transactions on Knowledge and Data Engineering</span>, 2(1), 1990, 44-62.</a></div>
+      </div>
+
+    
+
+      <div class="intro">
+      <p>In this section are papers on (arguably) the three most important real DBMS systems. We will discuss them chronologically in this introduction.</p>
+<p>The System R project started under the direction of Frank King at IBM Research - probably around 1972. By then Ted Codd&rsquo;s pioneering paper was 18 months old, and it was obvious to a lot of people that one should build a prototype to test out his ideas. Unfortunately, Ted was not a permitted to lead this effort, and he went off to consider natural language interfaces to DBMSs. System R quickly decided to implement SQL, which morphed from a clean block structured language in 1972&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-chamberlin-sequel">2</a>]</span> to a much more complex structure described in the paper here&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-chamberlin-history">1</a>]</span>. See&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-date">3</a>]</span> for a commentary on the design of the SQL language, written a decade later.</p>
+<p>System R was structured into two groups, the &ldquo;lower half&rdquo; and the &ldquo;upper half&rdquo;. They were not totally synchronized, as the lower half implemented links, which were not supported by the upper half. In defense of the decision by the lower half team, it was clear they were competing against IMS, which had this sort of construct, so it was natural to include it. The upper half simply didn&rsquo;t get the optimizer to work for this construct.</p>
+<p>The transaction manager is probably the biggest legacy of the project, and it is clearly the work of the late Jim Gray. Much of his design endures to this day in commercial systems. Second place goes to the System R optimizer. The dynamic programming cost-based approach is still the gold standard for optimizer technology.</p>
+<p>My biggest complaint about System R is that the team never stopped to clean up SQL. Hence, when the &ldquo;upper half&rdquo; was simply glued onto VSAM to form DB2, the language level was left intact. All the annoying features of the language have endured to this day. SQL will be the COBOL of 2020, a language we are stuck with that everybody will complain about.</p>
+<p>My second biggest complaint is that System R used a subroutine call interface (now ODBC) to couple a client application to the DBMS. I consider ODBC among the worst interfaces on the planet. To issue a single query, one has to open a data base, open a cursor, bind it to a query and then issue individual fetches for data records. It takes a page of fairly inscrutable code just to run one query. Both Ingres&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-ingres">11</a>]</span> and Chris Date&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-date-language">4</a>]</span> had much cleaner language embeddings. Moreover, Pascal-R&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-pascalr">9</a>]</span> and Rigel&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-rigel">7</a>]</span> were also elegant ways to include DBMS functionality in a programming language. Only recently with the advent of Linq&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-linq">6</a>]</span> and Ruby on Rails&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-rails">8</a>]</span> are we seeing a resurgence of cleaner language-specific enbeddings.</p>
+<p>After System R, Jim Gray went off to Tandem to work on Non-stop SQL and Kapali Eswaren did a relational startup. Most of the remainder of the team remained at IBM and moved on to work on various other projects, include R*.</p>
+<p>The second paper concerns Postgres. This project started in 1984 when it was obvious that continuing to prototype using the academic Ingres code base made no sense. A recounting of the history of Postgres appears in&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-stonebraker-turing">10</a>]</span>, and the reader is directed there for a full blow-by-blow recap of the ups and downs in the development process.</p>
+<p>However, in my opinion the important legacy of Postgres is its abstract data type (ADT) system. User-defined types and functions have been added to most mainstream relational DBMSs, using the Postgres model. Hence, that design feature endures to this day. The project also experimented with time-travel, but it did not work very well. I think no-overwrite storage will have its day in the sun as faster storage technology alters the economics of data management.</p>
+<p>It should also be noted that much of the importance of Postgres should be accredited to the availability of a robust and performant open-source code line. This is an example of the open-source community model of development and maintenance at its best. A pickup team of volunteers took the Berkeley code line in the mid 1990&rsquo;s and has been shepherding its development ever since. Both Postgres and 4BSD Unix&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-bsdunix">5</a>]</span> were instrumental in making open source code the preferred mechanism for code development.</p>
+<p>The Postgres project continued at Berkeley until 1992, when the commercial company Illustra was formed to support a commercial code line. See&nbsp<span class="citationlink">[<a href="ch2-importantdbms.html#ref-stonebraker-turing">10</a>]</span> for a description of the ups and downs experienced by Illustra in the marketplace.</p>
+<p>Besides the ADT system and open source distribution model, a key legacy of the Postgres project was a generation of highly trained DBMS implementers, who have gone on to be instrumental in building several other commercial systems</p>
+<p>The third system in this section is Gamma, built at Wisconsin between 1984 and 1990. In my opinion, Gamma popularized the shared-nothing partitioned table approach to multi-node data management. Although Teradata had the same ideas in parallel, it was Gamma that popularized the concepts. In addition, prior to Gamma, nobody talked about hash-joins so Gamma should be credited (along with Kitsuregawa Masaru) with coming up with this class of algorithms.</p>
+<p>Essentially all data warehouse systems use a Gamma-style architecture. Any thought of using a shared disk or shared memory system have all but disappeared. Unless network latency and bandwidth get to be comparable to disk bandwidth, I expect the current shared-nothing architecture to continue.</p>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-chamberlin-history">
+<p>[1] Chamberlin, D.D. Early history of sQL. <em>Annals of the History of Computing, IEEE</em>. 34, 4 (2012), 78-82.</p>
+</div>
+<div id="ref-chamberlin-sequel">
+<p>[2] Chamberlin, D.D. and Boyce, R.F. SEQUEL: A structured english query language. <em>Proceedings of the 1974 aCM sIGFIDET (now sIGMOD) workshop on data description, access and control</em>, 1974, 249-264.</p>
+</div>
+<div id="ref-date">
+<p>[3] Date, C.J. A critique of the SQL database language. <em>ACM SIGMOD Record</em>. 14, 3 (Nov. 1984).</p>
+</div>
+<div id="ref-date-language">
+<p>[4] Date, C.J. An architecture for high-level language database extensions. <em>SIGMOD</em>, 1976.</p>
+</div>
+<div id="ref-bsdunix">
+<p>[5] McKusick, M.K., Bostic, K., Karels, M.J. and Quarterman, J.S. The design and implementation of the 4.4 BSD operating system. Pearson Education. 1996.</p>
+</div>
+<div id="ref-linq">
+<p>[6] Meijer, E., Beckman, B. and Bierman, G. Linq: Reconciling object, relations and XML in the .NET framework. <em>SIGMOD</em>, 2006.</p>
+</div>
+<div id="ref-rigel">
+<p>[7] Rowe, L.A. and Shoens, K.A. Data abstraction, views and updates in RIGEL. <em>SIGMOD</em>, 1979.</p>
+</div>
+<div id="ref-rails">
+<p>[8] Ruby on rails: Ruby on rails. <a href="http://www.rubyonrails.org" class="uri">http://www.rubyonrails.org</a>.</p>
+</div>
+<div id="ref-pascalr">
+<p>[9] Schmidt, J.W. Some high level language constructs for data of type relation. <em>ACM Trans. Database Syst.</em> 2, 3 (Sep. 1977).</p>
+</div>
+<div id="ref-stonebraker-turing">
+<p>[10] Stonebraker, M. The land sharks are on the squawk box. <em>Communications of the ACM</em>.</p>
+</div>
+<div id="ref-ingres">
+<p>[11] Stonebraker, M., Held, G., Wong, E. and Kreps, P. The design and implementation of iNGRES. <em>ACM Transactions on Database Systems (TODS)</em>. 1, 3 (1976), 189-222.</p>
+</div>
+</div>
+
+
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 7: Query Optimization</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch8-interactive.html">Next Chapter</a></div>
+<div class="headerlink"><a href="ch6-isolation.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch7-queryoptimization.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch7-queryoptimization">Chapter 7: Query Optimization</div>
+	<div class="introauthor">Introduced by Joe Hellerstein</div>
+
+      <div class="paperchoicebox">
+	<div class="paperchoicetitle">Readings:</div>
+	<div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=2304531151126477511" target="_blank">Goetz Graefe and William J. McKenna. <span class="papertitle">The Volcano Optimizer Generator: Extensibility and Efficient Search</span>. <span class="papervenue">ICDE</span>, 1993.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=13049208738754012194" target="_blank">Ron Avnur and Joseph M. Hellerstein. <span class="papertitle">Eddies: Continuously Adaptive Query Processing</span>. <span class="papervenue">SIGMOD</span>, 2000.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=4929312332613352080" target="_blank">Volker Markl, Vijayshankar Raman, David Simmen, Guy Lohman, Hamid Pirahesh, Miso Cilimdzic. <span class="papertitle">Robust Query Processing Through Progressive Optimization</span>. <span class="papervenue">SIGMOD</span>, 2004.</a></div>
+      </div>
+
+    
+
+      <div class="intro">
+      <p>Query optimization is one of the signature components of database technology&mdash;the bridge that connects declarative languages to efficient execution. Query optimizers have a reputation as one of the hardest parts of a DBMS to implement well, so it&rsquo;s no surprise they remain a clear differentiator for mature commercial DBMSs. The best of the open-source relational database optimizers are limited by comparison, and some have relatively naive optimizers that only work for the simplest of queries.</p>
+<p>It&rsquo;s important to remember that no query optimizer is truly producing &ldquo;optimal&rdquo; plans. First, they all use estimation techniques to guess at real plan costs, and it&rsquo;s well known that errors in these estimation techniques can balloon&mdash;in some circumstances being as bad as random guesses&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-ic91">7</a>]</span>. Second, optimizers use heuristics to limit the search space of plans they choose, since the problem is NP-hard&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-ibaraki1984optimal">6</a>]</span>. One assumption that&rsquo;s gotten significant attention recently is the traditional use of 2-table join operators; this has been shown to be theoretically inferior to new multi-way join algorithms in certain cases&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-ngo2012worst">12</a>]</span>.</p>
+<p>Despite these caveats, relational query optimization has proven successful, and has enabled relational database systems to serve a wide range of bread-and-butter use cases fairly well in practice. Database vendors have invested many years into getting their optimizers to perform reliably on a range of use cases. Users have learned to live with limitations on the number of joins. Optimizers still, for the most part, make declarative SQL queries a far better choice than imperative code for most uses.</p>
+<p>In addition to being hard to build and tune, serious query optimizers also have a tendency to grow increasingly complex over time as they evolve to handle richer workloads and more corner cases. The research literature on database query optimization is practically a field unto itself, full of technical details&mdash;many of which have been discussed in the literature by researchers at mature vendors like IBM and Microsoft who work closely with product groups. For this book, we focus on the big picture: the main architectures that have been considered for query optimization and how have they been reevaluated over time.</p>
+<div id="volcanocascades" class="bodysection">Volcano/Cascades</div>
+<p>We begin with the state of the art. There are two reference architectures for query optimization from the early days of database research that cover most of the serious optimizer implementations today. The first is Selinger et al.&rsquo;s System R optimizer described in <a href="ch3-techniques.html">Chapter 3</a>. System R&rsquo;s optimizer is textbook material, implemented in many commercial systems; every database researcher is expected to understand it in detail. The second is the architecture that Goetz Graefe and his collaborators refined across a series of research projects: Exodus, Volcano, and Cascades. Graefe&rsquo;s work is not covered as frequently in the research literature or the textbooks as the System R work, but it is widely used in practice, notably in Microsoft SQL Server, but purportedly in a number of other commercial systems as well. Graefe&rsquo;s papers on the topic have something of an insider&rsquo;s flavor&mdash;targeted for people who know and care about implementing query optimizers. We chose the Volcano paper for this book as the most approachable representative of the work, but aficionados should also read the Cascades paper&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-graefe1995cascades">5</a>]</span>&mdash;not only does it raise and address a number of detailed deficiencies of Volcano, but it&rsquo;s the latest (and hence standard) reference for the approach. Recently, two open-source Cascades-style optimizers have emerged: Greenplum&rsquo;s Orca optimizer is now part of the Greenplum open source, and Apache Calcite is an optimizer that can be used with multiple backend query executors and languages, including LINQ.</p>
+<p>Graefe&rsquo;s optimizer architecture is notable for two main reasons. First, it was expressly designed to be extensible. Volcano deserves credit for being quite forward-looking&mdash;long predating MapReduce and the big data stacks&mdash;in exploring the idea that dataflow could be useful for a wide range of data-intensive applications. As a result, the Graefe optimizers are not just for compiling SQL into a plan of dataflow iterators. They can be parameterized for other input languages and execution targets; this is a highly relevant topic in recent years with the rise of specialized data models and languages on the one hand (see <a href="ch2-importantdbms.html">Chapter 2</a> and 9), and specialized execution engines on the other (Chapter 5). The second innovation in these optimizers was the use of a top-down or goal-oriented search strategy for finding the cheapest plan in the space of possible plans. This design choice is connected to the extensibility API in Graefe&rsquo;s designs, but that is not intrinsic: the Starburst system showed how to do extensibility for Selinger&rsquo;s bottom-up algorithm&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-lohman1988grammar">9</a>]</span>. This &ldquo;top-down&rdquo; vs &ldquo;bottom-up&rdquo; debate for query optimization has advocates on both sides, but no clear winner; a similar top-down/bottom-up debate came out to be more or less a tie in the recursive query processing literature as well&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-ramakrishnan1991top">13</a>]</span>. Aficionados will be interested to note that these two bodies of literature-recursive query processing and query optimizer search-were connected directly in the Evita Raced optimizer, which implemented both top-down and bottom-up optimizer search by using recursive queries as the language for implementing an optimizer&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-condie2008evita">1</a>]</span>.</p>
+<div id="adaptive-query-processing" class="bodysection">Adaptive Query Processing</div>
+<p>By the late 1990&rsquo;s, a handful of trends suggested that the overall architecture of query optimization deserved a significant rethink. These trends included:</p>
+<ul>
+<li><p>Continuous queries over streaming data.</p></li>
+<li><p>Interactive approaches to data exploration like Online Aggregation.</p></li>
+<li><p>Queries over data sources that are outside the DBMS and do not provide reliable statistics or performance.</p></li>
+<li><p>Unpredictable and dynamic execution environments, including elastic and multitenant settings and widely distributed systems like sensor networks.</p></li>
+<li><p>Opaque data and user-defined functions in queries, where statistics can only be estimated by observing behavior.</p></li>
+</ul>
+<p>In addition, there was ongoing practical concern about the theoretical fact that plan cost estimation was often erratic for multi-operator queries&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-ic91">7</a>]</span>. As a result of these trends, interest emerged in adaptive techniques for processing queries, where execution plans could change mid-query. We present two complementary points in the design space for adaptive query processing; there is a long survey with a more comprehensive overview&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-deshpande2007adaptive">4</a>]</span>.</p>
+<h2 id="eddies" class="bodysection">Eddies</h2>
+<p>The work on eddies, represented by our second paper, pushed hard on the issue of adaptivity: if query &ldquo;re-planning&rdquo; has to occur mid-execution, why not remove the architectural distinction between planning and execution entirely? In the eddies approach, the optimizer is encapsulated as a dataflow operator that is itself interposed along other dataflow edges. It can monitor the rates of dataflow along those edges, so it has dynamic knowledge of their behavior, with whatever history it cares to record. With that ongoing flow of information, it can dynamically control the rest of the aspects of query planning via dataflow routing: the order of commutative operators is determined by the order tuples are routed through operators (the focus of the first eddies paper that we include here) the choice of physical operators (e.g. join algorithms, index selection) is determined by routing tuples among multiple alternative, potentially redundant physical operators in the flow&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-deshpande2004lifting">3</a>, <a href="ch7-queryoptimization.html#ref-raman2003using">15</a>]</span> the scheduling of operators is determined by buffering inputs and deciding which output to deliver to next&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-raman2002partial">14</a>]</span>. As an extension, multiple queries can be scheduled by interposing on their flows and sharing common operators&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-madden2002continuously">10</a>]</span>. Eddies intercept the ongoing dataflow of query operators while they are in flight, pipelining data from their inputs to their output. For this reason it&rsquo;s important that eddy routing be implemented efficiently; Deshpande developed implementation enhancements along these lines&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-deshpande2004initial">2</a>]</span>. The advantage of this pipelined approach is that eddies can adaptively change strategies in the middle of executing a pipelined operator like a join, which is useful if a query operator is either very long-lived (as in a streaming system) or a very poor choice that should be abandoned long before it runs to completion. Interestingly, the original Ingres optimizer also had the ability to make certain query optimization decisions on a per-tuple basis&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-wong1976decomposition">18</a>]</span>.</p>
+<h2 id="progressive-optimization" class="bodysection">Progressive Optimization</h2>
+<p>The third paper in this section from IBM represents a much more evolutionary approach, which extends a System R style optimizer with adaptivity features; this general technique was pioneered by Kabra and DeWitt&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-kabra1998efficient">8</a>]</span> but receives a more complete treatment here. Where eddies focused on intra-operator reoptimization (while data is &ldquo;in motion&rdquo;), this work focuses on inter-operator reoptimization (when data is &ldquo;at rest&rdquo;). Some of the traditional relational operators including sorting and most hash-joins are blocking: they consume their entire input before producing any output. This presents an opportunity after input is consumed to compare observed statistics to optimizer predictions, and reoptimize the &ldquo;remainder&rdquo; of the query plan using traditional query optimization technique. The downside of this approach is that it does no reoptimization while operators are consuming their inputs, making it inappropriate for continuous queries over streams, for pipelining operators like symmetric hash join&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-wilschut1991dataflow">17</a>]</span> or for long-running relational queries that have poorly-chosen operators in the initial parts of the plan - e.g. when data is being accessed from data sources outside the DBMS that do not provide useful statistics&nbsp<span class="citationlink">[<a href="ch7-queryoptimization.html#ref-melton2002sql">11</a>, <a href="ch7-queryoptimization.html#ref-urhan1998cost">16</a>]</span>.</p>
+<p>It&rsquo;s worth noting that these two architectures for adaptivity could in principle coexist: an eddy is &ldquo;just&rdquo; a dataflow operator, meaning that a traditional optimizer can generate a query plan with an eddy connecting a set of streaming operators, and also do reoptimization at blocking points in the dataflow in the manner of our third paper.</p>
+<div id="discussion" class="bodysection">Discussion</div>
+<p>This brings us to a discussion of current trends in dataflow architectures, especially in the open source big data stack. Google MapReduce set back by a decade the conversation about adaptivity of data in motion, by baking blocking operators into the execution model as a fault-tolerance mechanism. It was nearly impossible to have a reasoned conversation about optimizing dataflow pipelines in the mid-to-late 2000&rsquo;s because it was inconsistent with the Google/Hadoop fault tolerance model. In the last few years the discussion about execution frameworks for big data has suddenly opened up wide, with a quickly-growing variety of dataflow and query systems being deployed that have more similarities than differences (Tenzing, F1, Dremel, DryadLINQ, Naiad, Spark, Impala, Tez, Drill, Flink, etc.) Note that all of the motivating issues for adaptive optimization listed above are very topical in today&rsquo;s big data discussion, but not well treated.</p>
+<p>More generally, I would say that the &ldquo;big data&rdquo; community in both research and open source has been far too slow to focus on query optimization, to the detriment of both the current systems and the query optimization field. To begin with, the &ldquo;hand-planned&rdquo; MapReduce programming model remained a topic of conversation for far longer than it should have. It took a long time for the Hadoop and systems research communities to accept that a declarative language like SQL or LINQ is a good general-purpose interface, even while maintaining low-level MapReduce-style dataflow programming as a special-case &ldquo;fast path&rdquo;. More puzzling is the fact that even when the community started building SQL interfaces like Hive, query optimization remained a little-discussed and poorly-implemented topic. Maybe it&rsquo;s because query optimizers are harder to build well than query executors. Or maybe it was fallout from the historical quality divide between commercial and open source databases. MySQL was the open source de facto reference for &ldquo;database technology&rdquo; for the preceding decade, with a naive heuristic optimizer. Perhaps as a result, many (most?) open source big data developers didn&rsquo;t understand&mdash;or trust&mdash;query optimizer technology.</p>
+<p>In any case, this tide is turning in the big data community. Declarative queries have returned as the primary interface to big data, and there are efforts underway in essentially all the projects to start building at least a 1980&rsquo;s-era optimizer. Given the list of issues I mention above, I&rsquo;m confident we&rsquo;ll also see more innovative query optimization approaches deployed in new systems over the coming years.</p>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-condie2008evita">
+<p>[1] Condie, T., Chu, D., Hellerstein, J.M. and Maniatis, P. Evita raced: Metacompilation for declarative networks. <em>Proceedings of the VLDB Endowment</em>. 1, 1 (2008), 1153-1165.</p>
+</div>
+<div id="ref-deshpande2004initial">
+<p>[2] Deshpande, A. An initial study of overheads of eddies. <em>ACM SIGMOD Record</em>. 33, 1 (2004), 44-49.</p>
+</div>
+<div id="ref-deshpande2004lifting">
+<p>[3] Deshpande, A. and Hellerstein, J.M. Lifting the burden of history from adaptive query processing. <em>VLDB</em>, 2004.</p>
+</div>
+<div id="ref-deshpande2007adaptive">
+<p>[4] Deshpande, A., Ives, Z. and Raman, V. Adaptive query processing. <em>Foundations and Trends in Databases</em>. 1, 1 (2007), 1-140.</p>
+</div>
+<div id="ref-graefe1995cascades">
+<p>[5] Graefe, G. The cascades framework for query optimization. <em>IEEE Data Eng. Bull.</em> 18, 3 (1995), 19-29.</p>
+</div>
+<div id="ref-ibaraki1984optimal">
+<p>[6] Ibaraki, T. and Kameda, T. On the optimal nesting order for computing n-relational joins. <em>ACM Transactions on Database Systems (TODS)</em>. 9, 3 (1984), 482-502.</p>
+</div>
+<div id="ref-ic91">
+<p>[7] Ioannidis, Y.E. and Christodoulakis, S. On the propagation of errors in the size of join results. <em>SIGMOD</em>, 1991.</p>
+</div>
+<div id="ref-kabra1998efficient">
+<p>[8] Kabra, N. and DeWitt, D.J. Efficient mid-query re-optimization of sub-optimal query execution plans. <em>SIGMOD</em>, 1998.</p>
+</div>
+<div id="ref-lohman1988grammar">
+<p>[9] Lohman, G.M. Grammar-like functional rules for representing query optimization alternatives. <em>SIGMOD</em>, 1988.</p>
+</div>
+<div id="ref-madden2002continuously">
+<p>[10] Madden, S., Shah, M., Hellerstein, J.M. and Raman, V. Continuously adaptive continuous queries over streams. <em>SIGMOD</em>, 2002.</p>
+</div>
+<div id="ref-melton2002sql">
+<p>[11] Melton, J., Michels, J.E., Josifovski, V., Kulkarni, K. and Schwarz, P. SQL/MED: A status report. <em>ACM SIGMOD Record</em>. 31, 3 (2002), 81-89.</p>
+</div>
+<div id="ref-ngo2012worst">
+<p>[12] Ngo, H.Q., Porat, E., R&eacute;, C. and Rudra, A. Worst-case optimal join algorithms:[extended abstract]. <em>Proceedings of the 31st symposium on principles of database systems</em>, 2012, 37-48.</p>
+</div>
+<div id="ref-ramakrishnan1991top">
+<p>[13] Ramakrishnan, R. and Sudarshan, S. Top-down vs. bottom-up revisited. <em>Proceedings of the international logic programming symposium</em>, 1991, 321-336.</p>
+</div>
+<div id="ref-raman2002partial">
+<p>[14] Raman, V. and Hellerstein, J.M. Partial results for online query processing. <em>SIGMOD</em>, 2002, 275-286.</p>
+</div>
+<div id="ref-raman2003using">
+<p>[15] Raman, V., Deshpande, A. and Hellerstein, J.M. Using state modules for adaptive query processing. <em>ICDE</em>, 2003.</p>
+</div>
+<div id="ref-urhan1998cost">
+<p>[16] Urhan, T., Franklin, M.J. and Amsaleg, L. Cost-based query scrambling for initial delays. <em>ACM SIGMOD Record</em>. 27, 2 (1998), 130-141.</p>
+</div>
+<div id="ref-wilschut1991dataflow">
+<p>[17] Wilschut, A.N. and Apers, P.M. Dataflow query execution in a parallel main-memory environment. <em>Parallel and distributed information systems, 1991., proceedings of the first international conference on</em>, 1991, 68-77.</p>
+</div>
+<div id="ref-wong1976decomposition">
+<p>[18] Wong, E. and Youssefi, K. Decomposition&mdash;a strategy for query processing. <em>ACM Transactions on Database Systems (TODS)</em>. 1, 3 (1976), 223-241.</p>
+</div>
+</div>
+
+
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

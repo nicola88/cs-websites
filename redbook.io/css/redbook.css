@@ -1,0 +1,359 @@
+
+
+html {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+body {
+  background: #EFEFEF;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  font-size: 18px;
+}
+
+#container {
+    background: #FEFEFE;
+    padding-left: 1em;
+    padding-right: 1em;
+    max-width: 44em;
+    line-height: 27px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.chaptertitle {
+    font-size: 30px;
+    margin-bottom: 10px;
+    font-weight: 500;
+    line-height: 1.1;
+}
+
+.introauthor {
+    font-size: 1.2em;	
+    margin-bottom:.5em;
+    font-weight: 600;
+}
+
+#indexbox {
+  margin-left: auto;
+  margin-right: auto;
+  display:table;
+}
+
+#indexheader {
+  background-color: #d94c55;
+  color: #ecf0f1;
+  max-width: 44em;
+  padding-left: 28px;
+  padding-right: 28px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#indexchapter {
+display: block;
+    font-size: 1.17em;
+    -webkit-margin-before: 1em;
+    -webkit-margin-start: 0px;
+    -webkit-margin-end: 0px;
+    font-weight: bold;
+}
+
+#indextitle {
+  padding-top: 6px;
+  font-size: 32px;
+  font-weight: bold;
+  line-height: 35px;
+  margin-bottom: 4px;
+}
+
+#indexabout {
+    background: #EEE;
+    margin-top: .25em;
+    margin-bottom: .25em;
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: .5em;
+    padding-bottom: .5em;
+}
+
+#indexeds {
+  font-size: 18px;
+  padding-bottom: 8px;
+}
+
+
+#header {
+  width: 100%;
+  background-color: #d94c55;
+  color: #ecf0f1;
+  min-height: 50px;
+}
+
+#headerbox {
+    max-width: 46em;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#booktitle {
+    padding: 14px;
+    font-size: 18px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.headerlink {
+    padding: 14px;
+    font-size: 17px;
+    display: inline-block;
+}
+
+.headerlink a:link { color: #ecf0f1 !important; text-decoration: none; }
+.headerlink a:visited { color: #ecf0f1 !important; text-decoration: none; }
+.headerlink a:active { color: #ecf0f1 !important; text-decoration: none; }
+.headerlink a:hover { color: #ecf0f1 !important; text-decoration: none; }
+
+#indexbox a:link { color: #ecf0f1 !important; text-decoration: none; }
+#indexbox a:visited { color: #ecf0f1 !important; text-decoration: none; }
+#indexbox a:active { color: #ecf0f1 !important; text-decoration: none; }
+#indexbox a:hover { colorindexeds: #ecf0f1 !important; text-decoration: none; }
+
+#booktitle a:link { color: #ecf0f1 !important; text-decoration: none; }
+#booktitle a:visited { color: #ecf0f1 !important; text-decoration: none; }
+#booktitle a:active { color: #ecf0f1 !important; text-decoration: none; }
+#booktitle a:hover { color: #ecf0f1 !important; text-decoration: none; }
+
+p {
+  margin: 0em 0em 1em 0em;
+}
+
+.refheader {
+ font-size: 1.2em;
+ font-weight: bold;
+ margin-bottom: .5em;
+}
+
+.papervenue {
+    font-style: italic;
+}
+
+#license {
+    margin-top: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    font-style: italic;
+    font-size: 9pt;
+    text-align: center;
+}
+
+#comments {
+    margin-top: -.75em;
+    margin-left: auto;
+    margin-right: auto;
+    font-style: italic;
+    font-size: 9pt;
+    text-align: center;
+}
+
+.papertitle {
+    font-weight: 500;
+}
+
+@media screen and (min-width: 600px) {
+    .introlinks {
+	float:right;
+	display: inline;
+    }
+}
+
+@media screen and (min-width: 600px) {
+    #container {
+	padding-left: 28px;
+	padding-right: 28px;
+    }
+}
+
+p {
+    margin-bottom: 1.15em;
+}
+
+
+.paperchoicebox {
+    background: #EEE;
+    margin-top: .25em;
+    margin-bottom: .25em;
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: .5em;
+    padding-bottom: .5em;
+}
+
+.paperchoicetitle{
+    margin-top: .75em;
+    margin-bottom: .5em;
+    font-weight: 500;
+}
+
+.paperchoice {
+    margin-bottom: .75em;
+}
+
+.intro {
+    margin-top: 1em;
+}
+
+.bodysection {
+    font-size: 24px;
+    margin-bottom: .5em;
+    margin-top: 28px;
+    font-weight: 600;
+    line-height: 28px;
+}
+
+.bodymajorsection {
+    font-size: 32px;
+    line-height: 36px;
+    margin-bottom: .5em;
+    margin-top: 28px;
+    font-weight: 600;
+}
+
+
+.bodycommentarysection {
+    font-size: 32px;
+    line-height: 36px;
+    margin-bottom: .5em;
+    margin-top: 28px;
+    font-weight: 600;
+    font-style: italic;
+}
+
+#headerbox {
+    display: block;
+    overflow: auto;
+}
+
+#head {
+    margin-top: 6px;
+
+    font-weight: 700;
+    font-size: 24pt;
+    color: #D94C55;
+}
+
+#entries {
+    margin-top: .5em;
+}
+
+#entries li {
+    margin-bottom: 8px;
+}
+
+.boldtext {
+    font-weight: 500 !important;
+}
+
+a:link, a:visited {color: #222; text-decoration: none; }
+a:active, a:hover {color: #444; text-decoration: none; }
+
+
+
+/* =Comments
+-------------------------------------------------------------- */
+
+.comments {
+    clear: both;
+    border-bottom: 1px solid #333;
+}
+
+.comments h3 {
+    font-size: 16px;
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+}
+
+.div-comment {
+    border-top: 1px solid #333;
+    margin-bottom: 20px;
+}
+
+.comment-meta {
+    margin-top: 10px;
+}
+
+.comment-content {
+    margin-top: 10px;
+}
+
+.comments ol li,
+#commentform {
+    position: relative;
+}
+
+
+
+.comment-content {
+    margin-left: 200px;
+    min-height: 100px;
+    font-size: 16px;
+}
+
+.comments .trackback-content {
+    margin-left: 270px;
+    min-height: 50px;
+}
+
+.comments .comment-content p {
+    margin-bottom: 1.0em;
+    list-style: circle inside;
+}
+
+.comments .comment-meta,
+.form-one {
+    float: left;
+    font-family: "Lucida Grande", "Lucida Sans", Verdana, Arial, sans-serif;
+    font-size: 12px;
+    width: 120px;
+}
+
+.comments .comment-author {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.comments .comment-meta li {
+    /*border-bottom: 1px solid #222;*/
+    line-height: normal;
+    padding: 5px 2px;
+    list-style: none;
+}
+
+@media screen and (max-width: 800px) {
+.comment-content {
+    margin-left: 0px !important;
+    min-height: 100px !important;
+    font-size: 18px !important;
+}
+
+.trackback-content {
+    margin-left: 0px !important;
+    min-height: 50px !important;
+}
+
+.comment-meta {
+    float: none !important;
+    font-size: 14px !important;
+    width: 100% !important;
+    margin-left: 0px !important;
+    padding-left: 0px !important;
+}
+
+.comment-author {
+font-size: 18px !important;
+}
+
+}

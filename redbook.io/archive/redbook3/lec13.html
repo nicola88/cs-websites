@@ -1,0 +1,227 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+
+<title>Concurrency Control 4: Tree Locking Protocols</title>
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Concurrency Control 4: Tree Locking Protocols</h1>
+
+<p>Kung and Robinson said we can do optimistic locking on B-trees, since each lookup
+touches only h pages, and the tree will have <i>f<sup>h</sup></i> pages. </p>
+
+<ul>
+  <li>Quibble 1: Everybody has already implemented locking, since it's a better
+    general-purpose solution (and was invented first)</li>
+  <li>Quibble 2: The <i>h</i> pages are not chosen at random.</li>
+</ul>
+
+<p>What can happen if you proceed optimistically? </p>
+
+<p><b>Problem</b>: Design a locking protocol that allows highly concurrent access to a
+B-tree. </p>
+
+<p><b>Solution 1</b>: release locks early (non-2PL!)&nbsp; &quot;Latches&quot;.&nbsp; OK,
+but when? <br>
+<b>Solution 1.1:</b> Extra lock modes + &quot;Safety analysis&quot; (Bayer/Schkolnick) <br>
+<b>Solution 1.2</b>: Extra data structure details (Lehman/Yao) <br>
+<b>Solution 1.3: </b>Careful ordering of actions + &quot;repositioning&quot; logic (ARIES
+IM) <br>
+&nbsp; </p>
+
+<h3>B-Link Trees (Lehman/Yao)</h3>
+
+<p>A super-high concurrency solution, at the expense of a little extra complexity in the
+data structure. </p>
+
+<ul>
+  <li>take a B+-tree (they call it a B*-tree)</li>
+  <li>add &quot;high keys&quot; to each page</li>
+  <li>add right-links to each page (Idea: think of two nodes with a right-link as one big
+    node)</li>
+  <li>ensure that people search top-down, left-to-right</li>
+  <li>ensure that people insert bottom-up</li>
+  <li>Requires NO locking for read (!!)</li>
+  <li>&quot;Lock coupling&quot; for writes is rare (question: why is lock coupling so bad?)</li>
+</ul>
+<b>
+
+<p>Search</b> </p>
+
+<pre>current = root;
+A = get(current);
+while (current is not a leaf) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; current = <a HREF="lec13.html#footnote">scannode<sup>1</sup></a>(v, A);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A = get(current);
+}
+while ((t = scannode(v,A)) == link pointer of A) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; current = t;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A = get(current);
+}
+if (v is in A)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return(success);
+else return(failure);</pre>
+
+<p>Simple! Only trick is to have scannode know about high-keys and right-links. </p>
+
+<p><a NAME="footnote"></a>(Footnote: The <tt>scannode(v,A)</tt> routine examines memory
+page <tt>A</tt> and finds the appropriate pointer for value <tt>v</tt>.&nbsp; Note that it
+may return a right-link pointer instead of a child pointer.) </p>
+
+<p><b>Insert</b> </p>
+
+<p>First, we find a leaf node, and keep a stack of the rightmost node we visited at each
+level: </p>
+
+<pre>initialize stack;
+current = root;
+A = get(current);
+while (current is not a leaf) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; t = current;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; current = scannode(v,A);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (current not link pointer in A)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; push t;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A = get(current);
+}</pre>
+
+<p>When we get to the leaf level, we may need to search right for the appropriate leaf.
+The <tt>move_right </tt>procedure scans right across the bottom, with lock coupling (i.e.
+if you have to move right, first lock right neighbor, then release lock on current). </p>
+
+<pre><font COLOR="#FF0000">lock(current);
+</font>A = get(current);
+<font COLOR="#FF0000">move_right();</font></pre>
+
+<p>Now, assuming the key/ptr pair is not already in the tree, we proceed to insert &amp;
+possibly split: </p>
+
+<pre><b>Doinsertion:
+</b>if A is safe {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; insert new key/ptr pair on A;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; put(A, current);
+<font COLOR="#FF0000">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; unlock(current);
+</font>}
+else { // gonna have to split
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; u = allocate(1 new page for B);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; redistribute A over A and B;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; y = max value on A now;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; make high key of B equal old high key of A;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; make right-link of B equal old right-link of A;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; make high key of A equal y;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; make right-link of A point to B;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; put (B, u);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; put (A, current);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; oldnode = current;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; new key/ptr pair = (y, u); // high key of new page, new page
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; current = pop(stack);
+&nbsp;<font COLOR="#FF0000">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; lock(current);
+</font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A = get(current);
+&nbsp;<font COLOR="#FF0000">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; move_right(); // at this point we may have 3 locks: oldnode,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // and two at the parent level while moving right
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; unlock(oldnode);
+</font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; goto Doinsertion;
+}</pre>
+
+<p>Note the worst-case multiple locking here. (Improvement later proposed by Sagiv, and by
+Lanin &amp; Shasha: unlock current after <tt>put(A, current)</tt>). </p>
+
+<p><b>Delete:</b> </p>
+
+<p>Just remove from the leaf. They punt on underflow &#150; just let leaves get empty,
+never delete them (hence never do deletion from internal nodes.) If you think your tree is
+too empty, then reorganize it offline. </p>
+
+<p>Why does this all work? </p>
+
+<ol>
+  <li>Deadlock-free: there is a total order on tree nodes (bottom-up, left-to-right) that is
+    followed by locking protocol</li>
+  <li>Correctness of Tree Modifications: By doing <tt>put(B, u) </tt>before <tt>put(A,
+    current)</tt> in <tt>insert</tt>, we make node splitting atomic at each level. This means
+    at any time the tree will appear consistent (though it may have &quot;big&quot; nodes)</li>
+  <li>Correct Interaction: it is somewhat tricky to show that reader/writer and writer/writer
+    pairs don&#146;t step on each other. The worrisome case is when a reader reads node <i>N</i>,
+    which is subsequently updated by a writer. In this case, the reader will subsequently
+    detect relevant inserts by seeing (possibly lower in the tree) that she needs to keep
+    looking right.</li>
+</ol>
+
+<p>Interesting potential problem: Livelock. </p>
+
+<p>What&#146;s missing from this discussion??? </p>
+
+<p>Alternative techniques are used in ARIES: ARIES/KVL &amp; ARIES/IM. Don&#146;t require
+right-links, add a little more constraint on ordering of operations. On occasion need to
+&quot;reposition&quot; (i.e. find the appropriate spot on a level to continue.) Papers
+handle lots more details than Lehman/Yao, including degree-3 consistency, deletion,
+logging/recovery, savepoints. <br>
+&nbsp; </p>
+
+<h3>Extensions for R-trees &amp; GiSTs</h3>
+
+<p>A CS286 class project in &#146;94, published VLDB &#146;95 (Kornacker &amp; Banks).
+Improved for GiST with concurrency, degree-3 consistency, deletion, savepoints in SIGMOD
+&#146;97 (Kornacker, Mohan &amp; Hellerstein). </p>
+
+<p>Main differences to focus on: </p>
+
+<ul>
+  <li>search traverses multiple nodes</li>
+  <li>keys no longer linearly ordered</li>
+</ul>
+
+<p>Raises 2 questions: </p>
+
+<ol>
+  <li>how do we detect a node has split?</li>
+  <ul>
+    <li>this can&#146;t be done using data values in an R-tree</li>
+  </ul>
+  <li>how do we limit extent to which we move right?</li>
+  <ul>
+    <li>no way to know we&#146;ve caught up with inserters</li>
+  </ul>
+</ol>
+
+<p>Idea: impose an ordering that has nothing to do with the data. </p>
+
+<p>Each page gets a Node Sequence Number (NSN), like a timestamp. </p>
+
+<p>On page split, the new right sibling gets the original NSN, and the left sibling gets a
+new NSN, and parent&#146;s NSN is updated on insertion of pointer to new sibling. </p>
+
+<p>Split detection: if child&#146;s NSN is greater than the NSN in the parent entry, child
+has since split. </p>
+
+<p>Limiting right-traversal: only scan until a lower NSN. </p>
+
+<p>Some extra details: </p>
+
+<ul>
+  <li>degree-3 consistency especially tricky! Predicate locks attached to nodes.</li>
+  <li>The ARIES/IM ideas don&#146;t work &#150; link trees are basically required because
+    &quot;repositioning&quot; doesn&#146;t work.</li>
+</ul>
+<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

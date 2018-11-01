@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 9: Languages</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch10-webdata.html">Next Chapter</a></div>
+<div class="headerlink"><a href="ch8-interactive.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch9-languages.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch9-languages">Chapter 9: Languages</div>
+	<div class="introauthor">Introduced by Joe Hellerstein</div>
+
+      <div class="paperchoicebox">
+	<div class="paperchoicetitle">Readings:</div>
+	<div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=5934767222958591409" target="_blank">Joachim W. Schmidt. <span class="papertitle">Some High Level Language Constructs for Data of Type Relation</span>. <span class="papervenue">ACM Transactions on Database Systems</span>, 2(3), 1977, 247-261.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=17215743948117955326" target="_blank">Arvind Arasu, Shivnath Babu, Jennifer Widom. <span class="papertitle">The CQL Continuous Query Language: Semantic Foundations and Query Execution</span>. <span class="papervenue">The VLDB Journal</span>, 15(2), 2006, 121-142.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=9165311711752272482" target="_blank">Peter Alvaro, Neil Conway, Joseph M. Hellerstein, William R. Marczak. <span class="papertitle">Consistency Analysis in Bloom: A CALM and Collected Approach</span>. <span class="papervenue">CIDR</span>, 2011.</a></div>
+      </div>
+
+    
+
+      <div class="intro">
+      <p>From reading database papers, you might expect that typical database users are data analysts, business decision-makers, or IT staff. In practice, the majority of database users are software engineers, who build database-backed applications that are used further up the stack. Although SQL was originally designed with non-technical users in mind, it is rare for people to interact directly with a database via a language like SQL unless they are coding up a database-backed application.</p>
+<p>So if database systems are mostly just APIs for software development, what do they offer programmers? Like most good software, database systems offer powerful abstractions.</p>
+<p>Two stand out:</p>
+<ol>
+<li><p>The transaction model gives programmers the abstraction of a single-process, sequential machine that never fails mid-task. This protects programmers from a gigantic cliff of complexity&mdash;namely, the innate parallelism of modern computing. A single compute rack today has thousands of cores running in parallel across dozens of machines that can fail independently. Yet application programmers can still blithely write sequential code as if it were 1965 and they were loading a deck of punchcards into a mainframe to be executed individually from start to finish.</p></li>
+<li><p>Declarative query languages like SQL provide programmers with abstractions for manipulating sets of data. Famously, declarative languages shield programmers from thinking about <em>how</em> to access data items, and instead let them focus on <em>what</em> data items to return. This data independence also shields application programmers from changes in the organization of underlying databases, and shields database administrators from getting involved in the design and maintenance of applications.</p></li>
+</ol>
+<p>Just how useful have these abstractions been over time? How useful are they today?</p>
+<ol>
+<li><p>As a programming construct, serializable transactions have been very influential. It is easy for programmers to bracket their code with BEGIN and COMMIT/ROLLBACK. Unfortunately, as we discussed in <a href="ch6-isolation.html">Chapter 6</a>, transactions are expensive, and are often compromised. &ldquo;Relaxed&rdquo; transactional semantics break the serial abstraction for users and expose application logic to the potential for races and/or unpredictable exceptions. If application developers want to account for this, they have to manage the complexity of concurrency, failure, and distributed state. A common response to the lack of transactions is to aspire to &ldquo;eventual consistency&rdquo;&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-bayou-session">21</a>]</span>, as we discuss in the weak isolation section. But as we discussed in <a href="ch6-isolation.html">Chapter 6</a>, this still shifts all the correctness burdens to the application developer. In my opinion, this situation represents a major crisis in modern software development.</p></li>
+<li><p>Declarative query languages have also been a success&mdash;certainly an improvement over the navigational languages that preceded them, which led to spaghetti code that needed to be rewritten every time you reorganized the database. Unfortunately, query languages are quite different from the imperative languages that programmers usually use. Query languages consume and produce simple unordered &ldquo;collection types&rdquo; (sets, relations, streams); programming languages typically carry out ordered execution of instructions, often over complex structured data types (trees, hashtables, etc.). Programmers of database applications are forced to bridge this so-called &ldquo;impedance mismatch&rdquo; between programs and database queries. This has been a hassle for database programmers since the earliest days of relational databases.</p></li>
+</ol>
+<div id="database-language-embeddings-pascalr" class="bodysection">Database Language Embeddings: Pascal/R</div>
+<p>The first paper in this section presents a classical example of tackling the second problem: helping imperative programmers with the impedance mismatch. The paper begins by defining operations for what we might now recognize (40-odd years later!) as familiar collection types: the &ldquo;dictionary&rdquo; type in Python, the &ldquo;map&rdquo; type in Java or Ruby, etc. The paper then patiently takes us through the possibilities and pitfalls of various language constructs that seem to recur in applications across the decades. A key theme is a desire for differentiating between enumeration (for generating output) and quantification (for checking properties)&mdash;the latter can often be optimized if you are explicit. In the end, the paper proposes a declarative, SQL-like sublanguage for Relation types that is embedded into Pascal. The result is relatively natural and not unlike some of the better interfaces today.</p>
+<p>Although this approach seems natural now, the topic took decades to gain popular attention. Along the way, database &ldquo;connectivity&rdquo; APIs like ODBC and JDBC arose as a crutch for C/C++ and Java&mdash;they allowed users to push queries to the DBMS and iterate through results, but the type systems remained separate, and bridging from SQL types to host language types was unpleasant. Perhaps the best modern evolution of ideas like Pascal/R is Microsoft&rsquo;s LINQ library, which provides language-embedded collection types and functions so application developers can write query-like code over a variety of backend databases and other collections (XML documents, spreadsheets, etc.) We included a taste of LINQ syntax in the DryadLINQ paper in <a href="ch5-dataflow.html">Chapter 5</a>.</p>
+<p>In the 2000&rsquo;s, web applications like social media, online forums, interactive chat, photo sharing and product catalogs were implemented and reimplemented over relational database backends. Modern scripting languages for web programming were a bit more convenient than Pascal, and typically included decent collection types. In that environment, application developers eventually saw recognized patterns in their code and codified them into what are now called Object-Relational Mappings (ORMs). Ruby on Rails was one of the most influential ORMs to begin with, though by now there are many others. Every popular application programming language has at least one, and there are variations in features and philosophy. The interested reader is referred to Wikipedia&rsquo;s &ldquo;List of object-relational mapping software&rdquo; wiki.</p>
+<p>ORMs do a few handy things for the web programmer. First they provide language-native primitives for working with collections much like Pascal/R. Second they can enable updates to in-memory language objects to be transparently reflected in the database-backed state. They often offer some language-native syntax for familiar database design concepts like entities, relationships, keys and foreign keys. Finally, some ORMs including Rails offer nice tools for tracking the way that database schemas evolve over time to reflect changes in the application code (&ldquo;migrations&rdquo; in Rails terminology).</p>
+<p>This is an area where the database research community and industry should pay more attention: these are our users! There are some surprising&mdash;and occasionally disconcerting&mdash;disconnects between ORMs and databases&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-feral">6</a>]</span>. The author of Rails, for example, is a colorful character named David Heinemeier Hansson (&ldquo;DHH&rdquo;) who believes in &ldquo;opinionated software&rdquo; (that reflects his opinions, of course). He was quoted saying the following:</p>
+<blockquote>
+<p>I don&rsquo;t want my database to be clever! ...I consider stored procedures and constraints vile and reckless destroyers of coherence. No, Mr. Database, you can not have my business logic. Your procedural ambitions will bear no fruit and you&rsquo;ll have to pry that logic from my dead, cold object-oriented hands . . . I want a single layer of cleverness: My domain model.</p>
+</blockquote>
+<p>This unwillingness to trust the DBMS leads to many problems in Rails applications. Applications written against ORMs are often very slow&mdash;the ORMs themselves don&rsquo;t do much to optimize the way that queries are generated. Instead, Rails programmers often need to learn to program &ldquo;differently&rdquo; to encourage Rails to generate efficient SQL&mdash;similar to the discussion in the Pascal/R paper, they need to learn to avoid looping and table-at-a-time iteration. A typical evolution in a Rails app is to write it naively, observe slow performance, study the SQL logs it generates, and rewrite the app to convince the ORM to generate &ldquo;better&rdquo; SQL. Recent work by Cheung and colleagues explores the idea that program synthesis techniques can automatically generate these optimizations&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-statusquo">9</a>]</span>; it&rsquo;s an interesting direction, and time will tell how much complexity it can automate away. The separation between database and applications can also have negative effects for correctness. For example, Bailis recently showed&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-feral">6</a>]</span> how a host of existing open-source Rails applications are susceptible to integrity violations due to improper enforcement within the application (instead of the database).</p>
+<p>Despite some blind spots, ORMs have generally been an important practical leap forward in programmability of database-backed applications, and a validation of ideas that go back as far as Pascal/R. Some good ideas take time to catch on.</p>
+<div id="stream-queries-cql" class="bodysection">Stream Queries: CQL</div>
+<p>Our second paper on CQL is a different flavor of language work&mdash;it&rsquo;s a query language design paper. It presents the design of a new declarative query language for a data model of streams. The paper is interesting for a few reasons. First, it is a clean, readable, and relatively modern example of query language design. Every few years a group of people emerges with yet another data model and query language: examples include Objects and OQL, XML and XQuery, or RDF and SPARQL. Most of these exercises begin with an assertion that &ldquo;X changes everything&rdquo; for some data model X, leading to the presentation of a new query language that often seems familiar and yet strangely different than SQL. CQL is a refreshing example of language design because it does the opposite: it highlights that fact that streaming data, viewed through the right lens, actually changes very little. CQL evolves SQL just enough to isolate the key distinctions between querying &ldquo;resting&rdquo; tables and &ldquo;moving&rdquo; streams. This leaves us with a crisp understanding of what&rsquo;s really different, semantically, when you have to talk about streams; many other current streaming languages are quite a bit more ad hoc and messy than CQL.</p>
+<p>In addition to this paper being a nice exemplar of thoughtful query language design, it also represents a research area that received a lot of attention in the database literature, and remains intriguing in practice. The first generation of streaming data research systems from the early 2000&rsquo;s&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-abadi2003aurora">1</a>, <a href="ch9-languages.html#ref-chandrasekarantelegraphcq">8</a>, <a href="ch9-languages.html#ref-motwani2003query">16</a>, <a href="ch9-languages.html#ref-naughton2001niagara">17</a>]</span> did not have major uptake either as open source or in the variety of startups that grew out of those systems. However the topic of stream queries has been gaining interest again in industry in recent years, with open source systems like SparkStreaming, Storm and Heron seeing uptake, and companies like Google espousing the importance of continuous dataflow as a new reality of modern services&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-googledataflow">2</a>]</span>. We may yet see stream query systems occupy more than their current small niche in financial services.</p>
+<p>Another reason CQL is interesting is that streams are something of a middle ground between databases and &ldquo;events&rdquo;. Databases store and retrieve collection types; event systems transmit and handle discrete events. Once you view your events as data, then event programming and stream programming look quite similar. Given that event programming is a widely-used programming model in certain domains (e.g. Javascript for user interfaces, Erlang for distributed systems), there should be a relatively small impedance mismatch between an event programming language like Javascript and a data stream system. An interesting example of this approach is the Rx (Reactive extensions) language, which is a streaming addition to LINQ that makes programming event streams feel like writing functional query plans; or as its author Erik Meijer puts it, &ldquo;your mouse is a database&rdquo;&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-meijer2012your">15</a>]</span>.</p>
+<div id="programming-correct-applications-without-transactions-bloom" class="bodysection">Programming Correct Applications without Transactions: Bloom</div>
+<p>The third paper on Bloom connects to a number of the points above; it has a relational model of state at the application level, and a notion of network channels that relates to CQL streams. But the primary goal is to help programmers manage the loss of the first abstraction at the beginning of this chapter introduction; the one I described as a major crisis. A big question for modern developers is this: can you find a correct distributed implementation for your program without using transactions or other other expensive schemes to control orders of operation?</p>
+<p>Bloom&rsquo;s answer to this question is to give programmers a &ldquo;disorderly&rdquo; programming language: one that discourages them from accidentally using ordering. Bloom&rsquo;s default data structures are relations; its basic programming constructs are logical rules that can run in any order. In short, it&rsquo;s a general-purpose language that is similar to a relational query language. For the same reason that SQL queries can be optimized and parallelized without changing output, simple Bloom programs have a well-defined (consistent) result independent of the order of execution. The exception to this intuition comes with lines of Bloom code that are &ldquo;non-monotonic&rdquo;, testing for a property that can oscillate between true and false as time passes (e.g. &ldquo;NOT EXISTS x&rdquo; or &ldquo;HAVING COUNT() = x&rdquo;.) These rules are sensitive to execution and message ordering, and need to be &ldquo;protected&rdquo; by coordination mechanisms.</p>
+<p>The CALM theorem formalizes this notion, answering the question above definitively: you can find a consistent, distributed, coordination-free implementation for your program if and only if its specification is monotonic&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-ameloot2013relational">5</a>, <a href="ch9-languages.html#ref-hellerstein2010declarative">13</a>]</span>. The Bloom paper also illustrates how a compiler can use CALM in practice to pinpoint the need for coordination in Bloom programs. CALM analysis can also be applied to data stream languages in systems like Storm with the help of programmer annotations&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-alvaro2014blazes">3</a>]</span>. A survey of the theoretical results in this area is given in&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-ameloot2014declarative">4</a>]</span>.</p>
+<p>There has been a flurry of related language work on avoiding coordination: a number of papers propose using associative, commutative, idempotent operations&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-clements2015scalable">10</a>, <a href="ch9-languages.html#ref-quicksand">12</a>, <a href="ch9-languages.html#ref-crdt">19</a>]</span>; these are inherently monotonic. Another set of work examines alternative correctness criteria, e.g., ensuring only specific invariants over database state&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-coord-avoid">7</a>]</span> or using alternative program analysis to deliver serializable outcomes without impelementing traditional read-write concurrency&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-roy2015homeostasis">18</a>]</span>. The area is still new; papers have different models (e.g. some with transactional boundaries and some not) and often don&rsquo;t agree on definitions of &ldquo;consistency&rdquo; or &ldquo;coordination&rdquo;. (CALM defines consistency in terms of globally deterministic outcomes, coordination as messaging that is required regardless of data partitioning or replication&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-ameloot2013relational">5</a>]</span>.) It&rsquo;s important to get more clarity and ideas here&mdash;if programmers can&rsquo;t have transactions then they need help at the app-development layer.</p>
+<p>Bloom also serves as an example of a recurring theme in database research: general-purpose declarative languages (a.k.a. &ldquo;logic programming&rdquo;). Datalog is the standard example, and has a long and controversial history in database research. A favorite topic of database theoreticians in the 1980&rsquo;s, Datalog met ferocious backlash from systems researchers of the day as being irrelevant in practice&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-lagunabeach">20</a>]</span>. More recently it has gotten some attention from (younger) researchers in databases and other applied fields&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-green2013datalog">11</a>]</span>&mdash;for example, Nicira&rsquo;s software-defined networking stack (acquired by VMWare for a cool billion dollars) uses a Datalog language for network forwarding state&nbsp<span class="citationlink">[<a href="ch9-languages.html#ref-koponen2014network">14</a>]</span>. There is a spectrum between using declarative sublanguages for accessing database state, and very aggressive uses of declarative programming like Bloom for specifying application logic. Time will tell how this declarative-imperative boundary shifts for programmers in various contexts, including infrastructure, applications, web clients and mobile devices.</p>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-abadi2003aurora">
+<p>[1] Abadi, D.J., Carney, D., &Ccedil;etintemel, U., Cherniack, M., Convey, C., Lee, S., Stonebraker, M., Tatbul, N. and Zdonik, S. Aurora: A new model and architecture for data stream management. <em>The VLDB Journal&mdash;The International Journal on Very Large Data Bases</em>. 12, 2 (2003), 120-139.</p>
+</div>
+<div id="ref-googledataflow">
+<p>[2] Akidau, T. and others The dataflow model: A practical approach to balancing correctness, latency, and cost in massive-scale, unbounded, out-of-order data processing. <em>VLDB</em>, 2015.</p>
+</div>
+<div id="ref-alvaro2014blazes">
+<p>[3] Alvaro, P., Conway, N., Hellerstein, J.M. and Maier, D. Blazes: Coordination analysis for distributed programs. <em>Data engineering (iCDE), 2014 iEEE 30th international conference on</em>, 2014, 52-63.</p>
+</div>
+<div id="ref-ameloot2014declarative">
+<p>[4] Ameloot, T.J. Declarative networking: Recent theoretical work on coordination, correctness, and declarative semantics. <em>ACM SIGMOD Record</em>. 43, 2 (2014), 5-16.</p>
+</div>
+<div id="ref-ameloot2013relational">
+<p>[5] Ameloot, T.J., Neven, F. and Van den Bussche, J. Relational transducers for declarative networking. <em>Journal of the ACM (JACM)</em>. 60, 2 (2013), 15.</p>
+</div>
+<div id="ref-feral">
+<p>[6] Bailis, P., Fekete, A., Franklin, M.J., Ghodsi, A., Hellerstein, J.M. and Stoica, I. Feral Concurrency Control: An empirical investigation of modern application integrity. <em>SIGMOD</em>, 2015.</p>
+</div>
+<div id="ref-coord-avoid">
+<p>[7] Bailis, P., Fekete, A., Franklin, M.J., Hellerstein, J.M., Ghodsi, A. and Stoica, I. Coordination avoidance in database systems. <em>VLDB</em>, 2015.</p>
+</div>
+<div id="ref-chandrasekarantelegraphcq">
+<p>[8] Chandrasekaran, S., Cooper, O., Deshpande, A., Franklin, M.J., Hellerstein, J.M., Hong, W., Krishnamurthy, S., Madden, S., Raman, V., Reiss, F. and others TelegraphCQ: Continuous dataflow processing for an uncertain world. <em>CIDR</em>, 2003.</p>
+</div>
+<div id="ref-statusquo">
+<p>[9] Cheung, A., Arden, O., Madden, S., Solar-Lezama, A. and Myers, A.C. StatusQuo: Making familiar abstractions perform using program analysis. <em>CIDR</em>, 2013.</p>
+</div>
+<div id="ref-clements2015scalable">
+<p>[10] Clements, A.T., Kaashoek, M.F., Zeldovich, N., Morris, R.T. and Kohler, E. The scalable commutativity rule: Designing scalable software for multicore processors. <em>ACM Transactions on Computer Systems (TOCS)</em>. 32, 4 (2015), 10.</p>
+</div>
+<div id="ref-green2013datalog">
+<p>[11] Green, T.J., Huang, S.S., Loo, B.T. and Zhou, W. Datalog and recursive query processing. <em>Foundations and Trends in Databases</em>. 5, 2 (2013), 105-195.</p>
+</div>
+<div id="ref-quicksand">
+<p>[12] Helland, P. and Campbell, D. Building on quicksand. <em>CIDR</em>, 2009.</p>
+</div>
+<div id="ref-hellerstein2010declarative">
+<p>[13] Hellerstein, J.M. The declarative imperative: Experiences and conjectures in distributed logic. <em>ACM SIGMOD Record</em>. 39, 1 (2010), 5-19.</p>
+</div>
+<div id="ref-koponen2014network">
+<p>[14] Koponen, T., Amidon, K., Balland, P., Casado, M., Chanda, A., Fulton, B., Ganichev, I., Gross, J., Gude, N., Ingram, P. and others Network virtualization in multi-tenant datacenters. <em>USENIX nSDI</em>, 2014.</p>
+</div>
+<div id="ref-meijer2012your">
+<p>[15] Meijer, E. Your mouse is a database. <em>Queue</em>. 10, 3 (2012), 20.</p>
+</div>
+<div id="ref-motwani2003query">
+<p>[16] Motwani, R., Widom, J., Arasu, A., Babcock, B., Babu, S., Datar, M., Manku, G., Olston, C., Rosenstein, J. and Varma, R. Query processing, resource management, and approximation in a data stream management system. <em>CIDR</em>, 2003.</p>
+</div>
+<div id="ref-naughton2001niagara">
+<p>[17] Naughton, J.F., DeWitt, D.J., Maier, D., Aboulnaga, A., Chen, J., Galanis, L., Kang, J., Krishnamurthy, R., Luo, Q., Prakash, N. and others The niagara internet query system. <em>IEEE Data Eng. Bull.</em> 24, 2 (2001), 27-33.</p>
+</div>
+<div id="ref-roy2015homeostasis">
+<p>[18] Roy, S., Kot, L., Bender, G., Ding, B., Hojjat, H., Koch, C., Foster, N. and Gehrke, J. The homeostasis protocol: Avoiding transaction coordination through program analysis. <em>SIGMOD</em>, 2015.</p>
+</div>
+<div id="ref-crdt">
+<p>[19] Shapiro, M., Preguica, N., Baquero, C. and Zawirski, M. Shapiro Marc. Preguica Nuno. Baquero Carlos. Zawirski Marek. A comprehensive study of convergent and commutative replicated data types. INRIA TR 7506. 2011.</p>
+</div>
+<div id="ref-lagunabeach">
+<p>[20] Stonebraker, M. and Neuhold, E. The laguna beach report. International Institute of Computer Science. 1989.</p>
+</div>
+<div id="ref-bayou-session">
+<p>[21] Terry, D.B., Demers, A.J., Petersen, K., Spreitzer, M.J., Theimer, M.M. and others Session guarantees for weakly consistent replicated data. <em>PDIS</em>, 1994.</p>
+</div>
+</div>
+
+
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

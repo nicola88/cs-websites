@@ -1,0 +1,257 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<title>Relational Roots</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Relational Roots</h1>
+
+<h3>Some Notes on Codd '70</h3>
+
+<ul>
+  <li>The case for physical independence.</li>
+  <li>Notes on strict relational model that might surprise SQL users:</li>
+  <ol>
+    <li>all rows are distinct!</li>
+    <li>columns identified by position (column names are for semantic info)</li>
+    <li>&quot;relationships&quot;: relations where columns are identified by name</li>
+    <li>non-algebraic definition of join leads to a &quot;plurality of joins&quot;</li>
+  </ol>
+  <li>Simple domains vs. non-simple domains (&quot;complex objects&quot;).</li>
+  <li>Normalization: removing non-simple domains.&nbsp; Normalization theory was a big
+    research area in the 70's.&nbsp; We will skip it here.&nbsp; The material in an undergrad
+    textbook is probably all you need to know.</li>
+  <ul>
+    <li>OODBMSs use non-simple domains.&nbsp; Reasons Codd gives to avoid non-simple domains:</li>
+    <ol>
+      <li>hard to represent [this problem popped up in the late 80's as OODB clustering]</li>
+      <li>hard to translate to other systems [this problem popped up in the 90's as OODB bulk
+        loading]</li>
+    </ol>
+  </ul>
+  <li>Support for modelling Generations of relations (time travel! -- this popped up in the
+    POSTGRES storage manager, mid '80s.&nbsp; We'll read about this down the road.)</li>
+</ul>
+
+<h3>Relational System Architecture</h3>
+
+<p>Databases are BIG pieces of software. Typically very hard to modularize. Lots of system
+design decisions at the macro and micro scale. We focus mostly on micro decisions in
+subsequent lectures. Here we focus on macro design. </p>
+
+<p>Disk management choices: 
+
+<ul>
+  <ul>
+    <li>file per relation</li>
+    <li>big file in file system</li>
+    <li>raw device</li>
+  </ul>
+</ul>
+
+<p>Process Model: 
+
+<ul>
+  <ul>
+    <li>process per user</li>
+    <li>server</li>
+    <li>multi-server</li>
+  </ul>
+</ul>
+
+<p>Basic modules: 
+
+<ul>
+  <ul>
+    <li>parser</li>
+    <li>query rewrite</li>
+    <li>optimizer</li>
+    <li>query executor</li>
+    <li>access methods</li>
+    <li>buffer manager</li>
+    <li>lock manager</li>
+    <li>log/recovery manager</li>
+  </ul>
+</ul>
+
+<p>Query Rewriter 
+
+<ul>
+  <ul>
+    <li>Flattens views (why?)</li>
+    <li>may change query semantics (constraints, protection, etc.)</li>
+  </ul>
+</ul>
+
+<p>Optimizer 
+
+<ul>
+  <ul>
+    <li>large space of equivalent relational plans</li>
+    <li>pick one that&#146;s going to be &quot;optimal&quot; (?)</li>
+    <li>produces either an interpretable plan tree, or compiled code</li>
+  </ul>
+</ul>
+
+<p>Executor 
+
+<ul>
+  <ul>
+    <li>modules to perform relation operations like joins, sorts, aggregations, etc.</li>
+    <li>calls Access Methods for operations on base and temporary relations</li>
+  </ul>
+</ul>
+
+<p>Access Methods 
+
+<ul>
+  <ul>
+    <li>uniform relational interface (open, get next), a la INGRES AMI, System R's RSS</li>
+    <li>multiple implementations: heap, B-tree, extensible hashing</li>
+  </ul>
+</ul>
+
+<p>Buffer Manager 
+
+<ul>
+  <ul>
+    <li>Intelligent user-level disk cache</li>
+    <li>must interact with transaction manager &amp; lock manager</li>
+  </ul>
+</ul>
+
+<p>Lock Manager 
+
+<ul>
+  <ul>
+    <li>must efficiently support lock table</li>
+    <li>System R architecture influential:</li>
+    <ul>
+      <li>physical and logical locks treated uniformly</li>
+      <li>multiple granularity of locks</li>
+      <li>set intent locks at high levels</li>
+      <li>we will study this in more detail later (Gray)</li>
+    </ul>
+    <li>deadlock handling: detection</li>
+  </ul>
+</ul>
+
+<p>Log/Recovery Manager 
+
+<ul>
+  <ul>
+    <li>&quot;before/after&quot; log on values</li>
+    <li>checkpoint/restore facility for quick recovery</li>
+    <li>Redo/Undo on restore</li>
+    <li>Support soft crashes off disk, hard crashes off tape.</li>
+    <li>System R&#146;s shadowing is too slow. Use Write-Ahead Logging! (WAL) More on this to
+      come.</li>
+    <li>Hard to get right!</li>
+  </ul>
+</ul>
+
+<h4>Notes on INGRES </h4>
+
+<p>What of this stuff is in today&#146;s systems?
+
+<ul>
+  <ul>
+    <li>query rewrite, especially for views and integrity constraints</li>
+    <li>use of UNIX</li>
+    <li>catalogs as relations</li>
+    <li>idea of extensible access methods</li>
+    <li>thoughts on strange-length transactions</li>
+    <li>deferred updates</li>
+    <li>interpreted query plans (?)</li>
+    <li>simple, clear language is a good thing</li>
+  </ul>
+</ul>
+
+<p>Things it got wrong: 
+
+<ul>
+  <ul>
+    <li>static trees &amp; hashing</li>
+    <li>interpreted query plans (?)</li>
+    <li>file/relation</li>
+    <li>DECOMP and OVQP (note retrospection comments)</li>
+    <li>process(es)/user</li>
+    <li>locking: column-level (actually table). Deadlock avoidance.</li>
+    <li>logging/recovery</li>
+    <li>argued that clustering wasn&#146;t important</li>
+  </ul>
+</ul>
+
+<p>&nbsp; </p>
+
+<h4>Notes on System R </h4>
+
+<p>See the <a HREF="http://www.mcjones.org/System_R/SQL_Reunion_95">System
+R reunion notes</a> for fun background and gossip. </p>
+
+<p>More influential? A lot of the ideas remain in today&#146;s systems: 
+
+<ul>
+  <ul>
+    <li>optimizer remains, largely unchanged</li>
+    <li>RSS/RDS divide remains in many systems</li>
+    <li>SQL, cursors, duplicates, NULLs, etc.</li>
+    <ul>
+      <li>the pros and cons of duplicates. Alternatives?</li>
+      <li>pros and cons of NULLs. Alternatives?</li>
+      <li>grouping and aggregation</li>
+    </ul>
+    <li>updatable single-table views</li>
+    <li>begin/end xact at user level</li>
+    <li>savepoints and restore</li>
+    <li>catalogs as relations</li>
+    <li>flexible security (GRANT/REVOKE)</li>
+    <li>integrity constraints</li>
+    <li>triggers (!!)</li>
+    <li>clustering</li>
+    <li>compiled queries</li>
+    <li>B-trees</li>
+    <li>Nest-loop &amp; sort-merge join, all joins 2-way</li>
+    <li>dual logs to support log failure</li>
+  </ul>
+</ul>
+
+<p>Stuff they got wrong: 
+
+<ul>
+  <ul>
+    <li>shadow paging</li>
+    <li>predicate locking</li>
+    <li>SQL language</li>
+    <ul>
+      <li>duplicate semantics</li>
+      <li>subqueries vs. joins</li>
+      <li>outer join</li>
+    </ul>
+    <li>rejected hashing</li>
+  </ul>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

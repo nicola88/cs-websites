@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 11: A Biased Take on a Moving Target: Complex Analytics</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch12-dataintegration.html">Next Chapter</a></div>
+<div class="headerlink"><a href="ch10-webdata.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch11-complexanalytics.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch11-complexanalytics">Chapter 11: A Biased Take on a Moving Target: Complex Analytics</div>
+	<div class="introauthor">by Michael Stonebraker</div>
+
+
+
+    
+
+      <div class="intro">
+      <p>In the past 5-10 years, new analytic workloads have emerged that are more complex than the typical business intelligence (BI) use case. For example, internet advertisers might want to know &ldquo;How do women who bought an Apple computer in the last four days differ statistically from women who purchased a Ford pickup truck in the same time period?&rdquo; &nbspThe next question might be: &ldquo;Among all our ads, which one is the most profitable to show to the female Ford buyers based on their click-through likelihood?&rdquo; These are the questions asked by today&rsquo;s data scientists, and represent a very different use case from the traditional SQL analytics run by business intelligence specialists. It is widely assumed that data science will completely replace business intelligence over the next decade or two, since it represents a more sophisticated approach to mining data warehouses for new insights. As such, this document focuses on the needs of data scientists.</p>
+<p>I will start this section with a description of what I see as the job description of a data scientist. After cleaning and wrangling his data, which currently consumes the vast majority of his time and which is discussed in the section on data integration, he generally performs the following iteration:</p>
+<p><code>Until(tired) {<br/>&nbsp&nbsp Data management operation(s);<br/>&nbsp&nbsp Analytic operation(s);<br/>}</code></p>
+<p>In other words, he has an iterative discovery process, whereby he isolates a data set of interest and then performs some analytic operation on it. This often suggests either a different data set to try the same analytic on or a different analytic on the same data set. By and large what distinguishes data science from business intelligence is that the analytics are predictive modeling, machine learning, regressions, ... and not SQL analytics.</p>
+<p>In general, there is a pipeline of computations that constitutes the analytics. For example, Tamr has a module which performs entity consolidation (deduplication) on a collection of records, say N of them, at scale. To avoid the N ** 2 complexity of brute force algorithms, Tamr identifies a collection of &ldquo;features&rdquo;, divides them into ranges that are unlikely to co-occur, computes (perhaps multiple) &ldquo;bins&rdquo; for each record based on these ranges, reshuffles the data in parallel so it is partitioned by bin number, deduplicates each bin, merges the results, and finally constructs composite records out of the various clusters of duplicates. This pipeline is partly SQL-oriented (partitioning) and partly array-oriented analytics. Tamr seems to be typical of data science workloads in that it is a pipeline with half a dozen steps.</p>
+<p>Some analytic pipelines are &ldquo;one-shots&rdquo; which are run once on a batch of records. However, most production applications are incremental in nature. For example, Tamr is run on an initial batch of input records and then periodically a new &ldquo;delta&rdquo; must be processed as new or changed input records arrive. There are two approaches to incremental operation. If deltas are processed as &ldquo;mini batches&rdquo; at periodic intervals of (say) one day, one can add the next delta to the previously processed batch and rerun the entire pipeline on all the data each time the input changes. Such a strategy will be very wasteful of computing resources. Instead, we will focus on the case where incremental algorithms must be run after an initial batch processing operation. Such incremental algorithms require intermediate states of the analysis to be saved to persistent storage at each interation. Although the Tamr pipeline is of length 6 or so, each step must be saved to persistent storage to support incremental operation. Since saving state is a data management operation, this make the analytics pipeline of length one.</p>
+<p>The ultimate &ldquo;real time&rdquo; solution is to run incremental analytics continuously services by a streaming platform such as discussed in the section on new DBMS technology. Depending on the arrival rate of new records, either solution may be preferred.</p>
+<p>Most complex analytics are array-oriented, i.e. they are a collection of linear algebra operations defined on arrays. Some analytics are graph oriented, such as social network analysis. It is clear that arrays can be simulated on table-based systems and that graphs can be simulated on either table systems or array systems. As such, later in this document, we discuss how many different architectures are needed for this used case.</p>
+<p>Some problems deal with dense arrays, which are ones where almost all cells have a value. For example, an array of closing stock prices over time for all securities on the NYSE will be dense, since every stock has a closing price for each trading day. On the other hand, some problems are sparse. For example, a social networking use case represented as a matrix would have a cell value for every pair of persons that were associated in some way. Clearly, this matrix will be very sparse. Analytics on sparse arrays are quite different from analytics on dense arrays.</p>
+<p>In this section we will discuss such workloads at scale. If one wants to perform such pipelines on &ldquo;small data&rdquo; then any solution will work fine.</p>
+<p>The goal of a data science platform is to support this iterative discovery process. We begin with a sad truth. Most data science platforms are file-based and have nothing to do with DBMSs. The preponderance of analytic codes are run in R, MatLab, SPSS, SAS and operate on file data. In addition, many Spark users are reading data from files. An exemplar of this state of affairs is the NERSC high performance computing (HPC) system at Lawrence Berkeley Labs. This machine is used essentially exclusively for complex analytics; however, we were unable to get the Vertica DBMS to run at all, because of configuration restrictions. In addition, most &ldquo;big science&rdquo; projects build an entire software stack from the bare metal on up. It is plausible that this state of affairs will continue, and DBMSs will not become a player in this market. However, there are some hopeful signs such as the fact that genetic data is starting to be deployed on DBMSs, for example the 1000 Genomes Project&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-1000-genomes">13</a>]</span> is based on SciDB.</p>
+<p>In my opinion, file system technology suffers from several big disadvantages. First metadata (calibration, time, etc.) is often not captured or is encoded in the name of the file, and is therefore not searchable. Second, sophisticated data processing to do the data management piece of the data science workload is not available and must be written (somehow). Third, file data is difficult to share data among colleagues. I know of several projects which export their data along with their parsing program. The recipient may be unable to recompile this accessor program or it generates an error. In the rest of this discussion, I will assume that data scientists over time wish to use DBMS technology. Hence, there will be no further discussion of file-based solutions.</p>
+<p><center><table style="border: 1px solid black;border-collapse: collapse; margin-bottom: .5em;">  <tr><td style="padding: .5em; border: 1px solid black;"></td><td style="padding: .5em; border: 1px solid black;"><b>Loosely coupled</b></td><td style="padding: .5em; border: 1px solid black;"><b>Tightly coupled</b></td></tr>  <tr><td style="padding: .5em; border: 1px solid black;"><b>Array representation</b></td><td style="padding: .5em; border: 1px solid black;"></td><td style="padding: .5em; border: 1px solid black;">SciDB, TileDB, Rasdaman</td></tr>  <tr><td style="padding: .5em; border: 1px solid black;"><b>Table representation</b></td><td style="padding: .5em; border: 1px solid black;">Spark + HBase</td><td style="padding: .5em; border: 1px solid black;">MADLib, Vertica + R</td></tr>  </table>  <i>Table 1: A Classification of Data Science Platforms</i></center></p>
+<p>With this backdrop, we show in Table 1 a classification of data science platforms. To perform the data management portion, one needs a DBMS, according to our assumption above. This DBMS can have one of two flavors. First, it can be record-oriented as in a relational row store or a NoSQL engine or column-oriented as in most data warehouse systems. In these cases, the DBMS data structure is not focused on the needs of analytics, which are essentially all array-oriented, so a more natural choice would be an array DBMS. The latter case has the advantage that no conversion from a record or column structure is required to perform analytics. Hence, an array structure will have an innate advantage in performance. In addition, an array-oriented storage structure is multi-dimensional in nature, as opposed to table structures which are usually one-dimensional. Again, this is likely to result in higher performance.</p>
+<p>The second dimension concerns the coupling between the analytics and the DBMS. On the one hand, they can be independent, and one can run a query, copying the result to a different address space where the analytics are run. At the end of the analytics pipeline (often of length one), the result can be saved back to persistent storage. This will result in lots of data churn between the DBMS and the analytics. On the other hand, one can run analytics as user-defined functions in the same address space as the DBMS. Obviously the tight coupling alternative will lower data churn and should result in superior performance.</p>
+<p>In this light, there are four cells, as noted in Table 1. In the lower left corner, Map-Reduce used to be the exemplar; more recently Spark has eclipsed Map-Reduce as the platform with the most interest. There is no persistence mechanism in Spark, which depends on RedShift or H-Base, or ... for this purpose. Hence, in Spark a user runs a query in some DBMS to generate a data set, which is loaded into Spark, where analytics are performed. The DBMSs supported by Spark are all record or column-oriented, so a conversion to array representation is required for the analytics.</p>
+<p>A notable example in the lower right hand corner is MADLIB&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-madlib">8</a>]</span>, which is a user-defined function library supported by the RDBMS Greenplum. Other vendors have more recently started supporting other alternatives; for example Vertica supports user-defined functions in R. In the upper right hand corner are array systems with built-in analytics such as SciDB&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-scidb">15</a>]</span>, TileDB&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-bigdawg">6</a>]</span> or Rasdaman&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-rasdaman">1</a>]</span>.</p>
+<p>In the rest of this document, we discuss performance implications. First, one would expect performance to improve as one moves from lower left to upper right in Table 1. Second, most complex analytics reduce to a small collection of &ldquo;inner loop&rdquo; operations, such as matrix multiply, singular-value decomposition and QR decomposition. All are computationally intensive, typically floating point codes. It is accepted by most that hardware-specific pipelining can make nearly an order of magnitude difference in performance on these sorts of codes. As such, libraries such as BLAS, LAPACK, and ScaLAPACK, which call the hardware-optimized Intel MKL library, will be wildly faster than codes which don&rsquo;t use hardware optimization. Of course, hardware optimization will make a big difference on dense array calculations, where the majority of the effort is in floating point computation. It will be less significance on sparse arrays, where indexing issues may dominate the computation time.</p>
+<p>Third, codes that provide approximate answers are way faster than ones that produce exact answers. If you can deal with an approximate answer, then you will save mountains of time.</p>
+<p>Fourth, High Performance Computing (HPC) hardware are generally configured to support large batch jobs. As such, they are often structured as a computation server connected to a storage server by networking, whereby a program must pre-allocation disk space in a computation server cache for its storage needs. This is obviously at odds with a DBMS, which expects to be continuously running as a service. Hence, be aware that you may have trouble with DBMS systems on HPC environments. An interesting area of exploration is whether HPC machines can deal with both interactive and batch workloads simultaneously without sacrificing performance.</p>
+<p>Fifth, scalable data science codes invariably run on multiple nodes in a computer network and are often network-bound&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-duggan-array">5</a>]</span>. In this case, you must pay careful attention to networking costs and TCP-IP may not be a good choice. In general MPI is a higher performance alternative.</p>
+<p>Sixth, most analytics codes that we have tested fail to scale to large data set sizes, either because they run out of main memory or because they generate temporaries that are too large. Make sure you test any platform you would consider running on the data set sizes you expect in production!</p>
+<p>Seventh, the structure of your analytics pipeline is crucial. If your pipeline is on length one, then tight coupling is almost certainly a good idea. On the other hand, if the pipeline is on length 10, loose coupling will perform almost as well. In incremental operation, expect pipelines of length one.</p>
+<p>In general, all solutions we know of have scalability and performance problems. Moreover, most of the exemplars noted above are rapidly moving targets, so performance and scalability will undoubtedly improve. In summary, it will be interesting to see which cells in Table 1 have legs and which ones don&rsquo;t. The commercial marketplace will be the ultimate arbitrer!</p>
+<p>In my opinion, complex analytics is current in its &ldquo;wild west&rdquo; phase, and we hope that the next edition of the red book can identify a collection of core seminal papers. In the meantime, there is substantial research to be performed. Specifically, we would encourage more benchmarking in this space in order to identify flaws in existing platforms and to spur further research and development, especially benchmarks that look at end-to-end tasks involving both data management tasks and analytics. This space is moving fast, so the benchmark results will likely be transient. That&rsquo;s probably a good thing: we&rsquo;re in a phase where the various projects should be learning from each other.</p>
+<p>There is currently a lot of interest in custom parallel algorithms for core analytics tasks like convex optimization; some of it from the database community. It will be interesting to see if these algorithms can be incorporated into analytic DBMSs, since they don&rsquo;t typically follow a traditional dataflow execution style. An exemplar here is Hogwild! &nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-hogwild">12</a>]</span>, which achieves very fast performance by allowing lock-free parallelism in shared memory. Google Downpour&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-dean2012large">4</a>]</span> and Microsoft&rsquo;s Project Adam&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-projectadam">2</a>]</span> both adapt this basic idea to a distributed context for deep learning.</p>
+<p>Another area where exploration is warranted is out-of-memory algorithms. For example, Spark requires your data structures to fit into the combined amount of main memory present on the machines in your cluster. Such solutions will be brittle, and will almost certainly have scalability problems.</p>
+<p>Furthermore, an interesting topic is the desirable approach to graph analytics. One can either build special purpose graph analytics, such as GraphX&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-graphx">7</a>]</span> or GraphLab&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-graphlab">11</a>]</span> and connect them to some sort of DBMS. Alternately, one can simulate such codes with either array analytics, as espoused in D4M&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-d4m">10</a>]</span> or table analytics, as suggested in&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-vertexica">9</a>]</span>. Again, may the solution space bloom, and the commercial market place be the arbiter!</p>
+<p>Lastly, many analytics codes use MPI for communication, whereas DBMSs invariably use TCP-IP. Also, parallel dense analytic packages, such as ScaLAPACK, organize data into a block-cyclic organization across nodes in a computing cluster&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-scalapack">3</a>]</span>. I know of no DBMS that supports block-cyclic partitioning. Removing this impedance mismatch between analytic packages and DBMSs is an interesting research area, one that is targeted by the Intel-sponsored ISTC on Big Data&nbsp<span class="citationlink">[<a href="ch11-complexanalytics.html#ref-istc-bigdata">14</a>]</span>.</p>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-rasdaman">
+<p>[1] Baumann, P., Dehmel, A., Furtado, P., Ritsch, R. and Widmann, N. The multidimensional database system rasDaMan. <em>SIGMOD</em>, 1998.</p>
+</div>
+<div id="ref-projectadam">
+<p>[2] Chilimbi, T., Suzue, Y., Apacible, J. and Kalyanaraman, K. Project adam: Building an efficient and scalable deep learning training system. <em>OSDI</em>, 2014.</p>
+</div>
+<div id="ref-scalapack">
+<p>[3] Choi, J. and others ScaLAPACK: A portable linear algebra library for distributed memory computers&mdash;Design issues and performance. <em>Applied parallel computing computations in physics, chemistry and engineering science</em>. Springer. 95-106.</p>
+</div>
+<div id="ref-dean2012large">
+<p>[4] Dean, J., Corrado, G., Monga, R., Chen, K., Devin, M., Mao, M., Senior, A., Tucker, P., Yang, K., Le, Q.V. and others Large scale distributed deep networks. <em>Advances in neural information processing systems</em>, 2012, 1223-1231.</p>
+</div>
+<div id="ref-duggan-array">
+<p>[5] Duggan, J. and Stonebraker, M. Incremental elasticity for array databases. <em>Proceedings of the 2014 aCM sIGMOD international conference on management of data</em>, 2014, 409-420.</p>
+</div>
+<div id="ref-bigdawg">
+<p>[6] Elmore, A., Duggan, J., Stonebraker, M., Balazinska, M., Cetintemel, U., Gadepally, V., Heer, J., Howe, B., Kepner, J., Kraska, T. and others A demonstration of the BigDAWG polystore system. <em>VLDB</em>, 2015.</p>
+</div>
+<div id="ref-graphx">
+<p>[7] Gonzales, J.E., Xin, R.S., Crankshaw, D., Dave, A., Franklin, M.J. and Stoica, I. GraphX: Unifying data-parallel and graph-parallel analytics. <em>OSDI</em>, 2014.</p>
+</div>
+<div id="ref-madlib">
+<p>[8] Hellerstein, J.M., R&eacute;, C., Schoppmann, F., Wang, D.Z., Fratkin, E., Gorajek, A., Ng, K.S., Welton, C., Feng, X., Li, K. and others The MADlib analytics library: or MAD skills, the SQL. <em>VLDB</em>, 2012.</p>
+</div>
+<div id="ref-vertexica">
+<p>[9] Jindal, A., Rawlani, P., Wu, E., Madden, S., Deshpande, A. and Stonebraker, M. Vertexica: Your relational friend for graph analytics! <em>VLDB</em>, 2014.</p>
+</div>
+<div id="ref-d4m">
+<p>[10] Kepner, J. and others Dynamic distributed dimensional data model (D4M) database and computation system. <em>Acoustics, speech and signal processing (iCASSP), 2012 iEEE international conference on</em>, 2012, 5349-5352.</p>
+</div>
+<div id="ref-graphlab">
+<p>[11] Low, Y., Bickson, D., Gonzalez, J., Guestrin, C., Kyrola, A. and Hellerstein, J.M. Distributed graphLab: A framework for machine learning and data mining in the cloud. <em>VLDB</em>, 2012.</p>
+</div>
+<div id="ref-hogwild">
+<p>[12] Recht, B., Re, C., Wright, S. and Niu, F. Hogwild: A lock-free approach to parallelizing stochastic gradient descent. <em>Advances in neural information processing systems</em>, 2011, 693-701.</p>
+</div>
+<div id="ref-1000-genomes">
+<p>[13] Siva, N. 1000 genomes project. <em>Nature biotechnology</em>. 26, 3 (2008), 256-256.</p>
+</div>
+<div id="ref-istc-bigdata">
+<p>[14] Stonebraker, M., Madden, S. and Dubey, P. Intel big data science and technology center vision and execution plan. <em>ACM SIGMOD Record</em>. 42, 1 (2013), 44-49.</p>
+</div>
+<div id="ref-scidb">
+<p>[15] The SciDB Development Team Overview of SciDB: Large scale array storage, processing and analysis. <em>SIGMOD</em>, 2010.</p>
+</div>
+</div>
+
+<div class="comments"><h3 class="comment-header" class="numcomments">Comments</h3>
+            <div class="div-comment">
+              <ul class="comment-meta">
+                <li class="comment-author vcard">
+                  <div class="fn">
+                    Joe Hellerstein
+                  </div>
+                </li>
+                <li>
+                  6 December 2015
+                </li>
+              </ul>
+              <div class="comment-content">
+                <p>I have a rather different take on this area than Mike, both from a business perspective and in terms of research opportunities. At base, I recommend a &ldquo;big tent&rdquo; approach to this area. DB folk have much to contribute, but we&rsquo;ll do far better if we play well with others.</p>
+<p>Let&rsquo;s look at the industry. First off, advanced analytics of the sort we&rsquo;re discussing here will not replace BI as Mike suggests. The BI industry is healthy and growing. More fundamentally, as noted statistician John Tukey pointed out in his foundational work on Exploratory Data Analysis,<a href="ch11-complexanalytics.html#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> a chart is often much more valuable than a complex statistical model. Respect the chart!</p>
+<p>That said, the advanced analytics and data science market is indeed growing and poised for change. But unlike the BI market, this is not a category where database technology currently plays a significant role. The incumbent in this space is SAS, a company that makes multiple billions of dollars in revenue each year, and is decidedly not a database company. When VCs look at companies in this space, they&rsquo;re looking for &ldquo;the next SAS&rdquo;. SAS users are not database users. And the users of open-source alternatives like R are also not database users. If you assume as Mike does that &ldquo;data scientists will want to use DBMS technology&rdquo; &mdash; particularly a monolithic &ldquo;analytic DBMS&rdquo; &mdash; you&rsquo;re swimming upstream in a strong current.</p>
+<p>For a more natural approach to the advanced analytics market, ask yourself this: what is a serious threat to SAS? Who could take a significant bite out of the cash that enterprises currently spend there? Here are some starting points to consider:</p>
+<ol>
+<li><p><span><strong>Open source stats programming</strong></span>: This includes R and the Python data science ecosystem (NumPy, SciKit-Learn, iPython Notebook). These solutions don&rsquo;t currently don&rsquo;t scale well, but efforts are underway aggressively to address those limitations. This ecosystem could evolve more quickly than SAS.</p></li>
+<li><p><span><strong>Tight couplings to big data platforms</strong></span>. When the data is big enough, performance requirements may &ldquo;drag&rdquo; users to a new platform &mdash; namely a platform that already hosts the big data in their organization. Hence the interest in &ldquo;DataFrame&rdquo; interfaces to platforms like Spark/MLLib, PivotalR/MADlib, and Vertica dplyr. Note that the advanced analytics community is highly biased toward open source. The cloud is also an interesting platform here, and not one where SAS has an advantage.</p></li>
+<li><p><span><strong>Analytic Services</strong></span>. By this I mean interactive online services that use analytic methods at their core: recommender systems, real-time fraud detection, predictive equipment maintenance and so on. This space has aggressive system requirements for response times, request scaling, fault tolerance and ongoing evolution that products like SAS don&rsquo;t address. Today, these services are largely built with custom code. This doesn&rsquo;t scale across industries &mdash; most companies can&rsquo;t recruit developers that can work at this level. So there is ostensibly an opportunity here in commoditizing this technology for the majority of use cases. But it&rsquo;s early days for this market &mdash; it remains to be seen whether analytics service platforms can be made simple enough for commodity deployment. If the tech evolves, then cloud-based services may have significant opportunities for disruption here as well.</p></li>
+</ol>
+<p>On the research front, I think it&rsquo;s critical to think outside the database box, and collaborate aggressively. To me this almost goes without saying. Nearly every subfield in computing is working on big data analytics in some fashion, and smart people from a variety of areas are quickly learning their own lessons about data and scale. We can have fun playing with these folks, or we can ignore them to our detriment.</p>
+<p>So where can database research have a big impact in this space? Some possiblities that look good to me include these:</p>
+<ol>
+<li><p><span><strong>New approaches to Scalability</strong></span>. We have successfully shown that parallel dataflow &mdash; think MADlib, MLlib or the work of Ordonez at Teradata<a href="ch11-complexanalytics.html#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> &mdash; can take you a long way toward implementing scalable analytics <em>without</em> doing violence at the system architecture level. That&rsquo;s useful to know. Moving forward, can we do something that is usefully faster and more scalable than parallel dataflow over partitioned data? Is that necessary? Hogwild! has generated some of the biggest excitement here; note that it&rsquo;s work that spans the DB and ML communities.</p></li>
+<li><p><span><strong>Distributed infrastructure for analytic services</strong></span>. As I mentioned above, analytic services are an interesting opportunity for innovation. The system infrastructure issues on this front are fairly wide open. What are the main components of architectures for analytics services? How are they stitched together? What kind of data consistency is required across the components? So-called Parameter Servers are a topic of interest right now, but only address a piece of the puzzle.<a href="ch11-complexanalytics.html#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> There has been some initial work on online serving, evolution and deployment of models.<a href="ch11-complexanalytics.html#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a> I hope there will be more.</p></li>
+<li><p><span><strong>Analytic lifecycle and metadata management</strong></span>. This is an area where I agree with Mike. Analytics is often a people-intensive exercise, involving data exploration and transformation in addition to core statistical modeling. Along the way, a good deal of context needs to be managed to understand how models and data products get developed across a range of tools and systems. The database commmunity has perspectives on this area that are highly relevant, including workflow management, data lineage and materialized view maintenance. VisTrails is an example of research in this space that is being used in practice.<a href="ch11-complexanalytics.html#fn5" class="footnoteRef" id="fnref5"><sup>5</sup></a> This is an area of pressing need in industry as well &mdash; especially work that takes into account the real-world diversity of analytics tools and systems in the field.</p></li>
+</ol>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Tukey, John. Exploratory Data Analysis. Pearson, 1977.<a href="ch11-complexanalytics.html#fnref1">&#8617;</a></p></li>
+<li id="fn2"><p>e.g., Ordonez, C. Integrating K-means clustering with a relational DBMS using SQL. TKDE 18(2) 2006. Also Ordonez, C. Statistical Model Computation with UDFs. TKDE 22(12), 2010.<a href="ch11-complexanalytics.html#fnref2">&#8617;</a></p></li>
+<li id="fn3"><p>Ho, Q., et al. More effective distributed ML via a stale synchronous parallel parameter server. NIPS 2013.<a href="ch11-complexanalytics.html#fnref3">&#8617;</a></p></li>
+<li id="fn4"><p>Crankshaw, D, et al. The missing piece in complex analytics: Low latency, scalable model management and serving with Velox. CIDR 2015. See also Schleier-Smith, J. An Architecture for Agile Machine Learning in Real-Time Applications. KDD 2015.<a href="ch11-complexanalytics.html#fnref4">&#8617;</a></p></li>
+<li id="fn5"><p>See http://www.vistrails.org.<a href="ch11-complexanalytics.html#fnref5">&#8617;</a></p></li>
+</ol>
+</div>
+
+             </div>
+            </div><!-- /.div-comment -->
+          </div>
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

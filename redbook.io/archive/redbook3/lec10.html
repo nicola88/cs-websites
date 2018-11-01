@@ -1,0 +1,199 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<meta NAME="Author" CONTENT="Joe Hellerstein">
+
+<title>Concurrency Control 2: Optimistic Concurrency Control</title>
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Concurrency Control 2: Optimistic Concurrency Control</h1>
+
+<h2>Kung &amp; Robinson</h2>
+
+<p>Attractive, simple idea: optimize case where conflict is rare. </p>
+
+<p>Basic idea: all transactions consist of three phases: </p>
+
+<ol>
+  <li>Read. Here, all writes are to private storage (shadow copies).</li>
+  <li>Validation. Make sure no conflicts have occurred.</li>
+  <li>Write. If Validation was successful, make writes public. (If not, abort!)</li>
+</ol>
+
+<p>When might this make sense? Three examples: </p>
+
+<ol>
+  <li>All transactions are readers.</li>
+  <li>Lots of transactions, each accessing/modifying only a small amount of data, large total
+    amount of data.</li>
+  <li>Fraction of transaction execution in which conflicts &quot;really take place&quot; is
+    small compared to total pathlength.</li>
+</ol>
+
+<p>The Validation Phase </p>
+
+<ul>
+  <li>Goal: to guarantee that only serializable schedules result.</li>
+  <li>Technique: actually find an equivalent serializable schedule. That is,</li>
+</ul>
+
+<blockquote>
+  <ol>
+    <li>Assign each transaction a TN during execution.</li>
+    <li>Ensure that if you run transactions in order induced by &quot;&lt;&quot; on TNs, you get
+      an equivalent serial schedule.</li>
+  </ol>
+</blockquote>
+
+<p>Suppose TN(Ti) &lt; TN(Tj). Then if one of the following three conditions holds,
+it&#146;s serializable: </p>
+
+<ol>
+  <ol>
+    <li>Ti completes its write phase before Tj starts its read phase.</li>
+    <li>WS(Ti) <font FACE="Symbol">Ç </font>RS(Tj) = <font FACE="Symbol">Æ</font><font FACE="Tahoma"> </font>and Ti completes its write phase before Tj starts its write phase.</li>
+    <li>WS(Ti)<font FACE="Symbol"> Ç</font> RS(Tj) = <font FACE="Symbol">Æ</font> and WS(Ti) <font FACE="Symbol">Ç</font> WS(Tj) = <font FACE="Symbol">Æ</font> and Ti completes its read
+      phase before Tj completes its read phase.</li>
+  </ol>
+</ol>
+
+<p>Is this correct? Each condition guarantees that the three possible classes of conflicts
+(W-R, R-W, W-W) go one way only. </p>
+
+<ol>
+  <li>For condition 1 this is obvious (true serial execution!)</li>
+  <li>For condition 2,</li>
+</ol>
+
+<ul>
+  <ul>
+    <li>No W-R conflicts since WS(Ti) <font FACE="Symbol">Ç</font> RS(Tj) = <font FACE="Symbol">Æ</font></li>
+    <li>In all R-W conflicts, Ti precedes Tj, since the write phase (and hence the read phase)
+      of Ti precedes that of Tj.</li>
+    <li>In all W-W conflicts, Ti precedes Tj by definition.</li>
+  </ul>
+</ul>
+
+<ol>
+  <li type="disc" value="3">For condition 3,</li>
+</ol>
+
+<ul>
+  <ul>
+    <li>No W-R conflicts since WS(Ti) <font FACE="Symbol">Ç</font> RS(Tj) = <font FACE="Symbol">Æ</font>
+      .</li>
+    <li>No W-W conflicts since WS(Ti) <font FACE="Symbol">Ç</font> WS(Tj) = <font FACE="Symbol">Æ</font>
+      .</li>
+    <li>In all R-W conflicts, Ti precedes Tj, since the read phase of Ti precedes the write
+      phase of Tj.</li>
+  </ul>
+</ul>
+<b>
+
+<p>Assigning TN's</b>: at beginning of transactions is not optimistic; do it at end of
+read phase. Note: this satisfies second half of condition (3). </p>
+
+<p><b>Note</b>: a transaction T with a very long read phase must check write sets of all
+transactions begun and finished while T was active.&nbsp; This could require unbounded
+buffer space. <br>
+<b>Solution</b>: bound buffer space, toss out when full, abort transactions that could be
+affected. </p>
+
+<ul>
+  <li>Gives rise to starvation. Solve by having starving transaction write-lock the whole DB!</li>
+</ul>
+
+<p>Serial Validation </p>
+
+<p>Only checks properties (1) and (2), since writes are not going to be interleaved. </p>
+
+<p>Simple technique: make a critical section around &lt;get xactno; validate (1) or (2)
+for everybody from your start to finish; write&gt;. Not great if: </p>
+
+<ul>
+  <ul>
+    <li>write takes a long time</li>
+    <li>SMP &#150; might want to validate 2 things at once if there&#146;s not enough reading to
+      do</li>
+  </ul>
+</ul>
+
+<p>Improvement to speed up validation: </p>
+
+<p>repeat as often as you want { </p>
+
+<ul>
+  <ul>
+    <p>get current xactno. </p>
+    <p>Check if you&#146;re valid with everything up to that xactno.</p>
+  </ul>
+</ul>
+
+<p>} </p>
+
+<p>&lt;get xactno; validate with new xacts; write&gt;. </p>
+
+<p>Note: read-only xacts don&#146;t need to get xactnos! Just need to validate up to
+highest xactno at end of read phase (without critical section!) </p>
+
+<p>&nbsp; <br>
+&nbsp; </p>
+
+<h3>Parallel Validation</h3>
+
+<p>Want to allow interleaved writes. <br>
+Need to be able to check condition (3). </p>
+
+<ul>
+  <ul>
+    <li>Save active xacts (those which have finished reading but not writing).</li>
+    <li>Active xacts can&#146;t intersect your read or write set.</li>
+    <li>Validation:</li>
+  </ul>
+</ul>
+
+<ul>
+  <ul>
+    <p>&lt;get xactno; copy active; add yourself to active&gt; <br>
+    check (1) or (2) against everything from start to finish; <br>
+    check (3) against all xacts in active copy <br>
+    If all&#146;s clear, go ahead and write. <br>
+    &lt;bump xact counter, remove yourself from active&gt;.</p>
+  </ul>
+</ul>
+
+<p>Small critical section. <br>
+Problems: </p>
+
+<ul>
+  <ul>
+    <li>a member of active that causes you to abort may have aborted</li>
+    <ul>
+      <li>can add even more bookkeeping to handle this</li>
+      <li>can make active short with improvement analogous to that of serial validation</li>
+    </ul>
+  </ul>
+</ul>
+<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

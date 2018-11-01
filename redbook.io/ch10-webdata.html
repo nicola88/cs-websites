@@ -1,0 +1,94 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 10: Web Data</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch11-complexanalytics.html">Next Chapter</a></div>
+<div class="headerlink"><a href="ch9-languages.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch10-webdata.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch10-webdata">Chapter 10: Web Data</div>
+	<div class="introauthor">Introduced by Peter Bailis</div>
+
+      <div class="paperchoicebox">
+	<div class="paperchoicetitle">Readings:</div>
+	<div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=9820961755208603037" target="_blank">Sergey Brin and Larry Page. <span class="papertitle">The Anatomy of a Large-scale Hypertextual Web Search Engine</span>. <span class="papervenue">WWW</span>, 1998.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=15869287167041695406" target="_blank">Eric A. Brewer. <span class="papertitle">Combining Systems and Databases: A Search Engine Retrospective</span>. <span class="papervenue">Readings in Database Systems, Fourth Edition</span>, 2005.</a></div><div class="paperchoice"><a href="https://scholar.google.com/scholar?cluster=11659194181134800008" target="_blank">Michael J. Cafarella, Alon Halevy, Daisy Zhe Wang, Eugene Wu, Yang Zhang. <span class="papertitle">WebTables: Exploring the Power of Tables on the Web</span>. <span class="papervenue">VLDB</span>, 2008.</a></div>
+      </div>
+
+    
+
+      <div class="intro">
+      <p>Since the previous edition of this collection, the World Wide Web has unequivocally laid any lingering questions regarding its longevity and global impact to rest. Several multi-Billion-user services including Google and Facebook have become central to modern life in the first world, while Internet- and Web-related technology has permeated both business and personal interactions. The Web is undoubtedly here to stay&mdash;at least for the foreseeable future.</p>
+<p>Web data systems bring a new set of challenges, including high scale, data heterogeneity, and a complex and evolving set of user interaction modes. Classical relational database system designs did not have the Web workload in mind, and are not the technology of choice in this context. Rather, Web data management requires a melange of techniques spanning information retrieval, database internals, data integration, and distributed systems. In this section, we include three papers that highlight technical solutions to problems inherent in Web data management.</p>
+<p>Our first two papers describe the internals of search engine and indexing technology. Our first paper, from Larry Page and Sergey Brin, Google co-founders, describes the internals of an early prototype of Google. The paper is interesting both from a historical perspective as well as a technical one. The first Web indices, such as Yahoo!, consisted of human-curated &ldquo;directories&rdquo;. While directory curation proved useful, directories were difficult to scale and required considerable human power to maintain. As a result, a number of search engines, including Google but also Inktomi, co-created by Eric Brewer, author of the second paper, sought automated approaches. The design of these engines is conceptually straightforward: a set of crawlers downloads copies of web data and builds (and maintains) read-only indices that are used to compute a relevance scoring function. Queries, in turn, are serviced by a front-end web service that reads from the indices and presents an ordered set of results, ranked by scoring function.</p>
+<p>The implementation and realization of these engines is complex. For example, scoring algorithms are highly tuned, and their implementation is considered a trade secret even within search engines today: Web authors have a large incentive to manipulate the scoring function to their advantage. The PageRank algorithm described in the Google paper (and detailed in&nbsp<span class="citationlink">[<a href="ch10-webdata.html#ref-pagerank">5</a>]</span>) is an famous example of a scoring function, and measures the &ldquo;influence&rdquo; of each page measured according to the hyperlink graph. Both papers describe how a combination of mostly unspecified attributes is used for scoring in practice, including &ldquo;anchor text&rdquo; (providing context on the source of a link) and other forms of metadata. The algorithmic foundations of these techniques, such as keyword indexing date, date to the 1950s&nbsp<span class="citationlink">[<a href="ch10-webdata.html#ref-luhn">4</a>]</span>, while others, such as TFxIDF ranking and inverted indices, date to the 1960s&nbsp<span class="citationlink">[<a href="ch10-webdata.html#ref-salton-indexing">6</a>]</span>. Many of the key systems innovations in building Internet search engines came in scaling them and in handling dirty, heterogenous data sources.</p>
+<p>While the high-level details of these papers are helpful in understanding how modern search engines operate, these papers are also interesting for their commentary on the process of building a production Web search engine. A central message in each is that Web services must account for variety; the Google authors describe how assumptions made in typical information retrieval techniques may no longer hold in a Web context (e.g., the &ldquo;Bill Clinton sucks&rdquo; web page). Web sources change at varying rates, necessitating prioritized crawling for maintaining fresh indices. Brewer also highlights the importance of fault tolerance and availability of operation, echoing his experience in the field building Inktomi (which also led to the development of concepts including <em>harvest</em> and <em>yield</em>&nbsp<span class="citationlink">[<a href="ch10-webdata.html#ref-harvest-yield">2</a>]</span> and the CAP Theorem; see <a href="ch7-queryoptimization.html">Chapter 7</a>). Brewer outlines the difficulty in building a search engine using commodity database engines (e.g., Informix was 10x slower than Inktomi&rsquo;s custom solution). However, he notes that the principles of database system design, including &ldquo;top-down&rdquo; design, data independence, and a declarative query engine, are valuable in this context&mdash;if appropriately adapted.</p>
+<p>Today, Web search engines are considered mature technology. However, competing services continually improve search experience by adding additional functionality. Today&rsquo;s search engines are much more than information retrieval engines for textual data web pages; the content of the first two papers is a small subset of the internals of a service like Google or Baidu. These services provide a range of functionality, including targeted advertisement, image search, navigation, shopping, and mobile search. There is undoubtedly bleed-over in retrieval, entity resolution, and indexing techniques between these domains, but each requires domain-specific adaptation.</p>
+<p>As an example of a new type of search enabled by massive Web data, we include a paper from the WebTables project led by Alon Halevy at Google. WebTables allows users to query and understand relationships between data stored in HTML tables. HTML tables are inherently varied in structure due to a lack of fixed schema. However, aggregating enough of them at Web scale and performing some lightweight automated data integration enables some interesting queries (e.g., a table of influenza outbreak locations can be combined with a table containing data about city populations). Mining the schema of these tables, determining their structure and veracity (e.g., only 1% of the tables in the paper corpus were, in fact, relations), and efficiently inferring their relationships is difficult. The paper we have included describes techniques for building an attribute correlation statistics database (AcsDB) to answer queries about the table metadata, enabling novel functionality including schema auto-complete. The WebTables project continues today in various forms, including Google Table Search and integration with Google&rsquo;s core search technology; an update on the project can be found in&nbsp<span class="citationlink">[<a href="ch10-webdata.html#ref-webtables-update">1</a>]</span>. The ability to produce structured search results is desirable in several non-traditional domains, including mobile, contextual, and audio-based search.</p>
+<p>The WebTables paper in particular highlights the power of working with Web data at scale. In a 2009 article, Halevy and colleagues describe the &ldquo;Unreasonable Effectiveness of Data,&rdquo; effectively arguing that, with sufficient amount of data, enough latent structure is captured to make modeling simpler: relatively simple data mining techniques often beat more mathematically sophisticated statistical models&nbsp<span class="citationlink">[<a href="ch10-webdata.html#ref-unreasonable-data">3</a>]</span>. This argument stresses the potential for unlocking hidden structure by sheer volume of data and computation, whether mining schema correlations or performing machine translation between languages. With a big enough haystack, needles become large. Even examining 1% of the tables in the web corpus, the VLDB 2009 paper studies 154M distinct relations, a corpus that was &ldquo;five orders of magnitude larger than the largest one [previously] considered.&rdquo;</p>
+<p>The barrier for performing analysis of massive datasets and system architectures outside of these companies is decreasing, due to cheap commodity storage and cloud computing resources. However, it is difficult to replicate the feedback loop between users (e.g., spammers) and algorithms (e.g., search ranking algorithms). Internet companies are uniquely positioned to pioneer systems designs that account for this feedback loop. As database technologies power additional interactive domains, we believe this paradigm will become even more important. That is, the database market and interesting database workloads may benefit from similar analyses. For example, it would be interesting to perform a similar analysis on hosted database platforms such as Amazon Redshift and Microsoft SQL Azure, enabling a variety of functionality including index auto-tuning, adaptive query optimization, schema discovery from unstructured data, query autocomplete, and visualization recommendations.</p>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-webtables-update">
+<p>[1] Balakrishnan, S., Halevy, A., Harb, B., Lee, H., Madhavan, J., Rostamizadeh, A., Shen, W., Wilder, K., Wu, F. and Yu, C. Applying webTables in practice. <em>CIDR</em>, 2015.</p>
+</div>
+<div id="ref-harvest-yield">
+<p>[2] Brewer, E. and others Lessons from giant-scale services. <em>Internet Computing, IEEE</em>. 5, 4 (2001), 46-55.</p>
+</div>
+<div id="ref-unreasonable-data">
+<p>[3] Halevy, A., Norvig, P. and Pereira, F. The unreasonable effectiveness of data. <em>IEEE Intelligent Systems</em>. 24, 2 (Mar. 2009), 8-12.</p>
+</div>
+<div id="ref-luhn">
+<p>[4] Luhn, H.P. Auto-encoding of documents for information retrieval systems. <em>Modern Trends in Documentation</em>. (1959), 45-58.</p>
+</div>
+<div id="ref-pagerank">
+<p>[5] Page, L., Brin, S., Motwani, R. and Winograd, T. The PageRank citation ranking: Bringing order to the web. Stanford InfoLab. 1999. SIDL-WP-1999-0120.</p>
+</div>
+<div id="ref-salton-indexing">
+<p>[6] Salton, G. and Lesk, M.E. Computer evaluation of indexing and text processing. <em>Journal of the ACM (JACM)</em>. 15, 1 (1968), 8-36.</p>
+</div>
+</div>
+
+
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

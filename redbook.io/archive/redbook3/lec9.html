@@ -1,0 +1,561 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<title>Concurrency Control 1: Locking &amp; Degrees of Consistency</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Concurrency Control 1: Locking and Degrees of Consistency</h1>
+
+<h3>Transaction Refresher</h3>
+
+<p>Statement of problem: 
+
+<ul>
+  <li>Database: a fixed set of named resources (e.g. tuples, pages, files, whatever)</li>
+  <li>Consistency Constraints: must be true for DB to be considered &quot;consistent&quot;.
+    Examples:</li>
+  <ul>
+    <li>sum(account balances) = sum(assets)</li>
+    <li>P is index pages for R</li>
+    <li>ACCT-BAL &gt; 0</li>
+    <li>each employee has a valid department</li>
+  </ul>
+  <li>Transaction: a sequence of actions bracketed by begin and end statements. Each
+    transaction (&quot;xact&quot;) is assumed to maintain consistency (this can be guaranteed
+    by the system).</li>
+  <li>Goal: Concurrent execution of transactions, with high throughput/utilization, low
+    response time, and fairness.</li>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>The ACID test for transaction management: 
+
+<ul>
+  <li>Atomicity: Either all actions within a transaction occur, or none do (&quot;all or
+    nothing at all&quot;)</li>
+  <li>Consistency: Each transaction takes the database from one consistent state to another.
+    No intermediate states are observable. (We will refine this definition today)</li>
+  <li>Isolation: Events within a transaction must be invisible to other transactions. This
+    allows transactions to be aborted in isolation (i.e. avoids cascaded aborts)</li>
+  <li>Durability: Once a transaction is committed, its results must be preserved even in the
+    case of failures.</li>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>C &amp; I guaranteed by concurrency control. A &amp; D guaranteed by recovery. </p>
+
+<p>&nbsp; </p>
+
+<p>A transaction schedule: </p>
+
+<table CELLPADDING="0" WIDTH="307">
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%">T0</td>
+    <td VALIGN="TOP" WIDTH="51%">T1</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%">read(A)</td>
+    <td VALIGN="TOP" WIDTH="51%"></td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%">A = A - 50</td>
+    <td VALIGN="TOP" WIDTH="51%"></td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%">write(A)</td>
+    <td VALIGN="TOP" WIDTH="51%"></td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%"></td>
+    <td VALIGN="TOP" WIDTH="51%">read(A)</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%"></td>
+    <td VALIGN="TOP" WIDTH="51%">temp = A*0.1</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%"></td>
+    <td VALIGN="TOP" WIDTH="51%">A = A - temp</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%"></td>
+    <td VALIGN="TOP" WIDTH="51%">write(A)</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%">read(B)</td>
+    <td VALIGN="TOP" WIDTH="51%"></td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%">B = B + 50</td>
+    <td VALIGN="TOP" WIDTH="51%"></td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%">write(B)</td>
+    <td VALIGN="TOP" WIDTH="51%"></td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%"></td>
+    <td VALIGN="TOP" WIDTH="51%">read(B)</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%"></td>
+    <td VALIGN="TOP" WIDTH="51%">B = B + temp</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="49%"></td>
+    <td VALIGN="TOP" WIDTH="51%">write(B)</td>
+  </tr>
+</table>
+
+<p>&nbsp; </p>
+
+<p>The system &quot;understands&quot; only reads and writes; cannot assume any semantics
+of other operations. </p>
+
+<p>Arbitrary interleaving can lead to: 
+
+<ul>
+  <li>temporary inconsistencies (ok, unavoidable)</li>
+  <li>&quot;permanent&quot; inconsistencies, that is, inconsistencies that remain after
+    transactions have completed.</li>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>Some definitions: 
+
+<ul>
+  <li>Schedule: A &quot;history&quot; or &quot;audit trail&quot; of all actions in the system,
+    the xacts that performed them, and the objects they affected.</li>
+  <li>Serial Schedule: A schedule is serial if all the actions of each single xact appear
+    together.</li>
+  <li>Equivalence of schedules: Two schedules S1, S2 are considered computationally equivalent
+    if:</li>
+</ul>
+
+<blockquote>
+  <ol>
+    <li>The set of transactions that participate in S1 and S2 are the same.</li>
+    <li>For each data item Q in S1, if transaction Ti executes read(Q) and the value of Q read
+      by Ti was written by Tj, then the same will hold in S2. [reads are all the same]</li>
+    <li>For each data item Q in S1, if transaction Ti executes the last write(Q) instruction,
+      then the same holds in S2. [the same writers &quot;win&quot;]</li>
+  </ol>
+</blockquote>
+
+<ul>
+  <li>Serializability: A schedule S is serializable if there exists a serial schedule S&#146;
+    such that S and S&#146; are computationally equivalent.</li>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>One way to think about concurrency control &#150; in terms of dependencies: 
+
+<ol>
+  <li>T1 reads N ... T2 writes N: a RW dependency</li>
+  <li>T1 writes N ... T2 reads N: a WR dependency</li>
+  <li>T1 writes N ... T2 writes N: a WW dependency</li>
+</ol>
+
+<p>Can construct a &quot;serialization graph&quot; for a schedule S (SG(S)): 
+
+<ul>
+  <li>nodes are transactions T1, ..., Tn</li>
+  <li>Edges: Ti -&gt; Tj if there is a RW, WR, or WW dependency from Ti to Tj</li>
+</ul>
+
+<p>Theorem: A schedule S is serializable iff SG(S) is acyclic. <br>
+&nbsp; </p>
+
+<h3>Locking</h3>
+
+<p>A technique to ensure serializability, but hopefully preserve high concurrency as well.
+The winner in industry. <br>
+Basics: 
+
+<ul>
+  <li>A &quot;lock manager&quot; records what entities are locked, by whom, and in what
+    &quot;mode&quot;. Also maintains wait queues.</li>
+  <li>A well-formed transaction locks entities before using them, and unlocks them some time
+    later.</li>
+</ul>
+
+<p>Multiple lock modes: Some data items can be shared, so not all locks need to be
+exclusive. <br>
+Lock compatibility table 1: <br>
+Assume two lock modes: shared (S) and exclusive (X) locks. </p>
+
+<table BORDER="1" CELLSPACING="0" CELLPADDING="0" WIDTH="75">
+  <tr>
+    <td VALIGN="TOP" WIDTH="34%">&nbsp;</td>
+    <td VALIGN="TOP" WIDTH="33%">S</td>
+    <td VALIGN="TOP" WIDTH="34%">X</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="34%">S</td>
+    <td VALIGN="TOP" WIDTH="33%">T</td>
+    <td VALIGN="TOP" WIDTH="34%">F</td>
+  </tr>
+  <tr>
+    <td VALIGN="TOP" WIDTH="34%">X</td>
+    <td VALIGN="TOP" WIDTH="33%">F</td>
+    <td VALIGN="TOP" WIDTH="34%">F</td>
+  </tr>
+</table>
+
+<p>If you request a lock in a mode incompatible with an existing lock, you must
+wait.&nbsp; </p>
+
+<p>Two-Phase Locking (2PL): 
+
+<ul>
+  <li>Growing Phase: A transaction may obtain locks but not release any lock.</li>
+  <li>Shrinking Phase: A transaction may release locks, but not obtain any new lock. (in fact,
+    locks are usually all released at once to avoid &quot;cascading aborts&quot;.)</li>
+</ul>
+
+<p>Theorem: If all xacts are well-formed and follow 2PL, then any resulting schedule is
+serializable <br>
+(note: this is if, not if and only if!) <br>
+&nbsp; </p>
+
+<h3>Gray, et al.: Granularity of Locks</h3>
+
+<p>Theme: Correctness and performance 
+
+<ul>
+  <li>Granularity tradeoff: small granularity (e.g. field of a tuple) means high concurrency
+    but high overhead. Large granularity (e.g. file) means low overhead but low concurrency.</li>
+  <li>Possible granularities:</li>
+  <ul>
+    <li>DB</li>
+    <li>Areas</li>
+    <li>Files</li>
+    <li>Pages</li>
+    <li>Tuples (records)</li>
+    <li>fields of tuples</li>
+  </ul>
+  <li>Want hierarchical locking, to allow &quot;large&quot; xacts to set large locks,
+    &quot;small&quot; xacts to set small locks</li>
+  <li>Problem: T1 S-locks a record in a file, then T2 X-locks the whole file. How can T2
+    discover that T1 has locked the record?</li>
+  <li>Solution: &quot;Intention&quot; locks<table BORDER="1" CELLSPACING="0" CELLPADDING="0" WIDTH="250" HSPACE="15">
+      <tr>
+        <td VALIGN="TOP" WIDTH="17%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="16%">NL</td>
+        <td VALIGN="TOP" WIDTH="13%">IS</td>
+        <td VALIGN="TOP" WIDTH="14%">IX</td>
+        <td VALIGN="TOP" WIDTH="12%">S</td>
+        <td VALIGN="TOP" WIDTH="17%">SIX</td>
+        <td VALIGN="TOP" WIDTH="12%">X</td>
+      </tr>
+      <tr>
+        <td VALIGN="TOP" WIDTH="17%">NL</td>
+        <td VALIGN="TOP" WIDTH="16%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="13%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="14%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="17%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+      </tr>
+      <tr>
+        <td VALIGN="TOP" WIDTH="17%">IS</td>
+        <td VALIGN="TOP" WIDTH="16%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="13%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="14%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="17%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+      </tr>
+      <tr>
+        <td VALIGN="TOP" WIDTH="17%">IX</td>
+        <td VALIGN="TOP" WIDTH="16%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="13%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="14%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="17%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+      </tr>
+      <tr>
+        <td VALIGN="TOP" WIDTH="17%">S</td>
+        <td VALIGN="TOP" WIDTH="16%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="13%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="14%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="17%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+      </tr>
+      <tr>
+        <td VALIGN="TOP" WIDTH="17%">SIX</td>
+        <td VALIGN="TOP" WIDTH="16%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="13%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="14%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="17%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+      </tr>
+      <tr>
+        <td VALIGN="TOP" WIDTH="17%">X</td>
+        <td VALIGN="TOP" WIDTH="16%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="13%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="14%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="17%">&nbsp;</td>
+        <td VALIGN="TOP" WIDTH="12%">&nbsp;</td>
+      </tr>
+    </table>
+  </li>
+</ul>
+
+<p>&nbsp; 
+
+<ul>
+  <ul>
+    <li>IS and IX locks</li>
+    <li>T1 obtains S lock on record in question, but first gets IS lock on file.</li>
+    <li>Now T2 cannot get X lock on file</li>
+    <li>However, T3 can get IS or S lock on file (the reason for distinguishing IS and IX: if
+      there were only I, T3 couldn&#146;t get an S lock on file)</li>
+    <li>For higher concurrency, one more mode: SIX. Intuitively, you read all of the object but
+      only lock some subparts. Allows concurrent IS locks (IX alone would not). Note: gives S
+      access, so disallows IX to others.</li>
+    <li>requires that xacts lock items root to leaf in the hierarchy, unlock leaf to root</li>
+    <li>generalization to DAG of resources: X locks all paths to a node, S locks at least one.</li>
+  </ul>
+</ul>
+
+<p>Some implementation background (not in paper): 
+
+<ul>
+  <li>maintain a lock table as hashed main-mem structure</li>
+  <li>lock/unlock must be atomic operations (protected by critical section)</li>
+  <li>typically costs several hundred instructions to lock/unlock an item</li>
+  <li>suppose T1 has an S lock on P, T2 is waiting to get X lock on P, and now T3 wants S lock
+    on P. Do we grant T3 an S lock?</li>
+</ul>
+
+<blockquote>
+  <p>No! (starvation, unfair, etc.) So... </p>
+</blockquote>
+
+<ul>
+  <ul>
+    <li>Manage FCFS queue for each locked object with outstanding requests</li>
+    <li>all xacts that are adjacent and compatible are a compatible group</li>
+    <li>The front group is the granted group</li>
+    <li>group mode is most restrictive mode amongst group members</li>
+  </ul>
+  <li>Conversions: often want to convert (e.g. S to X for &quot;test and modify&quot;
+    actions). Should conversions go to back of queue?</li>
+  <li>No! Instant deadlock (more notes on deadlock later). So put conversions right after
+    granted group.</li>
+</ul>
+
+<h3>Gray, et al.: Degrees of Consistency</h3>
+
+<p>First, a definition: A write is committed when transaction if finished; otherwise, the
+write is dirty. </p>
+
+<p>A Locking-Based Description of Degrees of Consistency: </p>
+
+<p>This is not actually a description of the degrees, but rather of how to achieve them.
+But it&#146;s easier to understand (?) 
+
+<ul>
+  <li>Degree 0: set short write locks on updated items</li>
+  <li>Degree 1: set long write locks on updated items (&quot;long&quot; = EOT)</li>
+  <li>Degree 2: set long write locks on updated items, and short read locks on items read</li>
+  <li>Degree 3: set long write and read locks</li>
+</ul>
+
+<p>A Dirty-Data Description of Degrees of Consistency </p>
+
+<p>Transaction T sees degree X consistency if... 
+
+<ul>
+  <li>Degree 0: T does not overwrite dirty data of other transactions</li>
+  <li>Degree 1:</li>
+</ul>
+
+<ol TYPE="a">
+  <ol TYPE="a">
+    <li>T sees degree 0 consistency, and</li>
+    <li>T does not commit any writes before EOT</li>
+  </ol>
+</ol>
+
+<ul>
+  <li>Degree 2:</li>
+</ul>
+
+<ol TYPE="a">
+  <ol TYPE="a">
+    <li>T sees degree 1 consistency, and</li>
+    <li>T does not read dirty data of other transactions</li>
+  </ol>
+</ol>
+
+<ul>
+  <li>Degree 3:</li>
+</ul>
+
+<ol TYPE="a">
+  <ol TYPE="a">
+    <li>T sees degree 2 consistency, and</li>
+    <li>Other transactions do not dirty any data read by T before T completes.</li>
+  </ol>
+</ol>
+
+<p>Examples of Inconsistencies prevented by Various Degrees 
+
+<ul>
+  <li>Garbage reads:</li>
+  <p>T1: write(X); T2: write(X) </p>
+  <p>Who knows what value X will end up being? </p>
+  <p>Solution: set short write locks (degree 0) </p>
+  <li>Lost Updates:</li>
+  <p>T1: write(X) </p>
+  <p>T2: write(X) </p>
+  <p>T1: abort (restores X to pre-T1 value) </p>
+  <p>At this point, the update to T2 is lost (note: log contains T1.X.oldval, newval) </p>
+  <p>Solution: set long write locks (degree 1) </p>
+  <li>Dirty Reads:</li>
+  <p>T1: write(X) </p>
+  <p>T2: read(X) </p>
+  <p>T1: abort </p>
+  <p>Now T2&#146;s read is bogus. </p>
+  <p>Solution: set long X locks and short S locks (degree 2) </p>
+  <p>Many systems do long-running queries at degree 2. </p>
+  <li>Unrepeatable reads:</li>
+  <p>T1: read(X) </p>
+  <p>T2: write(X) </p>
+  <p>T2: end transaction </p>
+  <p>T1: read(X) </p>
+  <p>Now T2 has read two different values for X. </p>
+  <p>Solution: long read locks (degree 3) </p>
+  <li>Phantoms:</li>
+  <p>T1: read range [x - y] </p>
+  <p>T2: insert z, x &lt; z &lt; y </p>
+  <p>T2: end transaction </p>
+  <p>T1: read range [x - y] </p>
+  <p>Z is a &quot;phantom&quot; data item (eek!) </p>
+  <p>Solution: ?? </p>
+  <p>NOTE: two-phase well-formed implies degree-3 consistency. (Why?) <br>
+  &nbsp;</p>
+</ul>
+
+<p>Further reading on consistency levels: Berenson, et al., SIGMOD 1995. </p>
+
+<h3>Notes on Deadlock</h3>
+
+<ul>
+  <li>In OS world, deadlock usually due to errors or overloads</li>
+  <li>In DB/xact world with 2PL, they&#146;re inherent.</li>
+  <li>Most common causes:</li>
+  <ul>
+    <li>Differing access orders</li>
+  </ul>
+</ul>
+
+<ul>
+  <ul>
+    <p>T1: X-lock P </p>
+    <p>T2: X-lock Q </p>
+    <p>T1: X-lock Q // block waiting for T2 <ul>
+      <p>T2: X-lock P // block waiting for T1</p>
+    </ul>
+  </ul>
+</ul>
+
+<ul>
+  <ul>
+    <li>lock-mode upgrades</li>
+  </ul>
+</ul>
+
+<ul>
+  <ul>
+    <p>T1: S-lock P </p>
+    <p>T2: S-lock P </p>
+    <p>T1: convert S-lock on P to X-lock // block </p>
+    <p>T2: convert S-lock on P to X-lock // block</p>
+  </ul>
+</ul>
+
+<ul>
+  <li>Usual DB solution: deadlock detection (other option: deadlock avoidance)</li>
+  <ul>
+    <li>Use &quot;waits-for&quot; graph and look for cycles</li>
+    <li>Empirically, in actual systems the waits-for graph shows:</li>
+    <ul>
+      <li>cycles fairly rare</li>
+      <li>cycle length usually 2, sometimes 3, virtually never &gt;3</li>
+      <li>use DFS to find cycles</li>
+    </ul>
+    <li>When to look for cycles?</li>
+  </ul>
+</ul>
+
+<ol TYPE="a">
+  <ul>
+    <ul>
+      <ol TYPE="a">
+        <li>whenever a xact blocks</li>
+        <li>periodically</li>
+        <li>never (use timeouts)</li>
+      </ol>
+    </ul>
+  </ul>
+</ol>
+
+<blockquote>
+  <blockquote>
+    <p>Typically, in centralized systems, run deadlock detection whenever blocking occurs.
+    &nbsp; Arguably this is cheap: most recently blocked transaction T must be the one that
+    caused the deadlock, so just DFS starting from T</p>
+  </blockquote>
+</blockquote>
+
+<p>In distributed systems, even this can be expensive, so often do periodic detection
+(more later) 
+
+<ul>
+  <li>Who to restart (&quot;victim selection&quot;)</li>
+</ul>
+
+<ol TYPE="a">
+  <ol TYPE="a">
+    <li>current blocker</li>
+    <li>youngest XACT</li>
+    <li>least resources used</li>
+    <li>fewest locks held (common)</li>
+    <li>fewest number of restarts</li>
+  </ol>
+</ol>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

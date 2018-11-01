@@ -1,0 +1,329 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="Template" CONTENT="C:\MSOffice\Office\html.dot">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<meta NAME="Author" CONTENT="Joe Hellerstein">
+<title>Query Processing</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Query Processing</h1>
+
+<h3><b>A quick primer on the relational algebra</b></h3>
+
+<ul>
+  <li>selection</li>
+  <li>projection</li>
+  <li>cartesian product</li>
+  <li>join (in particular, theta-join)</li>
+</ul>
+
+<h3>Unary Operations</h3>
+
+<ul>
+  <li>sorting: see Knuth, or Shapiro paper.&nbsp; We will study high-performance parallel
+    sorting <a href="http://www.redbook.io/archive/redbook3/nowsort.pdf">later</a>.&nbsp; Uses?</li>
+  <li>hashing: a minor variant of hybrid-hash join works well. Uses?</li>
+</ul>
+
+<h3>Binary Operations (i.e. Joins)</h3>
+
+<p>Join algorithms apply to almost any form of combining multiple collections. </p>
+
+<p>Some commonly used join variants (alternative logical algebra operators): 
+
+<ul>
+  <li>semi-join: R semi-join S ~= R join remove-dups(S) projected to the columns of R</li>
+  <ul>
+    <li>S basically serves as a filter</li>
+    <li>logically, selection is a &quot;virtual semijoin&quot;</li>
+  </ul>
+  <li>outer join: R outer-join S: compute R join S, and for each tuple of R that has no match
+    send it to the output with the S columns filled in with NULLs. Left, Right, and Full Outer
+    Joins.</li>
+  <li>intersection &amp; difference</li>
+</ul>
+
+<p>These logical algebra operators can be implemented as minor variations on the same join
+algorithms! </p>
+
+<p>The &quot;Guy Lohman Test&quot; for join operators: 
+
+<ul>
+  <li>does the operator work for joining 3 inputs without storing the output of 2 of the
+    inputs?</li>
+</ul>
+
+<h3>Nested Loops Join</h3>
+
+<pre>for each tuple r of R
+&nbsp;&nbsp;&nbsp; for each tuple s of S
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if rs satisfies join predicate
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; output rs  </pre>
+
+<p>R is the outer relation (left) </p>
+
+<p>S is the inner relation (right) 
+
+<ul>
+  <li>works for any join predicate</li>
+  <li>inner input must be stored</li>
+</ul>
+
+<h3>Refinement 1: Block Nested Loops Join</h3>
+
+<pre>for each block BR of R
+&nbsp;&nbsp;&nbsp; for each tuple s of S
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for each tuple r of BR such that rs satisfies join predicate
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; output rs  </pre>
+
+<p>Further refinements to nested loops: 
+
+<ul>
+  <li>load R in chunks of M-K pages</li>
+  <li>&quot;pin&quot; K pages of the inner into memory</li>
+  <li>alternate scan direction on inner (&quot;boustrophedonism&quot;)</li>
+</ul>
+
+<h3>Refinement 2: Index Nested Loops Join</h3>
+
+<pre>for each tuple r of R
+&nbsp;&nbsp;&nbsp; probe index over S;
+&nbsp;&nbsp;&nbsp; output all s s.t. rs satisfies join predicate;  </pre>
+
+<p>Notes: 
+
+<ul>
+  <li>Still called &quot;nested loops&quot;, S is still referred to as the &quot;inner&quot;
+    relation</li>
+  <li>any join predicate can be supported if the index supports the predicate!</li>
+</ul>
+
+<pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SELECT cities.name
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FROM cities, forests
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; WHERE cities.boundary overlaps forests.boundary;  </pre>
+
+<ul>
+  <li>can convert all nested-loops joins to index-nested-loops by indexing inner on the fly</li>
+</ul>
+
+<h3>(Sort-)Merge Join</h3>
+
+<p>Works for equijoin, &quot;band&quot; joins </p>
+
+<p>we will assume here you know how to do a 2-pass sort [see Knuth or Shapiro] </p>
+
+<p>idea: if R &amp; S are sorted on the join column(s), we can &quot;simply&quot; merge
+them </p>
+
+<p>But duplicates complicate things (as usual). </p>
+
+<table>
+  <tr>
+    <td WIDTH="55"><p align="center">R </td>
+    <td WIDTH="48"><p align="center">S </td>
+    <td WIDTH="66"><p align="center">R join S </td>
+  </tr>
+  <tr>
+    <td WIDTH="55"><p align="center">1 </td>
+    <td WIDTH="48"><p align="center">1 </td>
+    <td WIDTH="66"><p align="center">1,1 </td>
+  </tr>
+  <tr>
+    <td WIDTH="55"><p align="center">2 </td>
+    <td WIDTH="48"><p align="center">2 </td>
+    <td WIDTH="66"><p align="center">2,2 </td>
+  </tr>
+  <tr>
+    <td WIDTH="55"><p align="center">2 </td>
+    <td WIDTH="48"><p align="center">4 </td>
+    <td WIDTH="66"><p align="center">2,2 </td>
+  </tr>
+  <tr>
+    <td WIDTH="55"><p align="center">3 </td>
+    <td WIDTH="48"><p align="center">5 </td>
+    <td WIDTH="66"><p align="center">5,5 </td>
+  </tr>
+  <tr>
+    <td WIDTH="55"><p align="center">5 </td>
+    <td WIDTH="48"><p align="center">5 </td>
+    <td WIDTH="66"><p align="center">5,5 </td>
+  </tr>
+</table>
+
+<pre>sort R;
+sort S;
+R.open();
+S.open();
+r = R.next();
+s = S.next();
+while (r != NULL &amp;&amp; s != NULL) {
+&nbsp;&nbsp;&nbsp; while (r.c &lt; s.c)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; r = R.next();
+&nbsp;&nbsp;&nbsp; if (r.c = s.c) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; while (r.c = s.c) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; output rs;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; r = R.next();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;rewind&quot; r to first tuple of R where r.c = s.c;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; s = S.next();
+&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp; while (r.c &gt; s.c)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; s = S.next();
+}  </pre>
+
+<p>Refinement: do merging of R &amp; S while merging runs from each. 
+
+<ul>
+  <li>Requires enough buffers for merging both R and S simultaneously.</li>
+</ul>
+
+<p>Note: Sort-merge is symmetric, so &quot;outer&quot;, &quot;inner&quot;,
+&quot;left&quot;, &quot;right&quot; are arbitrary </p>
+
+<h3>Classic Hash Join</h3>
+
+<p>Works for equijoin only </p>
+
+<p>Let R be the smaller relation </p>
+
+<pre>Hash R into VM;
+for each tuple of S
+&nbsp;&nbsp;&nbsp; probe hashtable over R and output all rs s.t. s.c = r.c  </pre>
+
+<ul>
+  <li>In the spirit of indexed nested-loop join, S is &quot;outer&quot; (left), and R is
+    &quot;inner&quot; (right)</li>
+  <li>Warning: at least one important paper calls S the right relation, R the left!!!</li>
+  <li>I prefer to call S left/outer, R right/inner<ul>
+      <li>note that hash join is very similar to nested-loop + index-on-the-fly (which Sybase used
+        to do.)&nbsp; If we call the probing relation there the &quot;outer&quot;, we should do
+        the same here!</li>
+    </ul>
+  </li>
+  <li>Safest to refer to &quot;building&quot; and &quot;probing&quot; relations</li>
+</ul>
+
+<h3>Simple Hash Join</h3>
+
+<p align="center"><img SRC="images/hj1.gif" WIDTH="289" HEIGHT="193"> <img SRC="images/hj2.gif" WIDTH="289" HEIGHT="193"> </p>
+
+<p align="center">Repeat steps 1 and 2 with R, S replaced by the passed over tuples. </p>
+
+<p>Advantages: 
+
+<ul>
+  <li>Great when R is small</li>
+  <li>Works for memory of any size</li>
+</ul>
+
+<p>Disadvantages: 
+
+<ul>
+  <li>you tell me!</li>
+</ul>
+
+<h3>Grace Hash Join</h3>
+
+<p align="center"><img SRC="images/hj3.gif" WIDTH="289" HEIGHT="193"> </p>
+
+<p>Phase 1 is repeated with S in place of R </p>
+
+<p><img SRC="images/hj4.gif" align="middle" WIDTH="289" HEIGHT="193">&nbsp;&nbsp;&nbsp;&nbsp; <strong>THEN&nbsp; </strong>&nbsp;&nbsp;&nbsp;
+<img SRC="images/hj5.gif" align="middle" WIDTH="289" HEIGHT="193"> </p>
+
+<p>Advantages: 
+
+<ul>
+  <li>works well for big R, esp. when RAM is just big enough for output buffers of R</li>
+</ul>
+
+<p>Disadvantages: 
+
+<ul>
+  <li>you tell me!</li>
+</ul>
+
+<h3>Hybrid Hash</h3>
+
+<p align="left">Original paper: DeWitt, Katz, Olken, Shapiro, Stonebraker, Wood, SIGMOD
+'84.</p>
+
+<p align="center">&nbsp;<img SRC="images/hj6.gif" WIDTH="289" HEIGHT="193"></p>
+
+<p align="center">&nbsp;<img SRC="images/hj7.gif" WIDTH="289" HEIGHT="193"> </p>
+
+<p align="left">Phase 2 as in Grace Join &nbsp; </p>
+
+<p>Hybrid Hash Advantages: 
+
+<ul>
+  <li>As good as simple hash for small R</li>
+  <li>As good as Grace for big R</li>
+  <li>If RAM is bigger than # of output buffers, improves on Grace</li>
+</ul>
+
+<p>Disadvantages: 
+
+<ul>
+  <li>you tell me</li>
+</ul>
+
+<p>Handling Partition Overflow: 
+
+<ul>
+  <li>If a partition of R overflows, recursively partition it, along with the corresponding
+    bucket of S</li>
+  <li>Note that size of S does not affect level of recursion!</li>
+  <ul>
+    <li>Makes hash-join particularly effective if |R| &lt;&lt; |S| (compare to sort-merge)</li>
+  </ul>
+</ul>
+
+<p>Variation: Virtual Memory 
+
+<ul>
+  <li>This is a Shapiro detail that is mostly ignored today...</li>
+  <li>Define Hot Set as those pages which should be &quot;pinned&quot; in memory</li>
+  <li>In our case, the hot set is the current hashtable in memory</li>
+  <li>Any other memory (e.g. partitions) could be managed by VM!</li>
+  <li>Problems:</li>
+  <ul>
+    <li>LRU paging leaves the &quot;wrong end&quot; of partitions in memory</li>
+    <li>LRU screws up phase 2</li>
+  </ul>
+</ul>
+
+<p>Additional Tricks: Filters </p>
+
+<p>Idea: build a filter based on R so you stage less of S to disk 
+
+<ul>
+  <li>Babb Array filter</li>
+  <li>Bloom filter</li>
+  <p><br>
+  These are like lossy semijoins! Any superset of S semijoin R will do.</p>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

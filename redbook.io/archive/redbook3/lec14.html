@@ -1,0 +1,95 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="Template" CONTENT="C:\PROGRAM FILES\MICROSOFT OFFICE\OFFICE\html.dot">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+
+<title>Intro to Recovery</title>
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Intro to Recovery</h1>
+
+<h3 align="left">Haerder &amp; Reuter</h3>
+
+<p align="left">Recall that Recovery guarantees Atomicity and Durability. <br>
+Paper outlines issues and options for recovery. </p>
+
+<p>Types of Failure </p>
+
+<ul>
+  <li>Transaction failure</li>
+  <li>System failure</li>
+  <li>Media failure</li>
+</ul>
+
+<p>Overwriting Options </p>
+
+<ul>
+  <li>ATOMIC: a transaction&#146;s updates become visible on disk all at once. System R&#146;s
+    &quot;shadow paging&quot; scheme did this. Pros/cons?</li>
+  <li>NOT ATOMIC: parts of transactions can be on disk without other parts. Pros/cons?</li>
+</ul>
+
+<p>Buffer Pool Eviction Options </p>
+
+<ul>
+  <li>STEAL: a transaction&#146;s updates may be flushed from the buffer at arbitrary times,
+    since another transaction is allowed to &quot;steal&quot; a buffer pool frame. Pros/cons?</li>
+  <li>NO STEAL: all of a transaction&#146;s updates remain in the buffer pool until commit
+    time. Pros/cons?</li>
+  <li>FORCE: at commit time, all modified pages are forced (flushed) to disk. Pros/cons?</li>
+  <li>NO FORCE: modified pages may remain in the buffer pool even after commit. Pros/cons?</li>
+</ul>
+
+<p>Log Data </p>
+
+<ul>
+  <li>Depending on the option chosen above, need some of REDO and UNDO log records to support
+    recovery.</li>
+  <li>Log records can be logical (e.g. &quot;inserted a tuple t into relation R), or physical
+    (e.g. &quot;byte 74 of page 255 used to be &#145;r&#146; and now is &#145;s&#146;&quot;).
+    Pros/cons of each?</li>
+  <li>Physical log records can be before/after images of pages (subpages), or diffs.</li>
+</ul>
+
+<p>Checkpoints </p>
+
+<ul>
+  <li>In order to speed up recovery, it&#146;s nice to have &quot;checkpoint&quot; records
+    that limit the amout of log that needs to be processed during recovery. It can be tricky
+    to do efficient checkpoints.</li>
+</ul>
+
+<p>State of the Art (as exemplified by ARIES) </p>
+
+<ul>
+  <li>Focus on speed and generality, rather than simplicity.</li>
+  <li>NOT ATOMIC, STEAL, NO FORCE. This allows the buffer manager to make intelligent (i.e.
+    efficient) decisions about when and what to flush to disk.</li>
+  <li>Log data is &quot;physiological&quot; &#150; i.e. some is physical (e.g. B-tree page
+    splits), and some is logical (heap-tuple insertions.)</li>
+</ul>
+
+<p>Many more details in ARIES paper! </p>
+<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

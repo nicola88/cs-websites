@@ -1,0 +1,184 @@
+<html>
+
+<head>
+<title>Buffer Management</title>
+<meta name="GENERATOR" content="Microsoft FrontPage 3.0">
+
+
+<meta name="Microsoft Theme" content="none"><meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Buffer Management</h1>
+
+<h3>DBMIN (Chou &amp; DeWitt)</h3>
+
+<p>Theme: There are just a few basic access patterns in a query processing system. Make
+straightforward observations about locality behavior of these access patterns, and expose
+them to your buffer manager. </p>
+
+<p>Old Stuff: 
+
+<ul>
+  <li>Background: blocks, frames, pages, &quot;pinning&quot;</li>
+  <li>Stochastic OS replacement policies: LRU, MRU, FIFO, LIFO, Clock, etc. None is uniformly
+    appropriate for typical DBMS access patterns (see Stonebraker&#146;s &quot;OS Dump&quot;).</li>
+  <li>Domain Separation: Split up work/memory into categories, and do LRU within your
+    category. If there are no pages in your chunk of memory, borrow from somewhere else.
+    Example domains: a non-leaf level of a B+-tree. 8-10% improvement over global LRU(?)</li>
+  <ul>
+    <li>domains are static</li>
+    <li>pages belong to partitions regardless of how they&#146;re being used (e.g. no
+      distinction between heap file page for sequential scan and for nested loop)</li>
+    <li>does not prevent over-utilization of memory by multiple users, since there&#146;s no
+      notion of &quot;users&quot; or &quot;processes&quot;</li>
+    <li>needs an orthogonal load-control facility</li>
+  </ul>
+  <li>Group LRU: Like DS, but prioritize domains. Free buffers are stolen in order of priority
+    (low <font FACE="Wingdings">à</font> high)</li>
+  <ul>
+    <li>optimization: adjust sizes of domains using a &quot;working-set&quot; judgment (i.e.
+      pages in last <em>T<sub>i</sub></em> refs are kept for domain <em>i</em>)</li>
+    <li>Effelsberg &amp; Haerder: no convincing evidence that any of this works better than LRU
+      or Clock.</li>
+  </ul>
+  <li>The &quot;New&quot; Algorithm: Modification of INGRES.</li>
+  <ul>
+    <li>Two observations:</li>
+    <ol>
+      <li>priority not a property of a page, but of a relation</li>
+      <li>each relation needs a working set</li>
+    </ol>
+    <li>Note: this is a query-based intuition!&nbsp; Anticipates DBMIN.</li>
+    <li>Subdivide memory into a chunk per relation, and prioritize chunks.</li>
+    <li>Assign an empty resident set per relation.</li>
+    <li>Use MRU per relation, but each relation gets one buffer at all times.</li>
+    <li>Heuristics available to reprioritize chunks.</li>
+    <li>Simulation study looked good, but implementation in INGRES didn&#146;t beat LRU.</li>
+  </ul>
+  <li>Hot Set</li>
+  <ul>
+    <li>Also uses query-based info</li>
+    <li>A set of pages which are accessed over and over form a &quot;hot set&quot;.</li>
+    <ul>
+      <li>If you graph buffer size against # of page faults, you see &quot;hot points&quot;.</li>
+    </ul>
+    <li>If your hot set fits in memory, you win! Otherwise you lose.</li>
+    <li>Example: NL-join, the hot set is |inner| + 1</li>
+    <li>Don&#146;t let a query into the system unless its hot set fits in memory. Each query is
+      given its hot set worth of buffers.</li>
+    <li>The idea assumes LRU is going on. But MRU is better for looping access, and makes the
+      &quot;hot point&quot; go away</li>
+    <li>Using LRU over-allocates (i.e. under-utilizes) memory, since the &quot;hot point&quot;
+      analysis can be fixed with MRU.</li>
+  </ul>
+</ul>
+
+<p>DBMIN </p>
+
+<p>Based on the Query Locality Set Model (QLSM), which characterizes DBMS reference
+patterns in 3 ways: 
+
+<ul>
+  <li>Sequential: Straight Sequential (SS) &amp; Clustered Sequential (CS)</li>
+  <li>Random: Independent Random (IR) and Clustered Random (CR)</li>
+  <li>Hierarchical: Straight Hierarchical (SH), Hierarchical with Straight Sequential (H/SS),
+    Hierarchical with Clustered Sequential (H/CS), Looping Hierarchical (LH)</li>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>Questions: which query processing operators correspond to each category? Do the
+categories cover all the operators? </p>
+
+<p>&nbsp; </p>
+
+<p>The DBMIN Algorithm: 
+
+<ul>
+  <li>associate a chunk of memory with each &quot;file instance&quot; (more like each table in
+    the FROM clause). This is called the file instance&#146;s locality set.</li>
+  <li>estimate max locality set sizes via looking at query plan &amp; database stats. A query
+    is allowed to run if the sum of its locality sets fits in free buffers.</li>
+  <li>a global page table and global free list is kept in addition to locality sets</li>
+  <li>on page request</li>
+  <ul>
+    <li>if page in global table &amp; the locality set, just update usage stats of page</li>
+    <li>else if page in memory but not in LocSet, grab page, and if not in another LocSet put it
+      in our LocSet</li>
+    <li>else read page into LocSet (using a page from global free list)</li>
+    <li>If locality set gets bigger than max needed, choose a page to toss according to a
+      LocSet-specific policy (to be discussed next)</li>
+  </ul>
+</ul>
+
+<p>&nbsp; </p>
+
+<p>Locality Set size &amp; replacement policies for different reference patterns: 
+
+<ul>
+  <li>SS: LocSet size = 1. Replace that page as soon as needed.</li>
+  <li>CS: LocSet size = (#tuples in largest cluster)/(# of tuples per page). FIFO or LRU
+    replacement work.</li>
+  <li>LS: LocSet size = size of relation. MRU is best.</li>
+  <li>IR: odds of revisit are low, so LocSet either 1, or the magic number b from the
+    &quot;Yao&quot; formula. Residual value <em>r = (k - b)/b</em> of a page can be used to
+    choose between 1 and <em>b</em> (i.e. <em>k</em> is number of accesses, <em>b</em> is # of
+    pages that will be referenced, so this is # of revisits over # of pages). Replacement
+    policy?</li>
+  <li>CR: Just like CS, but pages are not packed onto blocks. So it&#146;s just # of tuples in
+    largest cluster.</li>
+  <li>SH, H/SS: like SS</li>
+  <li>H/CS: like CS, but replace tuples with (key,ptr) pairs</li>
+  <li>LH: at each level h of an index, you have random access among pages. Use Yao to figure
+    out how many pages you&#146;ll access at each level in <em>k</em> lookups. LocSet is sum
+    of these over all levels that you choose to worry about (maybe only the root!) LIFO with a
+    few (4-5) buffers probably an OK replacement strategy.</li>
+</ul>
+
+<p>&nbsp;A Detailed Simulation Study (Welcome to Wisconsin!) 
+
+<ul>
+  <li>trace-based &amp; distribution-based: traces used to model individual queries, but
+    workload synthesized based on different distributions. Traces done on a popular benchmark
+    database (from the Wisconsin Benchmark). Queries of 1 and 2 tables.</li>
+  <li>simulator models CPU, one I/O device, and RAM access. Simulation tuned to
+    micro-benchmark of WiSS. Performance metric is query throughput.</li>
+  <li>3 levels of sharing modeled: full, half, and no sharing</li>
+  <li>Disk arm was jostled around randomly.</li>
+  <li>Memory set big enough to hold about 8 concurrent working sets.</li>
+  <li>statistical confidence intervals on validity of results guarantee things within 5% of
+    the mean (how often do you see that in CS performance studies these days?!&nbsp; Why not?)</li>
+  <li>comparison of RAND, FIFO, CLOCK, HOT, Working Set, DBMIN</li>
+  <li>Bottom line:</li>
+  <ul>
+    <li>as expected, DBMIN is the top line on every graph</li>
+    <li>Stochastic techniques are no good, though feedback-based load control helps</li>
+    <ul>
+      <li>Later work on such load control shows it's VERY tricky in mixed workloads.</li>
+    </ul>
+    <li>WS not a big winner either, though a popular OS choice</li>
+    <li>DBMIN beats HOT by 7-13% more throughput</li>
+  </ul>
+</ul>
+
+<p>Later work: LRU-K, by O'Neil &amp; O'Neil. 
+<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

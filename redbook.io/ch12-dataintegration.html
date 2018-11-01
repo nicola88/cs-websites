@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Red Book, 5th ed. Ch. 12: A Biased Take on a Moving Target: Data Integration</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name=viewport content="width=device-width, initial-scale=1">
+<link href='http://fonts.googleapis.com/css?family=Raleway:700,600,500'
+rel='stylesheet' type='text/css'>
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:700,600,500,400,300' rel='stylesheet' type='text/css'>
+
+<link href='css/redbook.css' rel='stylesheet' type='text/css'>
+
+</head>
+
+<body>
+
+<div id="header">
+<div id="headerbox">
+<div id="booktitle"><a href="index.html">Red Book, 5th ed.</a></div>
+<div class="headerlink"><a href="index.html">Index</a></div>
+<div class="headerlink"><a href="ch12-dataintegration.html#">Next Chapter</a></div>
+<div class="headerlink"><a href="ch11-complexanalytics.html">Previous Chapter</a></div>
+<div class="headerlink"><a href="http://www.redbook.io/pdf/ch12-dataintegration.pdf">PDF</a></div>
+</div>
+</div>
+
+    <div id="container">
+      <article>
+      
+      
+        <div class="chaptertitle" id="ch12-dataintegration">Chapter 12: A Biased Take on a Moving Target: Data Integration</div>
+	<div class="introauthor">by Michael Stonebraker</div>
+
+
+
+    
+
+      <div class="intro">
+      <p>I will start this treatise with a history of two major themes in data integration. In my opinion, the topic began with the major retailers in the 1990s consolidating their sales data into a data warehouse. To do this they needed to extract data from in-store sales systems, transform it into a predefined common representation (think of this as a global schema), and then load it into a data warehouse. This data warehouse kept historical sales data for a couple of years and was used by the buyers in the organization to rotate stock. In other words, a buyer would figure out that pet rocks are &ldquo;out&rdquo; and barbie dolls are &ldquo;in.&rdquo; Hence, he would tie up the barbie doll factory with a big order and move the pet rocks up front and discount them to get rid of them. A typical retail data warehouse paid for itself within a year through better buying and stock rotation decisions. In the late 1990s and early 2000&rsquo;s there was a giant &ldquo;pile on&rdquo; as essentially all enterprises followed the lead of retailers and organized their customer-facing data into a data warehouse.</p>
+<p>A new industry was spawned to support the loading of data warehouses, called extract, transform, and load (ETL) systems. The basic methodology was:</p>
+<p>a) Construct a global schema in advance.</p>
+<p>b) Send a programmer out to the owner of each data source and have him figure out how to do the extraction. Historically, writing such &ldquo;connectors&rdquo; was a lot of work because of arcane formats. Hopefully, this will become less problematic in the future with more open source and standardized formats.</p>
+<p>c) Have him write transformations, often in a scripting language, and any necessary cleaning routines</p>
+<p>d) Have him write a script to load the data into a data warehouse</p>
+<p>It became apparent that this methodology scales to perhaps a dozen data sources, because of three big issues:</p>
+<ol>
+<li><p>A global schema is needed up front. About this time, there was a push in many enterprises to write an enterprise-wide schema for all company objects. A team was charged with doing this and would work on it for a couple of years. At the end of this time, their result was two years out of date, and was declared a failure. Hence, an upfront global schema is incredibly difficult to construct for a broad domain. This limits the plausible scope of data warehouses.</p></li>
+<li><p>Too much manual labor. A skilled programmer is required to perform most of the steps in the methodology for each data source.</p></li>
+<li><p>Data integration and cleaning is fundamentally difficult. The typical data warehouse project in the 1990&rsquo;s was a factor of two over budget and a factor of two late. The problem was that planners underestimated the difficulty of the data integration challenge. There are two big issues. First, data is dirty. A rule of thumb is that 10% of your data is incorrect. This results from using nicknames for people or products, having stale addresses for suppliers, having incorrect ages for people, etc. The second is that deduplication is hard. One has to decide if Mike Stonebraker and M.R. Stonebraker are the same entity or different ones. Equally challenging is two restaurants at the same address. They might be in a food court, one might have replaced the other in a stand-alone location or this might be a data error. It is expensive to figure out ground truth in such situations.</p></li>
+</ol>
+<p>In spite of these issues, data warehouses have been a huge success for customer facing data, and are in use by most major enterprises. In this use case, the pain of assembling composite data is justified by the better decision making that results. I hardly ever hear enterprises complaining about the operational cost of their data warehouse. What I hear instead is an incessant desire by business analysts for more data sources, whether these be public data off the web or other enterprise data. For example, the average large enterprise has about 5000 operational data stores, and only a few are in the data warehouse.</p>
+<p>As a quick example, I visited a major beer manufacturer a while ago. He had a typical data warehouse of sales of his products by brand, by distributor, by time period, etc. I told the analysts that El Nino was widely predicted to occur that winter and it would be wetter than normal on the west coast and warmer than normal in the Northeast. I then asked if beer sales are correlated to temperature or precipitation. They replied &ldquo;I wish we could answer that question, but weather data is not in our warehouse&rdquo;. Supporting data source scalability is very difficult using ETL technology.</p>
+<p>Fast forward to the 2000&rsquo;s, and the new buzzword is <em>master data management (MDM)</em>. The idea behind MDM is to standardize the enterprise representation of important entities such as customers, employees, sales, purchases, suppliers, etc. Then carefully curate a master data set for each entity type and get everyone in the enterprise to use this master. This sometimes goes by the mantra &ldquo;golden records&rdquo;. In effect, the former ETL vendors are now selling MDM, as a broader scope offering. In my opinion, MDM is way over-hyped.</p>
+<p>Let me start with &ldquo;Who can be against standards?&rdquo; Certainly not me. However, MDM has the following problems, which I will illustrate by vignette.</p>
+<p>When I worked for Informix 15 years ago, the new CEO asked the Human Resources VP at an early staff meeting &ldquo;How many employees do we have?&rdquo; She returned the next week with the answer &ldquo;I don&rsquo;t know and there is no way to find out?&rdquo; Informix operated in 58 countries, each with its own labor laws, definition of an employee, etc. There was no golden record for employees. Hence, the only way to answer the CEOs question would be to perform data integration on these 58 data sources to resolve the semantic issues. Getting 58 country managers to agree to do this would be challenging, made more difficult by the fact that Informix did not even own all the organizations involved. The new CEO quickly realized the futility of this exercise.</p>
+<p>So why would a company allow this situation to occur? The answer is simple: business agility. Informix set up country operations on a regular basis, and wanted the sales team up and running quickly. Inevitably they would hire a country manager and tell him to &ldquo;make it happen&rdquo;. Sometimes it was a distributor or other independent entity. If they had said &ldquo;here are the MDM golden records you need to conform to&rdquo;, then the country manager or distributor would spend months trying to reconcile his needs with the MDM system in place. In other words, MDM is the opposite of business agility. Obviously every enterprise needs to strike a balance between standards and agility.</p>
+<p>A second vignette concerns a large manufacturing enterprise. They are decentralized into business units for business agility reasons. Each business unit has its own purchasing system - to specify the terms and conditions under which the business unit interacts with its suppliers. There are some 300 of these systems. There is an obvious return on investment to consolidate these systems. After all it is less code to maintain and the enterprise can presumably get better-consolidated terms than each business unit can individually.  So why are there so many purchasing systems? Acquisitions. This enterprise grew largely by acquisition. Each acquisition became a new business unit, and came with its own data systems, contracts in place, etc. It is often simply not feasible to merge all these data systems into the parent&rsquo;s IT infrastructure. In summary, acquisitions screw up MDM.</p>
+<p>So what is entailed in data integration (or data curation)? It is the following steps:</p>
+<ol>
+<li><p><em>Ingest.</em> A data source must be located and captured. This requires parsing whatever data structure is used for storage.</p></li>
+<li><p><em>Transform.</em> For example, Euros to dollars or airport code to city name.</p></li>
+<li><p><em>Clean.</em> Data errors must be found and rectified.</p></li>
+<li><p><em>Schema integration.</em> Your wages is my salary.</p></li>
+<li><p><em>Consolidate (deduplication).</em> Mike Stonebraker and M.R. Stonebraker must be consolidated into a single record.</p></li>
+</ol>
+<p>The ETL vendors do this at high cost and with low scalability. The MDM vendors have a similar profile. So there is a big unmet need. Data curation at scale is the &ldquo;800 pound gorilla in the corner.&rdquo; So what are the research challenges in this area?</p>
+<p>Let&rsquo;s go through the steps one by one.</p>
+<p>Ingest is simply a matter of parsing data sources. Others have written such &ldquo;connectors&rdquo;, and they are generally expensive to construct. An interesting challenge would be to semi-automatically generate connectors.</p>
+<p>Data transformations have also been extensively researched, mostly in the last decade or so. Scripting/visualization facilities to specify transforms have been studied in&nbsp<span class="citationlink">[<a href="ch12-dataintegration.html#ref-morpheus">3</a>, <a href="ch12-dataintegration.html#ref-potterswheel">8</a>]</span>. Data Wrangler&nbsp<span class="citationlink">[<a href="ch12-dataintegration.html#ref-wrangler">6</a>]</span> appears to be the state of the art in this area, and the interested reader is encouraged to take a look. In addition, there are a bunch of commercial offerings that offer transformation services for a fee (e.g. address to (lat,long) or company to canonical company representation). In addition, work on finding transformations of interest from the public web is reported in&nbsp<span class="citationlink">[<a href="ch12-dataintegration.html#ref-dataxformer">1</a>]</span>.</p>
+<p>Data cleaning has been studied using a variety of techniques. &nbsp<span class="citationlink">[<a href="ch12-dataintegration.html#ref-fd-cleaning">2</a>]</span>&nbspapplied functional dependencies to discover erroneous data and suggest automatic repairs. Outlier detection (which may correspond to errors) has been studied in many contexts&nbsp<span class="citationlink">[<a href="ch12-dataintegration.html#ref-fnt-cleaning">5</a>]</span>. &nbsp<span class="citationlink">[<a href="ch12-dataintegration.html#ref-seedb">11</a>, <a href="ch12-dataintegration.html#ref-scorpion">12</a>]</span> are query systems to discover interesting patterns in the data. Such patterns may correspond to errors. &nbsp<span class="citationlink">[<a href="ch12-dataintegration.html#ref-tamer">10</a>]</span> have studied the utilization of crowd sourcing and expert sourcing to correct errors, once they have been identified. Lastly, there are a variety of commercial services that will clean common domains, such as addresses of persons and dates. In my opinion, data cleaning research MUST utilize real-world data. Finding faults that have been injected into other-wise clean data just is not believable. Unfortunately, real world &ldquo;dirty&rdquo; data is quite hard to come by.</p>
+<p>Schema matching has been extensively worked on for at least 20 years. The interested reader should consult&nbsp<span class="citationlink">[<a href="ch12-dataintegration.html#ref-garlic1">4</a>, <a href="ch12-dataintegration.html#ref-clio">7</a>, <a href="ch12-dataintegration.html#ref-garlic2">9</a>]</span> for the state of the art in this area.</p>
+<p>Entity consolidation is a problem of finding records in a high dimensional space (all of the attributes about an entity - typically 25 or more) that are close together. Effectively this is a clustering problem in 25 space. This is an N ** 2 problem that will have a very long running time at scale. Hence, approximate algorithms are clearly the way to proceed here. A survey of techniques appears in&nbsp<span class="citationlink">[<a href="ch12-dataintegration.html#ref-fnt-cleaning">5</a>]</span>.</p>
+<p>In my opinion, the real problem is an end-to-end system. Data curation entails all of these steps, which must be seamlessly integrated, and enterprise-wide systems must perform curation at scale. An interesting end-to-end approach that appears to scale well is the Data Tamer system&nbsp<span class="citationlink">[<a href="ch12-dataintegration.html#ref-tamer">10</a>]</span>. On the other hand, data curation problems also occur at the department level, where an individual contributor wants to integrate a handful of data sources, and the Data Wrangler system noted above appears to be an interesting approach. There are commercial companies supporting both of these systems, so regular enhancements should be forthcoming.</p>
+<p>Hopefully, the next edition of the Red Book will have a collection of seminal papers in this area to replace this (self-serving) call to action. In my opinion, this is one of the most important topics that enterprises are dealing with. My one caution is &ldquo;the rubber has to meet the road&rdquo;. If you want to work in this area, you have got to try your ideas on real world enterprise data. Constructing artificial data, injecting faults into it, and then finding these faults is simply not believable. If you have ideas in this area, I would recommend building an end-to-end system. In this way, you make sure that you are solving an important problem, rather than just a &ldquo;point problem&rdquo; which real world users may or may not be interested in.</p>
+<div id="refs" class="references"><div class="refheader">References:</div>
+<div id="ref-dataxformer">
+<p>[1] Abedjan, Z., Morcos, J., Gubanov, M., Ilyas, I.F., Stonebraker, M., Papotti, P. and Ouzzani, M. DataXFormer: Leveraging the web for semantic transformations. <em>CIDR</em>, 2015.</p>
+</div>
+<div id="ref-fd-cleaning">
+<p>[2] Chu, X., Ilyas, I.F. and Papotti, P. Holistic data cleaning: Putting violations into context. <em>ICDE</em>, 2013.</p>
+</div>
+<div id="ref-morpheus">
+<p>[3] Dohzen, T., Pamuk, M., Seong, S.-W., Hammer, J. and Stonebraker, M. Data integration through transform reuse in the morpheus project. <em>SIGMOD</em>, 2006.</p>
+</div>
+<div id="ref-garlic1">
+<p>[4] Haas, L., Kossmann, D., Wimmers, E. and Yang, J. Optimizing queries across diverse data sources. <em>VLDB</em>, 1997.</p>
+</div>
+<div id="ref-fnt-cleaning">
+<p>[5] Ilyas, I.F. and Chu, X. Trends in cleaning relational data: Consistency and deduplication. <em>Foundations and Trends in Databases</em>. 5, 4 (2012), 281-393.</p>
+</div>
+<div id="ref-wrangler">
+<p>[6] Kandel, S., Paepcke, A., Hellerstein, J. and Heer, J. Wrangler: Interactive visual specification of data transformation scripts. <em>CHI</em>, 2011.</p>
+</div>
+<div id="ref-clio">
+<p>[7] Miller, R.J., Hernández, M.A., Haas, L.M., Yan, L.-L., Ho, C.H., Fagin, R. and Popa, L. The clio project: Managing heterogeneity. <em>SIGMOD Record</em>. 30, 1 (2001), 78-83.</p>
+</div>
+<div id="ref-potterswheel">
+<p>[8] Raman, V. and Hellerstein, J.M. Potter&rsquo;s wheel: An interactive data cleaning system. <em>VLDB</em>, 2001.</p>
+</div>
+<div id="ref-garlic2">
+<p>[9] Roth, M.T. and Schwarz, P.M. Don&rsquo;t scrap it, wrap it! A wrapper architecture for legacy data sources. <em>VLDB</em>, 1997.</p>
+</div>
+<div id="ref-tamer">
+<p>[10] Stonebraker, M., Bruckner, D., Ilyas, I.F., Beskales, G., Cherniack, M., Zdonik, S.B., Pagan, A. and Xu, S. Data curation at scale: The data tamer system. <em>CIDR</em>, 2013.</p>
+</div>
+<div id="ref-seedb">
+<p>[11] Vartak, M., Madden, S., Parameswaran, A. and Polyzotis, N. SeeDB: Automatically generating query visualizations. <em>VLDB</em>, 2014.</p>
+</div>
+<div id="ref-scorpion">
+<p>[12] Wu, E. and Madden, S. Scorpion: Explaining away outliers in aggregate queries. <em>VLDB</em>, 2013.</p>
+</div>
+</div>
+
+<div class="comments"><h3 class="comment-header" class="numcomments">Comments</h3>
+            <div class="div-comment">
+              <ul class="comment-meta">
+                <li class="comment-author vcard">
+                  <div class="fn">
+                    Joe Hellerstein
+                  </div>
+                </li>
+                <li>
+                  6 December 2015
+                </li>
+              </ul>
+              <div class="comment-content">
+                <p>I agree with Mike&rsquo;s assessment here in general, but wanted to add my perspective on the space, relating to the &ldquo;department level&rdquo; problem he mentions in passing.</p>
+<p>Based on experience with users across a wide range of organizations, we&rsquo;ve seen that data transformation is increasingly a user-centric task, and depends critically upon the user experience: the interfaces and languages for interactively assessing and manipulating data.</p>
+<p>In many of today&rsquo;s settings, the right outcome from data transformation depends heavily on context. To understand if data is dirty, you have to know what it is &ldquo;supposed&rdquo; to look like. To transform data for use, you need to understand what it is being used for. Even in a single organization, the context of how data is going to be used and what it needs to be like varies across people and across time. Add this to Mike&rsquo;s critique of the idea of a &ldquo;golden master&rdquo;-it simply doesn&rsquo;t make sense for many modern use cases, especially in analytical contexts.</p>
+<p>Instead, you need to design tools for the people who best understand the data and the use case, and enable them to do their own data profiling and transformation in an agile, exploratory manner. Computer scientists tend to design for technical users-IT professionals and data scientists. But in most organizations, the users who understand the data and the context are closer to the &ldquo;business&rdquo; than the IT department. They are often less technically skilled as well. Rather than reach for traditional ETL tools, they tend to fall back on manipulating data in spreadsheets and desktop database packages, neither of which are well suited for assessing data quality or doing bulk transformation. For large datasets they &ldquo;code in Microsoft Word&rdquo;: they describe their desired workflow in a natural language spec, wait for IT to get around to writing the code for them, and then when they get the results they typically realize they don&rsquo;t quite work. At which point their need for the data has often changed anyhow. No surprise that people often assert that 50-80% of their time is spent in &ldquo;preparing the data.&rdquo; (As a footnote, in my experience modern &ldquo;data scientists&rdquo; tend to wrangle data via ad-hoc scripts in Python, R or SAS DataStep, and are shockingly lax about code quality and revision control for these scripts. As a result they&rsquo;re often worse off over time than the old-school ETL users!)</p>
+<p>Business users reach for graphical tools for good reason: they want to understand the data as it is being transformed, and assess whether it is getting closer to a form that&rsquo;s useful for their business problem. As a result, the unattended algorithms from the database research literature have done too little to address the key issues in this space. I believe the most relevant solutions will be based on interfaces that enable people to understand the state of their data intuitively, and collaborate with algorithms to get the data better purposed for use.</p>
+<p>This presents a significant opportunity for innovation. Data transformation is a perfect Petri Dish for exploring the general topic of visualizing and interacting with data. This is an area where ideas from Databases, HCI and Machine Learning can be brought together, to create interactive collaborations between algorithms and people that solve practical, context-specific problems with data. Backing this up we need interactive data systems that can do things like provide instantaneous data profiles (various aggregates) over the results of ad-hoc transformation steps, and speculate ahead of users in real time to suggest multiple alternative transformations that could be useful.<a href="ch12-dataintegration.html#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> Some of the topics from the Interactive Analytics chapter are relevant here, particularly for big data sets. I&rsquo;ve been happy to see more work on visualization and interaction in the database community in recent years; this is a great application area for that work.</p>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Heer, J., Hellerstein, J.M. and Kandel, S. &ldquo;Predictive Interaction for Data Transformation.&rdquo; CIDR 2015.<a href="ch12-dataintegration.html#fnref1">&#8617;</a></p></li>
+</ol>
+</div>
+
+             </div>
+            </div><!-- /.div-comment -->
+          </div>
+
+      </div>
+
+      </article>      
+
+    <div id="license">
+      <a rel="license" href="http://creativecommons.org/licenses/by-nc-nd/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/80x15.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.
+     </div>
+      
+    </div><!-- /.container -->
+
+      <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-70907115-1', 'auto');
+  ga('send', 'pageview');
+    </script>
+
+
+</html>

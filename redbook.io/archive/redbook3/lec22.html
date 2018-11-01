@@ -1,0 +1,296 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<meta NAME="Template" CONTENT="C:\PROGRAM FILES\MICROSOFT OFFICE\OFFICE\html.dot">
+<meta NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (Win95; I) [Netscape]">
+<title>Parallel DBMS &amp; Gamma</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>DB Machines, Parallel DBMS &amp; Gamma</h1>
+
+<h3>History</h3>
+<b>
+
+<p>The database machine</b> <br>
+(taken from Boral/DeWitt '83, &quot;Database Machines: An Idea Whose Time has
+Passed?&quot;) 
+
+<ul>
+  <li>Processor Per Track (PPT): Examples: CASSM, RAP, RARES.&nbsp; Too expensive.&nbsp; Wait
+    for bubble memory, charge-couple devices (CCDs)?&nbsp; Still waiting...</li>
+  <li>PP Head: Examples: DBC, SURE.&nbsp; Helps with selection queries.&nbsp; Depends on
+    parallel readout disks (read all heads at once).&nbsp; This has become increasingly
+    difficult over time (&quot;settle&quot; is increasingly tricky as disks get faster and
+    smaller).</li>
+  <li>Off-the-disk DB Machines: Examples: DIRECT, RAP.2, RDBM, DBMAC, INFOPLEX. Precursors of
+    today's parallel DBs.&nbsp; A controller CPU, and special-purpose query processing CPUs
+    with shared disks and memory.</li>
+  <ul>
+    <li>1981: Britton-Lee Database Machine</li>
+    <li>&quot;There was 1 6Mhz Z8000 Database processor, up to 4 Z8000 communications
+      processors. Up to 4 &quot;Intellegent&quot; disk controllers (they could optimize their
+      own sector schedule, I think). I think you could put up to 16 .5Gig drives on the thing
+      and probably 4-6 Megs of memory. About a year later we upped the DBP to 10Mhz (yeilding a
+      mighty 1 mips). &quot; -- Mike Ubell</li>
+  </ul>
+</ul>
+
+<p>All failed.&nbsp; Why? 
+
+<ul>
+  <li>these don't help much with sort, join, etc.</li>
+  <li>special-purpose hardware is a losing proposition</li>
+  <ul>
+    <li>prohibitively expensive (no economy of scale)</li>
+    <li>slow to evolve</li>
+  </ul>
+</ul>
+
+<p>Is it time to revisit all this?? 
+
+<ul>
+  <li>IDISK @ Berkeley</li>
+  <li>Think more about this next lecture</li>
+</ul>
+
+<h3>Parallel DB 101</h3>
+
+<p>Performance metrics: 
+
+<ul>
+  <li>Speedup</li>
+  <li>Scaleup</li>
+  <ul>
+    <li>Transaction scaleup: N times as many TPC-C&#146;s for N machines</li>
+    <li>Batch scaleup: N times as big a query for N machines</li>
+  </ul>
+</ul>
+
+<p>2 kinds of parallelism 
+
+<ul>
+  <ul>
+    <li>pipelined (most are short)</li>
+    <li>partition</li>
+  </ul>
+</ul>
+
+<p>3 barriers to linearity: 
+
+<ul>
+  <ul>
+    <li>startup overheads</li>
+    <li>interference</li>
+    <li>skew</li>
+  </ul>
+</ul>
+
+<p>3 basic architectures 
+
+<ul>
+  <ul>
+    <li>shared-memory</li>
+    <li>shared-disk</li>
+    <li>shared-nothing</li>
+  </ul>
+</ul>
+
+<h3>DeWitt et al., GAMMA DB Machine</h3>
+
+<ul>
+  <li>Gamma: &quot;shared-nothing&quot; multiprocessor system</li>
+  <li>Other shared-nothing systems: Bubba (MCC), Volcano (Colorado), Teradata, Tandem,
+    Informix, IBM Parallel Edition</li>
+  <li>Version 1.0 (1985)</li>
+  <ul>
+    <li>token ring connecting 20 VAX 11/750's.</li>
+    <li>Eight processors had a disk each.</li>
+    <li>Issues:</li>
+    <ul>
+      <li>Token Ring packet size was 2K, so they used 2K disk blocks. Mistake.</li>
+      <li>Bottleneck at Unibus (1/20 the bandwidth of the network itself, slower than disk!)</li>
+      <li>Network interface also a bottleneck &#150; only buffered 2 incoming packets</li>
+      <li>Only 2M RAM per processor, no virtual memory</li>
+    </ul>
+  </ul>
+  <li>Version 2.0 (1989)</li>
+  <ul>
+    <li>Intel iPSC-2 hypercube. (32 386s, 8M RAM each, 1 333M disk each.)</li>
+    <li>networking provides 8 full duplex reliable channels at a time</li>
+    <li>small messages are datagrams, larger ones form a virtual circuit which goes away at EOT</li>
+    <li>Usual multiprocessor story: tuned for scientific apps</li>
+    <ul>
+      <li>OS supports few heavyweight processes</li>
+      <li>Solution: write a new OS! (NOSE) &#150; actually a thread package</li>
+      <li>SCSI controller transferred only 1K blocks</li>
+    </ul>
+    <li>ported GAMMA 1.0 &#150; some flaky porting stuff</li>
+    <li>Other complaints</li>
+    <ul>
+      <li>want disk-to-memory DMA. As of now, 10% of cycles wasted copying from I/O buffer, and
+        CPU constantly interrupted to do so (13 times per 8K block!)</li>
+    </ul>
+  </ul>
+  <li>&quot;The Future&quot;, circa 1990: CM-5, Intel Touchstone Sigma Machine.</li>
+  <li>&quot;The Future&quot;, circa 1995: COW/NOW/SHRIMP with high-speed LAN (Myrinet, ATM,
+    Fast Ethernet, etc.)</li>
+  <li>&quot;The Future&quot;, circa 2000???</li>
+  <li>How does this differ from a distributed dbms?</li>
+  <ul>
+    <li>no notion of site autonomy</li>
+    <li>centralized schema</li>
+    <li>all queries start at &quot;host&quot;</li>
+  </ul>
+  <li>Storage organization: all relations are &quot;horizontally partitioned&quot; across all
+    disk drives in four ways:</li>
+  <ul>
+    <li>round robin: default, used for all query outputs</li>
+    <li>hashed: randomize on key attributes</li>
+    <li>range partitioned (specified distribution), stored in range table for relation</li>
+    <li>range partitioned (uniform distribution &#150; sort and then cut into equal pieces.)</li>
+    <li>Within a site, store however you wish.</li>
+    <li>indices created at all sites</li>
+    <li>A better idea: heat (Bubba?)</li>
+    <ul>
+      <li>hotter relations get partitioned across more sites</li>
+      <li>why is this better?</li>
+    </ul>
+  </ul>
+  <li>&quot;primary multiprocessor index&quot; identifies where a tuple resides.</li>
+</ul>
+
+<p><b>Query Execution</b> 
+
+<ul>
+  <li>An operator tree constructed, each node assigned one or more operator processes at each
+    site.</li>
+  <ul>
+    <li>These operator processes never die</li>
+  </ul>
+  <li>Hash-based algorithms only for join &amp; grouping.</li>
+  <li>&quot;Left-deep&quot; trees (I call this &quot;right-deep&quot;. Think of it as
+    &quot;building-deep&quot;)</li>
+  <ul>
+    <li>pipelines at most 2 joins deep</li>
+    <li>this was done because of lack of RAM</li>
+    <li>&quot;right-deep&quot; (my &quot;left-deep&quot;, or &quot;probing-deep&quot;) is
+      probably better</li>
+  </ul>
+  <li>Life of a query:</li>
+  <ul>
+    <li>parsed and optimized at host (Query Manager)</li>
+    <li>if a single-site query, send to that site for execution</li>
+    <li>otherwise sent to a dispatcher process (load control)</li>
+    <li>dispatcher process gives query to scheduler process</li>
+    <li>scheduler process passes pieces to operator processes at the sites</li>
+    <li>results sent back to scheduler who passes them to Query Manager for display</li>
+  </ul>
+  <li>More detail:</li>
+  <ul>
+    <li>the example query in the paper</li>
+    <li>split table used to route result tuples to appropriate processors. Three types:</li>
+    <ul>
+      <li>Hashed</li>
+      <li>Range-Partitioned.</li>
+      <li>Round-Robin.</li>
+    </ul>
+    <li>selection: uses indices, compiled predicates, prefetching.</li>
+    <li>join: basic idea is to use hybrid hash, with one bucket per processor.</li>
+    <ul>
+      <li>tuples corresponding to each logical bucket should fit in the aggregate mem of
+        participating processors</li>
+      <li>each logical bucket after the first is split across all disks (may be diskless
+        processors)</li>
+    </ul>
+    <li>aggregation: done piecewise. Groups accumulated at individual nodes for final result.</li>
+    <ul>
+      <li>Question: can all aggs be done piecewise?</li>
+    </ul>
+    <li>updates: as usual, unless it requires moving a tuple (when?)</li>
+    <li>control messages: 3x as many as operators in the plan tree</li>
+    <ul>
+      <li>scheduler: Initiate</li>
+      <li>operator: ID of port to talk to</li>
+      <li>operator: Done</li>
+      <li>That&#146;s all the coordination needed!!</li>
+    </ul>
+  </ul>
+  <li>CC: 2PL with bi-granularity locking (file &amp; page). Centralized deadlock detection.</li>
+  <li>ARIES-based recovery, static assignment of processors to log sites.</li>
+  <li>Failure Management: Chained Declustering</li>
+  <ul>
+    <li>nodes belong to relation clusters</li>
+    <li>relations are declustered within a relation cluster</li>
+    <li>backups are declustered &quot;one disk off&quot;</li>
+    <li>tolerates failure of a single disk or processor</li>
+    <li>discussion in paper vs. interleaved declustering</li>
+    <ul>
+      <li>these tradeoffs have been beaten to death in RAID world</li>
+    </ul>
+    <li>glosses over how indexes are handled in case of failure (another paper)</li>
+  </ul>
+  <li>Simplified picture: Gamma gets parallelism by</li>
+  <ul>
+    <li>Running multiple small queries in parallel at (hopefully) disjoint sites.</li>
+    <li>Running big queries over multiple sites --- idea here is:</li>
+    <ul>
+      <li>Logically partition problem so that each subproblem is independent, and</li>
+      <li>Run the partitions in parallel, one per processor.</li>
+      <ul>
+        <li>Examples: hash joins, sorting, ...</li>
+      </ul>
+    </ul>
+  </ul>
+</ul>
+
+<ul>
+  <li>Performance results:</li>
+  <ul>
+    <li>a side-benefit of declustering is that small relations mean fewer &amp; smaller seeks</li>
+    <li>big queries get linear speedup!</li>
+    <ul>
+      <li>not perfect, but amazingly close</li>
+    </ul>
+    <li>pretty constant scaleup!</li>
+    <li>some other observations</li>
+    <ul>
+      <li>hash-join goes faster if already partitioned on join attribute</li>
+      <ul>
+        <li>but not much! Redistribution of tuples isn&#146;t too expensive</li>
+      </ul>
+      <li>as you add processors, you lose benefits of short-circuited messages, in addition to
+        incurring slight overhead for the additional processes</li>
+    </ul>
+  </ul>
+  <li>Missing Research Issues (biggies!):</li>
+  <ul>
+    <li>query optimization (query rewriting for subqueries, plan optimization)</li>
+    <li>load balancing: inter-query parallelism with intra-query parallelism</li>
+    <li>disk striping, reliability, etc.</li>
+    <li>admin utilities &amp; database design</li>
+    <li>skew handling for non-standard data types</li>
+  </ul>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>

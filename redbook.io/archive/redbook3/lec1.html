@@ -1,0 +1,234 @@
+<html>
+
+<head>
+<meta NAME="GENERATOR" CONTENT="Microsoft FrontPage 3.0">
+<title>Motivation &amp; DBMS Architecture Overview</title>
+
+<meta name="Microsoft Border" content="tb, default"></head>
+
+<body><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td>
+
+<table border="0" width="100%">
+  <tr>
+    <td width="9%"><img src="images/redbookcover.gif" alt="redbookcover.gif (13955 bytes)" WIDTH="72" HEIGHT="93" align="left"></td>
+    <td width="91%"><font face="Comic Sans MS"><em>Readings in Database Systems, 3rd Edition</em></font><p><font face="Comic Sans MS">Stonebraker &amp; Hellerstein, eds.</font></td>
+  </tr>
+</table>
+
+<hr align="center">
+</td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><!--msnavigation--><td valign="top">
+
+<h1>Motivation &amp; DBMS Architecture Overview</h1>
+
+<h3>Why databases? Why DB research?</h3>
+
+<ul>
+  <li>The technology trend angle: emphasis in CS research has shifted from computation to
+    information management.</li>
+  <p>Evidence: <ul>
+    <li>Hardware: high-performance computer companies on hard times (Thinking Machines, KSR,
+      Cray, SGI?).&nbsp; The exemplary success story in massive parallelism: Teradata (now sold
+      by NCR).&nbsp; Been around since the 70's.&nbsp; &quot;Shared-Nothing&quot; (sometimes
+      called &quot;clusters&quot; or &quot;NOW/COW/WOW&quot; etc.)&nbsp; Successes have been
+      largely database-centric.</li>
+    <li>&quot;Low-end&quot; users: scramble to webspace reflects desire to give/receive info.
+      Success of these efforts is questionable, and the disorganization will get worse as things
+      grow.</li>
+    <li>&quot;High-end&quot; users: scientists, the biggest users of high-powered computation,
+      now have data management problems that exceed their appetite for cycles</li>
+    <li>Other researchers: architecture, OS, theoreticians, AI are all moving this way.</li>
+    <li>PS: you will see all this in the job market!</li>
+  </ul>
+</ul>
+
+<ul>
+  <li>The utilitarian angle: &quot;Database: the boring part of accounting&quot;? Not anymore!
+    Interesting, world-changing apps:</li>
+  <ul>
+    <li>digital libraries</li>
+    <li>digital ``asset mgmt'' -- i.e., multimedia &amp; entertainment</li>
+    <li>digital mapping &amp; geo apps</li>
+    <li>scientific applications: earth science, DNA, molecular docking, experiment management,
+      etc.</li>
+    <li>decision-support, data analysis &amp; &quot;mining&quot;</li>
+    <li>your mom and pop care about this stuff!&nbsp; (as do funding agencies, companies, etc.)</li>
+  </ul>
+</ul>
+
+<ul>
+  <li>The intellectual angle:</li>
+  <ul>
+    <li>Big, beautiful ideas: relational model &amp; languages, concurrency control, query
+      processing, etc.</li>
+    <li>Real, meaty systems work: the serious 24x7, high performance, complex systems
+      engineering domain</li>
+    <li>Room for both kinds of contributions, separately and simultaneously</li>
+    <ul>
+      <li>plenty of room to take an idea from theory to practice</li>
+    </ul>
+    <li>lots of useful research left to do</li>
+  </ul>
+</ul>
+
+<p>The database-centric view of the CS research universe (take with a large grain of
+salt): 
+
+<ul>
+  <li>OS &amp; Architecture are ``finished'': Ascendancy of Linux and FreeBSD. If Microsoft
+    &amp; Intel can mass-market these, it must be easy. </li>
+  <li>PL has become arcane</li>
+  <li>Theory is ... theoretical.</li>
+  <li>AI is that which cannot be done</li>
+  <li>etc...</li>
+  <li>while you may (should!) disagree with all the above in some respects, it is true that DB
+    research is notably relevant and fertile these days. Lots of meaty problems remain that
+    people care about.</li>
+</ul>
+
+<h3>An outline of ongoing database research:</h3>
+
+<ul>
+  <li>Big: massive datasets</li>
+  <ul>
+    <li>Tertiary storage: EOSDIS 1 Tb/day, keep it all for 15 years</li>
+    <li>Parallelism: data parallelism is natural in a DBMS. How to do DB operations in parallel
+      and balance load well? WalMart (365 node, 6Tb online, 4billion row table, 200million
+      updates daily, 4000 queries/day, 1500 users/week, 4 min DS response time w/ avg. 60000
+      rows out)</li>
+    <li>Data Analysis, Data Mining: given huge amounts of data, try to find interesting
+      information in the data.&nbsp; What is the &quot;killer query&quot;?</li>
+  </ul>
+</ul>
+
+<ul>
+  <li>Wide: wide-scale distribution</li>
+  <ul>
+    <li>World-Wide Web (a bad example)</li>
+    <li>Distributed databases for the 00's: autonomous &quot;pay &amp; play&quot; databases</li>
+  </ul>
+</ul>
+
+<ul>
+  <li>Complex: complex datatypes and their associated lookups</li>
+  <ul>
+    <li>complex base types: geographic data, multimedia, scientific data, CAD data</li>
+    <li>complex objects</li>
+    <li>extensible query processing engines</li>
+    <li>indexing new data types</li>
+  </ul>
+</ul>
+
+<ul>
+  <li>Old &amp; hetero: the data integration problem</li>
+  <ul>
+    <li>schema integration: trying to figure out how different schemas fit together. Hard!!!</li>
+    <li>DBMS integration: trying to semi-transparently glue different kinds of database systems
+      together</li>
+  </ul>
+</ul>
+
+<h3>DBMS History</h3>
+
+<ul>
+  <li>late 60's: network (CODASYL) &amp; hierarchical (IMS) DBMS.</li>
+  <ul>
+    <li>Low-level ``record-at-a-time'' DML, i.e. physical data structures reflected in DML (no
+      data independence)</li>
+  </ul>
+  <li>1970: Codd's paper. The most influential paper in DB research. Set-at-a-time DML. Data
+    independence. Allows for schema and physical storage structures to change under the
+    covers''. Truly important theory, led to &quot;paradigm shift&quot; in thinking and in
+    practice.&nbsp;&nbsp; (Papadimitriou: &quot;as clear a paradigm shift as we can hope to
+    find in computer science&quot;).&nbsp; Turing award.</li>
+  <li>early-to-mid-70's: raging debate between the two camps. &quot;great debate&quot; in 1975</li>
+  <li>mid 70's: 2 full-function (sort of) prototypes. Ancestors of essentially all today's
+    commercial systems</li>
+  <li>Ingres: UCB 1974-77</li>
+  <ul>
+    <li>a ``pickup team'', including Stonebraker &amp; Wong. early and pioneering. begat Ingres
+      Corp (CA), Sybase, MS SQL Server, Britton-Lee, Wang's PACE.</li>
+  </ul>
+  <li>System R: IBM San Jose (now Almaden)</li>
+  <ul>
+    <li>15 PhDs. begat IBM's SQL/DS &amp; DB2, Oracle, HP's Allbase, Tandem's Non-Stop SQL.
+      System R arguably got more stuff ``right''</li>
+  </ul>
+  <li>Both were viable starting points, proved practicality of relational approach. Beautiful
+    example of theory&nbsp; -&gt; practice!!</li>
+  <li>early 80's: commercialization of relational systems</li>
+  <li>mid 80's: SQL becomes ``intergalactic standard''.</li>
+  <ul>
+    <li>DB2 becomes IBM's flagship product.</li>
+    <li>IMS ``sunseted''</li>
+  </ul>
+  <li>today: network &amp; hierarchical essentially dead (though commonly in use!)</li>
+  <ul>
+    <li>relational is mainstream, not even sexy</li>
+    <li>SQL (&amp; perhaps RDBMS) too flawed to last in current form.</li>
+    <ul>
+      <li>semantically flawed in various ways (Date, 1985).</li>
+      <li>anemic</li>
+      <li>in an effort to fix it up, standards committees are making a mess</li>
+      <ul>
+        <li>design by committee leads to kitchen sink</li>
+        <li>standards body as designers, rather than codifiers</li>
+        <li>leads to wasting time (Sybase) or irrelevance of standard (Informix &amp; IBM shipping
+          SQL3 before standardized)</li>
+      </ul>
+    </ul>
+    <li>various players in research, industry and both scrambling to standardize the &quot;next
+      thing&quot;</li>
+  </ul>
+</ul>
+
+<h3>Modern DBMS taxonomy</h3>
+
+<p>Two axes: 
+
+<ul>
+  <li>Functionality: RDBMS, OODBMS, ORDBMS.</li>
+
+<ul>
+  <li>RDBMS: query in, data out.</li>
+  <ul>
+    <li>simple data model: tables with rows and columns, simple data types.</li>
+    <li>widely standardized definitions, languages</li>
+    <li>clean mathematical foundation</li>
+  </ul>
+  <li>OODBMS: term is somewhat nebulous. usually, a persistent programming environment</li>
+  <ul>
+    <li>no queries (or only VERY simple ones).</li>
+    <li>data model comes from PL, includes lots of good OO stuff.</li>
+    <li>theoretical &quot;foundations&quot; after the fact, very complicated.</li>
+  </ul>
+  <li>ORDBMS: term is getting better defined as products mature (Informix, IBM)</li>
+  <ul>
+    <li>an attempt to provide best of both worlds: queries &amp; rich data types.</li>
+    <li>query interface.</li>
+    <li>Rich data types with lots of OO features, esp. object identity, type-extensibility and
+      inheritance.</li>
+    <li>Basic ``outer'' data type is relation, with extensible data types in the fields.</li>
+    <li>relational theory applies to outer operations only</li>
+  </ul>
+</ul>
+</ul>
+
+<ul>
+  <li>Implementation:</li>
+  <ul>
+    <li>Single-Site (i.e. traditional)</li>
+    <li>Parallel: lots of tightly-coupled machines solve one query together. A database
+      supercomputer.</li>
+    <li>Distributed: geographically distributed machines, each &quot;hosting&quot; different
+      data, participate in a more loosely coupled manner</li>
+  </ul>
+</ul>
+&nbsp;<!--msnavigation--></td></tr><!--msnavigation--></table><!--msnavigation--><table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td><font face="century gothic, arial, helvetica" mstheme>
+
+<p align="center" msthemeseparator><img src="_themes/blueprnt/bluhorsa.gif" width="300" height="10"></p>
+
+<p><strong><font face="Arial"><small><small>© 1998, Joseph M. Hellerstein.&nbsp; Last
+modified<small><small> </small></small>08/18/98</small></small></font>.<br>
+<font face="Arial"><small><small><a href="feedform.htm">Feedback</a> welcomed.</small></small></font></strong></p>
+</font mstheme></td></tr><!--msnavigation--></table></body>
+</html>
