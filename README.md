@@ -19,3 +19,9 @@ Computer architecture - Lois Wright Hawkes
 Last update: 2018-11-01
 
 Readings in Database Systems, 5th Edition - Peter Bailis, Joseph M. Hellerstein, Michael Stonebraker, editors
+
+## htdp.org/2018-01-06/Book
+
+Last update: 2018-11-01
+
+How to Design Programs, Second Edition - Matthias Felleisen, Robert Bruce Findler, Matthew Flatt, Shriram Krishnamurthi
