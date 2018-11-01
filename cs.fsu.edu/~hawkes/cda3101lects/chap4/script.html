@@ -1,0 +1,697 @@
+<HTML>
+<HEAD>
+</HEAD>
+<BODY>
+<BIG>
+<H1>Chapter 4</H1>
+
+<A NAME="intro">
+<H3>
+see Concepts Introduced in Chapter 4
+</H3>
+We will skip Section 4.9.
+
+<A NAME="numbers">
+<H3>
+see Binary Numbers
+</H3>
+It is natural for humans to use base 10 since we have 10 fingers.
+It is convenient to have computers use base 2 since they can represent
+high and low voltages.
+Decimal or binary is a weighted positional notation.
+The least significant digit is the rightmost digit.
+The most significant digit is the leftmost digit.
+
+<A NAME="binary">
+<H3>
+see Binary Representations
+</H3>
+The size of a MIPS word, which is used to represent integers, is 32 bits.
+Since with 32 bits there are 2^32 bit patterns, it makes sense that 2^32
+different values can be represented.
+Almost every computer today uses two's complement representation for
+signed integers.
+In two's complement there is one more negative value than positive value.
+If the most significant (leftmost) bit is a 1, then the value is negative.
+Old representations had two values that could represent zero, which caused
+problems.
+
+<A NAME="extension">
+<H3>
+see Sign and Zero Extension
+</H3>
+Note that a positive two's complement value can have an infinite number
+of leading zeroes.
+Likewise, a negative two's complement value can have an infinite number
+of leading ones.
+Thus, when loading a signed byte or a signed halfword, the machine
+performs sign extension.
+An unsigned load of a byte or halfword results in zero extension.
+
+<A NAME="negation">
+<H3>
+see Two's Complement Negation
+</H3>
+Note that two's complement negation does not always work since there is
+one more negative value than a position value.
+This is an overflow situation.
+
+<A NAME="convert">
+<H3>
+see Bases That Are a Power of Two
+</H3>
+There are six new characters that are used to represent hexadecimal
+digits.
+Note that rightmost 3 binary digits maps to rightmost octal digit.
+Note that rightmost 4 binary digits maps to rightmost hexadecimal digit.
+
+<A NAME="convertex">
+<H3>
+see Examples of Converting between Bases
+</H3>
+When converting from binary to some power of two, simply group the
+appropriate number of bits together and then convert each group to
+the appropriate digit.
+When converting from some power of two to some other power of two, first
+convert to binary then convert each group of bits to the new base.
+
+<A NAME="F4.3">
+<H3>
+see Figure 4.3: Binary addition, showing carries from right to left.
+</H3>
+When you add two numbers in decimal, sometimes you have to carry a 1 for
+the next digit.
+You have to do the same thing in binary.
+
+<A NAME="subtraction">
+<H3>
+see Subtraction by Negating and Adding
+</H3>
+Note that there was a carry out of the last bit.
+When is this a problem?
+
+<A NAME="overflow">
+<H3>
+see Detecting Overflow
+</H3>
+Overflow occurs on machines since we represent values with a limited number
+of bits.
+Remember that the operands are values that can be represented.
+The first two lines in the table represent when overflow can occur since
+the signs of the operands are the same and the result is different.
+The next two lines represent that overflow cannot occur when the signs of
+the operands and the result are the same.
+The last four lines represent that overflow cannot occur when the signs
+of the operands are different.
+The definition of C and C++ ignores overflow.
+Remember that the <code><strong>addu</strong></code>,
+<code><strong>addiu</strong></code>, and
+<code><strong>subu</strong></code> do not cause an overflow exception,
+while <code><strong>add</strong></code>, <code><strong>addi</strong></code>,
+and <code><strong>sub</strong></code> can cause an overflow exception.
+
+<A NAME="fp">
+<H3>
+see Floating-Point Values
+</H3>
+The floating-point representation is an approximation of many real values
+since it can only represent a limited precision.
+Floating-point representations allow several major benefits.
+(1) It allows real (noninteger) values to be represented.
+(2) The use of an exponent allows a wide range of values to be represented.
+(3) Very small fractions (close to zero) can also be represented.
+
+<A NAME="normalized">
+<H3>
+see Normalized Floating-Point Values
+</H3>
+You have seen this in normalized scientific notation.
+Remember that anything raised to the zero power is 1.
+
+<A NAME="ieeefpstandard">
+<H3>
+see IEEE Floating-Point Standard
+</H3>
+In the past, there would be different floating-point representations on
+different machines.
+This meant that a program would behave differently on one machine than
+another.
+Also data transfered from one machine to another had to be converted to
+the proper format.
+The IEEE came up with a standard, which helps to overcome these problems.
+This is actually the single precision standard.
+The double precision standard uses 64 bits and allows a wider range of
+values and more importantly more precision.
+You are only responsible for knowing the single precision standard.
+
+<A NAME="ieeefpstandard2">
+<H3>
+see Interpreting the IEEE FPS
+</H3>
+The sign bit represents if the value is positive (0) or negative (1).
+The F represents the fractional part of the value that does not include
+the hidden (implied) bit.
+E can take on values between 0 and 255.
+However 0 and 255 have special interpretations.
++Infinity is the value assigned as the result of an arithmetic operation
+when the result is a positive value that is too large to be represented.
+Likewise, -infinity is the value assigned as the result of an
+arithmetic operation when the result is a too large negative value.
+So the exponents with the regular meaning can range from 1 to 254 or
+represent after subtracting the bias -126 to 127.
+Note that there are two representations of zero.
+Note that unlike some integer operations (e.g. /0), floating-point
+operations do not generate exceptions since there are reserved patterns
+to represent these exceptional values.
+The more bits placed in the significand, the greater the precision that
+can be obtained.
+The more bits placed in the exponent, values with greater and smaller 
+magnitude (further and closer to zero)
+can be represented.
+
+<A NAME="ieeefpsex">
+<H3>
+see Example of Representing a Value in IEEE FPS
+</H3>
+So we do the following.
+(1) Convert to binary.
+(2) Normalize the binary value by using an exponent.
+(3) Determine the values of S (sign), E (normalizing and adding the bias), and
+F (by removing the hidden bit) fields.
+(4) Convert the value to hexadecimal.
+
+<A NAME="ieeefpsex2">
+<H3>
+see Example of Determining What Value an IEEE FPS Pattern Represents
+</H3>
+So we do the following.
+(1) Convert the hexadecimal value to binary.
+(2) Determine the values of the S, E, and F fields.
+(3) Plug in these values into the formula.
+(4) Do the arithmetic.
+
+<A NAME="largest">
+<H3>
+see What is the Largest Representable IEEE FPS Value?
+</H3>
+We want it to be positive, so the S has to be zero.
+The largest exponent that is not used to represent a special case value
+is 254.
+The largest significand is when all bits are set.
+This is a large value.
+Note that we cannot represent something like 2**30+1, which is a much
+smaller value.
+The reason is that there is too much distance between the most significant
+bit set and the least significant bit set.
+
+<A NAME="booleanalgebra">
+<H3>
+see Boolean Algebra
+</H3>
+Boolean algebra provides a concise way of representing logic in hardware.
+So you can think of this as under what conditions a signal will be asserted.
+It involves logic equations and the rules to manipulate them.
+Note that the <em>and</em> operation takes precedence over the <em>or</em>
+operation.
+
+<A NAME="F4.8">
+<H3>
+see Figure 4.8: Four hardware building blocks used to construct an
+arithmetic unit.
+</H3>
+A gate is an electronic circuit that produces an output signal that is a
+simple boolean operation on its input signals.
+Each output of these hardware building blocks depends only on its input,
+which is described as a combinational logic block.
+The multiplexor has the data inputs and selector input.
+A truth table simply depicts the output for each possible set of inputs.
+You can read in Appendix B how multiplexors are constructed from gates.
+We will see that the <em>and</em> and <em>or</em> gates and multiplexors
+could more than two inputs.
+In that case, the selector input would have to be multiple signals.
+
+<A NAME="boolex">
+<H3>
+see Writing A Logic Equation from a Truth Table
+</H3>
+Each row in the truth table corresponds to a product term, which is the
+product of each of the inputs or their complement, depending on if the
+entry in the truth table has a 0 or 1.
+The logic equation is the logical sum of the product terms where the
+output is true.
+<br><br>
+Now we will construct a simple ALU.
+We need a 32-bit ALU, but we will start with a 1-bit ALU.
+First, let's start with 1-bit AND and OR operations.
+
+<A NAME="F4.9">
+<H3>
+see Figure 4.9: The 1-bit logical unit for AND and OR.
+</H3>
+This logical unit simply accepts the appropriate output based on
+the operation signal.
+
+<A NAME="F4.10">
+<H3>
+see Figure 4.10: A 1-bit adder.
+</H3>
+Note the 3 inputs and 2 outputs.
+<em>CarryIn</em> is the <em>CarryOut</em> from the previous 1-bit adder.
+
+<A NAME="F4.11">
+<H3>
+see Figure 4.11: Input and output specification for a 1-bit adder.
+</H3>
+Note that the <em>Sum</em> signal is set if the number of inputs
+containing a 1 is odd.
+Note that the <em>CarryOut</em> signal is set if there are two or more
+inputs containing a 1.
+Both of these can be expressed as logical equations (or gates) as shown
+in the text.
+
+<!--
+<A NAME="F4.14">
+<H3>
+see Figure 4.14: A 1-bit ALU that performs AND, OR, and addition.
+</H3>
+Now we have 3 1-bit operations that can be performed.
+
+<A NAME="F4.15">
+<H3>
+see Figure 4.15: A 32-bit ALU constructed from 32 1-bit ALUs.
+</H3>
+This is called a ripple carry adder.
+A single carry out of the least significant bit can ripple all the
+way through the adder, causing a carry out of the most significant
+bit.
+The CarryOut of the last 1-bit adder is used to check for overflow.
+
+<A NAME="F4.16">
+<H3>
+see Figure 4.16: A 1-bit ALU that performance AND, OR, and addition
+on a and b or a and \(no b.
+</H3>
+We need negation to obtain the effect of subtraction.
+So that is why <em>b</em> can be negated depending on the signal
+<em>Binvert</em>.
+But we still have to add 1 to get <em>b</em> negated when we are dealing
+with a 32-bit two's complement value.
+We can assert the <em>CarryIn</em> signal of the first 1-bit adder to cause
+1 to be added.
+
+<A NAME="slt">
+<H3>
+see Changes Needed for the <code><strong>slt</strong></code> Operation
+</H3>
+A subtraction by itself won't work.
+We actually need to test for overflow as well (e.g. msb positive and
+overflow, then a < b).
+-->
+
+<A NAME="F4.17">
+<H3>
+see Figure 4.17: (Top) A 1-bit ALU that performs AND, OR, and addition on
+a and b or not(b), and (bottom) a 1-bit ALU for the most significant bit.
+</H3>
+Click on the names of individual signals within the figure to have the
+script frame automatically scrolled to an explanation of that signal.
+<br><br>
+<em>Summary of top half of figure</em>.
+The top half of Figure 4.17 contains the 1-bit ALU that is used for the
+least significant 31 bits.
+Each of the corresponding bits of the input values (shown as <em>a</em> and
+<em>b</em> in the figure) are input to elements that perform <em>and</em>,
+<em>or</em> and <em>addition</em> operations.
+<br><br>
+<A NAME="F4.17a">
+<em>Operation signal</em>.
+The <em>operation</em> signal is input to a multiplexor that allows one of 4 data
+results to be selected.
+The <em>operation</em> signal is set to 0 for an
+<code><strong>and</strong></code> instruction,
+a 1 for an <code><strong>or</strong></code> instruction,
+a 2 for an <code><strong>add</strong></code> or
+<code><strong>sub</strong></code> instructions, and
+a 3 for a <code><strong>slt</strong></code> instruction..
+Note that on each cycle an <em>and</em>, <em>or</em>, and <em>add</em> are
+performed.
+The <em>operation</em> signal just indicates which result should be used.
+<br><br>
+<A NAME="F4.17b">
+<em>Binvert signal</em>.
+The <em>Binvert</em> signal is asserted when a
+<code><strong>sub</strong></code> or an <code><strong>slt</strong></code>
+instruction is to be performed.
+This signal has the effect of complimenting the <em>b</em> signal, which
+results in (a + not(b)) being added.
+<br><br>
+<A NAME="F4.17c">
+<em>CarryIn signal</em>.
+The assertion of the <em>CarryIn</em> signal represents that the 1-bit ALU
+for the previous bit has a <em>CarryOut</em> asserted from its addition
+element.
+<br><br>
+<A NAME="F4.17d">
+<em>Less signal</em>.
+The <em>Less</em> signal is asserted on the least significant 1-bit ALU
+when an <code><strong>slt</strong></code> instruction is to be performed.
+<br><br>
+<A NAME="F4.17e">
+<em>CarryOut signal</em>.
+The <em>CarryOut</em> signal is asserted when there is a carry out of the
+addition element.
+This signal is passed to the next 1-bit ALU.
+<br><br>
+<A NAME="F4.17f">
+<em>Result signal</em>.
+The <em>Result</em> signal is the 1-bit result of the operation performed
+by the 1-bit ALU.
+.sp 3
+<br><br>
+<em>Summary of the bottom half of figure</em>.
+The bottom half of Figure 4.17 contains the 1-bit ALU that is used for
+the most significant bit.
+There are two differences from the 1-bit ALU shown in the upper portion
+of the figure.
+<br><br>
+<A NAME="F4.17g">
+<em>Set signal</em>.
+The <em>set</em> signal simply indicates the result of the addition element.
+Since this is the most significant bit, then the <em>set</em> signal
+indicates if the result is negative.
+<br><br>
+<A NAME="F4.17h">
+<em>Overflow signal</em>.
+The <em>overflow</em> signal indicates if the result of the addition caused
+an overflow.
+Remember that overflow on addition only occurs when the sign of the two
+values being added are the same and the sign of the result of the addition
+differs from its operands.
+
+<!--
+.lp
+\fBshow Figure 4.18: The final 32-bit ALU.\fP
+The <em>Overflow\fP output should actually be used to determine whether the
+<em>Less\fP input should be set for the first 1-bit ALU.
+-->
+
+<A NAME="F4.19">
+<H3>
+see Figure 4.19: The final 32-bit ALU.
+</H3>
+<!--
+The <em>CarryIn</em> and the <em>Binvert</em> are always set together
+whenever we need to do a subtract.
+These signals are combined into the <em>Bnegate</em> signal.
+The results are also fed through an OR gate and inverted to see if
+the subtraction result was equal to zero.
+Thus, we can now handle a <code><strong>beq</strong></code> instruction
+that checks if two registers have the same value.
+The <em>Overflow</em> output should actually be used to determine whether
+the <em>Less</em> input should be set for the first 1-bit ALU.
+The <em>Zero</em> detector is used for the
+<code><strong>beq</strong></code> and <code><strong>bne</strong></code>
+instructions (i.e. do a subtract and see if all the bits are zero).
+-->
+Click on the names of individual signals or within elements in the figure to
+have the script frame automatically scrolled to an explanation of that signal
+or element.
+<br><br>
+<em>Summary of figure</em>.
+This figure shows how the 32 1-bit ALUs can be hooked together
+to perform the operations of several instructions.
+This is called a <em>ripple-carry</em> adder.
+A single carry out of the least significant bit can ripple all the
+way through the adder, causing a carry out of the most significant
+bit.
+<br><br>
+<A NAME="F4.19a">
+<em>1-bit ALU</em>.
+Each 1-bit ALU accepts two corresponding bits (data signals) from the
+input operand values and produces a result bit as output.
+In addition, each 1-bit ALU accepts a CarryIn signal that indicates
+if the previous ALU had a CarryOut signal asserted from its ALU.
+results to be selected.
+Finally, each 1-bit ALU has a <em>Bnegate</em>, <em>Operation</em>, and
+<em>Less</em> signals as input, whose functions are explained elsewhere
+in the figure.
+<br><br>
+<A NAME="F4.19b">
+<em>Bnegate signal</em>.
+The <em>Bnegate</em> signal comes from the <em>CarryIn</em> and
+<em>Binvert</em> signals from Figure 4.17.
+Both of these signals are always asserted whenever a subtraction operation
+(<code><strong>sub</strong></code>, <code><strong>slt</strong></code>, or
+<code><strong>beq</strong></code> instructions) needs to be performed.
+Remember that the <em>Binvert</em> from Figure 17 was asserted to cause the
+complement of the <em>b</em> data signal to be used as input to the adder.
+Asserting the <em>CarryIn</em> of the least significant 1-bit ALU
+effectively causes an addition of 1.
+Thus, inverting the bits of the second operand and adding 1 causes a
+two's complement negation of the second operand.
+<br><br>
+<A NAME="F4.19c">
+<em>Operation signal</em>.
+The <em>Operation</em> signal indicates which result from the different
+types of elements (and, or, add, less) is to be selected.
+<br><br>
+<A NAME="F4.19d">
+<em>Set signal</em>.
+The <em>set</em> signal indicates if the most significant bit of the
+result is set.
+This indicates if the result is negative.
+For a <code><strong>slt</strong></code> instruction, which causes the
+second operand to
+be subtracted from the first operand, a negative result means that
+the first operand is less than the second operand.
+Remember that a <code><strong>slt</strong></code> instruction produces a
+value of a one that is assigned to the destination register when the first
+operand is less than the second operand (and a zero when the condition
+is not true).
+Thus, the 31 most significant 1-bit ALUs will produce a zero when
+there is a <code><strong>slt</strong></code> instruction.
+Only the result of the least significant 1-bit ALU can vary depending
+on the result of the most significant 1-bit ALU.
+Note that for a <code><strong>slt</strong></code> instruction, the result
+of the subtraction is ignored except for most significant bit.
+<br><br>
+<A NAME="F4.19e">
+<em>Overflow signal</em>.
+The <em>overflow</em> signal is asserted when the operation caused an
+overflow.
+The figure is really incomplete since it does not show how the overflow
+signal is used.
+For instance, the <em>overflow</em> signal should be examined to determine
+the <em>Less</em> input signal for the least significant 1-bit ALU.
+<br><br>
+<A NAME="F4.19f">
+<em>Zero signal</em>.
+The <em>zero</em> signal is asserted when all the bits in the two operand
+values are equal.
+This is accomplished by subtracting the second operand from the first and
+checking if the result is zero.
+This check is accomplished by ORing the 32 data result signals and then
+taking the complement of the OR result.
+Thus, the <em>zero</em> signal is only asserted when all of the inputs to
+the OR gate were deasserted.
+
+<A NAME="carrylookahead">
+<H3>
+see Carry-Lookahead Adder
+</H3>
+Ripple-carry adders are considered too slow.
+It is possible to make a complete adder with only two levels of logic
+by formulating a complete logic equation for each result bit.
+However, the logic would be very complex.
+A compromise between these two approaches is the carry-lookahead
+adder.
+The <em>generate</em> indicates that the carry bit will be set if
+the <em>gi</em> is set.
+So a carry is generated when the <em>gi</em> condition is true.
+The <em>propagate</em> indicates that the carry bit will be set if
+the <em>pi</em> and <em>ci</em> are both set.
+So the previous carry is propagated when <em>pi</em> is true.
+The carry <em>c(i+1)</em> is set when either <em>gi</em> or <em>pi</em> and
+<em>ci</em> are set.
+We can precalculate a set of carry bits by using forward substitution.
+Note that each of these calculations can be accomplished in two levels
+of logic.
+
+<A NAME="F4.22">
+<H3>
+see Figure 4.22: A plumbing analogy for carry lookahead for 1 bit, 2 bits,
+and 4 bits using water, pipes, and valves.
+</H3>
+The wrenches are turned to open (set) and close (clear) valves.
+Water will come out of the pipe, if the closest value <em>g</em> for the water
+is open or a previous consecutive set of <em>p</em> values is open and the 
+<em>g</em> or <em>c</em> valve preceding it is also open.
+
+<A NAME="carrylookahead2">
+<H3>
+see Carry-Lookahead Adder (cont.)
+</H3>
+This example shows 4-bit adders using carry-lookahead logic to construct
+a 16-bit (not 32-bit) adder.
+Each <em>Pi</em> represents a propagate of a 4-bit adder.
+Each <em>Gi</em> represents the generate out of a 4-bit adder.
+Look back at the <em>c4</em> equation on the previous carry-lookahead slide.
+The <em>P0</em> is simply the last term without the <em>c0</em>.
+The <em>G0</em> is simply the first 4 terms.
+The last 4 equations should look familiar.
+It is the same as the last 4 equations on the previous slide.
+The only difference is that we are dealing with <em>generates</em>
+and <em>propagates</em> at a higher level of abstraction.
+
+<A NAME="F4.24">
+<H3>
+see Figure 4.24: Four 4-bit ALUs using carry lookahead to form a
+16-bit adder.
+</H3>
+The <em>propagates</em> and <em>generates</em> are produced by each 4-bit
+adder.
+The <em>carries</em> come from the carry-lookahead unit.
+Carry lookahead makes carries faster since fewer gates are required to
+send the carry signal (for a 4-bit adder) ahead and the next adder in
+the sequence can start calculating valid results sooner.
+A ripple-carry adder would take 32 (16*2) gate delays to calculate
+the carry out of the most significant bit of a 16-bit adder.
+To calculate <em>C4</em> of a 16-bit carry-lookahead adder would require
+5 levels of logic.
+So for our example, the carry-lookahead adder is 6.4 (32/5) times as
+fast as the ripple-carry adder.
+
+<A NAME="mult">
+<H3>
+see Integer Multiplication
+</H3>
+Addition can cause one carry out bit.
+But a multiplication result can require twice as many bits as each of
+its operands.
+So the chances of overflow are greater.
+We will see that multiplication is essentially a series of adds and
+shifts.
+
+<A NAME="F4.32">
+<H3>
+show Figure 4.32: The third multiplication algorithm
+</H3>
+<em>Product0</em> indicates the least significant bit in the product.
+The product is initialized to contain the value of the multiplier.
+The product is right shifted at each repetition so we can test the least
+significant bit to see if we should perform the addition.
+Eventually the multiplier is completely shifted out of the product.
+Note that when we are performing the right shift, the most significant
+bit remains the same.
+This is referred to as an arithmetic right shift and allows the algorithm
+to work correctly when multiplying negative values.
+
+<A NAME="F4.33">
+<H3>
+show Figure 4.33: Multiply example using third algorithm in Figure 4.32.
+</H3>
+So the left half of the product is initialized to zero and the right half is
+initialized to the multiplier.
+The multiplicand just stays the same at each step.
+We perform additions the first two repetitions since the least significant
+bit of the product is 1 at that point.
+We don't perform additions the last two repetitions since the least
+significant bit of the multiplier is zero.
+
+<A NAME="booths">
+<H3>
+show Booth's Algorithm for Multiplication
+</H3>
+A shift can be performed cheaper than an add.
+0's don't require an addition.
+The trick with Booth's algorithm is that a sequence of 1's can be handled
+with 1 addition and 1 subtraction.
+Note that this does not guarantee a performance improvement since we could
+have a value of alternating zeroes and ones.
+Booth's algorithm can be beneficial for machines that have multiplies that
+require a varying number of cycles to complete.
+
+<A NAME="div">
+<H3>
+see Integer Division
+</H3>
+We will see that division is essentially a series of subtracts and shifts.
+We will have to detect divide by zero (infinity).
+
+<A NAME="F4.40">
+<H3>
+see Figure 4.40: The third division algorithm has just two steps.
+</H3>
+Place the dividend in the right half of the remainder register.
+We subtract the divisor register from the left half of the remainder.
+If the result is >= 0, then we know that the divisor fit into the
+dividend and we set the rightmost bit of the remainder to 1.
+If the result is < 0, then we have to restore the previous value of the
+remainder register by adding the divisor register to it (undo the subtract).
+We keep doing this for 32 repetitions.
+We finally have the quotient in the right half of the remainder register
+and the remainder in the left half.
+
+<A NAME="F4.42">
+<H3>
+see Figure 4.42: Division example using third algorithm in Figure 4.40
+</H3>
+So the right half of the remainder is initialized to the dividend and the
+left half is the sign extension of the dividend.
+Step 0 also left shifts the remainder register by 1.
+Steps 1 and 2 find that after subtracting the divisor from the left half
+of the remainder register, the result is negative. 
+So the old value is restored and left shifted by 1.
+Steps 3 and 4 find that after subtracting the divisor from the left half
+of the remainder register, the result is positive.
+So the value in the left half does not get restored and the whole register
+value is left shifted.
+Finally we right shift the left half of the remainder register by 1 to
+get rid of the effect of that final left shift.
+
+<A NAME="multdivform">
+<H3>
+see General Forms of a MIPS Integer Multiply or Divide Instruction
+</H3>
+Only 2 source registers are explicitly given.
+The destination of the integer multiply and divide are implicit <em>hi</em>
+and <em>lo</em> registers.
+These pair of registers hold the 64-bit product for the multiply.
+The high portion can be inspected to see if there is an overflow
+(nonzero bit for nonnegative right half or zero bit for negative right half).
+For the divide, the <em>lo</em> portion contains the quotient and the <em>hi</em>
+portion contains the remainder.
+The last two instructions show how we can move the values from these special
+registers to conventional registers.
+The likely reason that special registers (<em>hi</em> and <em>lo</em>) are used
+is due to multiply and divide instructions requiring several cycles to execute.
+<A NAME="problems">
+<H3>
+see Fallacies
+</H3>
+<OL>
+<LI>
+<em>Fallacy: Floating-point addition is associative; that is,
+x+(y+z) = (x+y)+z.</em>
+The problem is that floating-point numbers are represented with limited
+precision.
+For instance, if the result has the most significant bit set a far distance
+from the least significant bit, then the least significant bit will often
+be truncated away.
+This can happen when <em>x</em> is a very large magnitude negative number,
+<em>y</em> is a very large magnitude positive number, and <em>z</em> is a
+small number.
+Thus, the results can differ depending on the order that the operations
+applied, which can inhibit many compiler optimizations.
+This is less of a problem with integer operations, except for the possibility
+of introducing overflow.
+<LI>
+<em>Fallacy: Only theoretical mathematicians care about floating-point
+accuracy.</em>
+Remember the Pentium where errors on floating-point divides could occur on
+the 4th to 15th decimal digits to the right of the decimal point.
+This error cost Intel an estimated $300 million in recalled chips.
+</OL>
+</BIG>
+</BODY>
+</HTML>

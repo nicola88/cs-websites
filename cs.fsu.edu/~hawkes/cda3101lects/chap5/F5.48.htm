@@ -1,0 +1,158 @@
+<HTML>
+<HEAD>
+
+	<SCRIPT SRC = "../slave.js" LANGUAGE = JAVASCRIPT></SCRIPT>
+
+	<SCRIPT LANGUAGE = JAVASCRIPT>
+	 chapter_gif = new Image 
+	 activeChapter_gif = new Image 
+	 greyChapter_gif = new Image 
+	 slide_gif = new Image 
+	 activeSlide_gif = new Image 
+	 greySlide_gif = new Image 
+	 Script_gif = new Image 
+	 activeScript_gif = new Image 
+	 greyScript_gif = new Image 
+	 Frame_gif = new Image 
+	 activeFrame_gif = new Image 
+	 greyFrame_gif = new Image 
+	 prev_gif = new Image 
+	 activePrev_gif = new Image 
+	 greyPrev_gif = new Image 
+	 next_gif = new Image 
+	 activeNext_gif = new Image 
+	 greyNext_gif = new Image 
+	 top_gif = new Image 
+	 activeTop_gif = new Image 
+
+	 chapter_gif.src = "../images_system/chapter.gif" 
+	 activeChapter_gif.src = "../images_system/activeChapter.gif" 
+	 greyChapter_gif.src = "../images_system/greyChapter.gif" 
+	 slide_gif.src = "../images_system/slide.gif" 
+	 activeSlide_gif.src = "../images_system/activeSlide.gif" 
+	 greySlide_gif.src = "../images_system/greySlide.gif" 
+	 Script_gif.src = "../images_system/Script.gif" 
+	 activeScript_gif.src = "../images_system/activeScript.gif" 
+	 greyScript_gif.src = "../images_system/greyScript.gif" 
+	 Frame_gif.src = "../images_system/Frame.gif" 
+	 activeFrame_gif.src = "../images_system/activeFrame.gif" 
+	 greyFrame_gif.src = "../images_system/greyFrame.gif" 
+	 prev_gif.src = "../images_system/prev.gif" 
+	 activePrev_gif.src = "../images_system/activePrev.gif" 
+	 greyPrev_gif.src = "../images_system/greyPrev.gif" 
+	 next_gif.src = "../images_system/next.gif" 
+	 activeNext_gif.src = "../images_system/activeNext.gif" 
+	 greyNext_gif.src = "../images_system/greyNext.gif" 
+	 top_gif.src = "../images_system/top.gif" 
+	 activeTop_gif.src = "../images_system/activeTop.gif" 
+	</SCRIPT>
+
+</HEAD>
+<BODY BACKGROUND = "../images_system/back.gif" >
+<!-- (C) 2000 by the Florida State University Department of Computer Science -->
+<FONT FACE = "Arial">
+	<SCRIPT LANGUAGE = JAVASCRIPT>
+		change_script ("script.html#F5.48")
+	</SCRIPT>
+<A NAME = "Top_of_Page"></A>
+ <table VALIGN=TOP BORDER=0>
+ <tr>
+<td><A HREF = "../index.html" onMouseover = "document.chapter.src = activeChapter_gif.src" 
+			onMouseout ="document.chapter.src = chapter_gif.src" TARGET = "_top">
+
+				<img SRC="../images_system/chapter.gif" BORDER = 0 NAME = "chapter"></A></td>
+<td><A HREF="toc.html" onMouseover = "document.slide.src = activeSlide_gif.src"
+
+				onMouseout = "document.slide.src = slide_gif.src">
+ 	<img SRC="../images_system/slide.gif" BORDER=0 NAME="slide"></a></td>
+<SCRIPT LANGUAGE = JAVASCRIPT>
+ document.writeln ('<td><A HREF ="https://www.cs.fsu.edu/~hawkes/cda3101lects/chap5/'&#32;+&#32;change_frames()&#32;+&#32;'" TARGET ="_top"')
+
+			document.writeln ('onMouseover = "document.script.src = active' + script_viewable() + '_gif.src"')
+
+			document.writeln ('onMouseout = "document.script.src = ' + script_viewable() + '_gif.src">')
+
+			document.writeln ('<img SRC="https://www.cs.fsu.edu/~hawkes/cda3101lects/images_system/'&#32;+&#32;script_viewable()&#32;+&#32;'.gif" BORDER = 0 NAME = "script"></A></td>')
+
+			</SCRIPT>
+<td>	<a href="exceptions.htm"onMouseover = "document.top_prev.src = activePrev_gif.src"
+	onMouseout = "document.top_prev.src = prev_gif.src">
+	<IMG SRC = "../images_system/prev.gif" BORDER=0 NAME = "top_prev"></a></td>
+
+<td><a href="F5.50.htm"onMouseover = "document.top_next.src = activeNext_gif.src"
+		onMouseout = "document.top_next.src = next_gif.src">
+	<IMG SRC = "../images_system/next.gif" BORDER=0 NAME = "top_next"></a></td>
+</tr>
+ </table>
+ <table COLS=1 WIDTH="100%" BORDER=0>
+<tr VALIGN=TOP>
+<td>
+<img src="F5.48.gif" target="lower" usemap="#F5.48" border="0">
+<map name="F5.48">
+<area shape="rect" alt="PC" coords="28,162,47,210" href="script.html#F5.48a" title="PC" target="lower">
+<area shape="poly" alt="0-1 MUX with PC and ALUOut as input    0-1 Mux with PC and ALUOut as inputs." coords="66,188,67,227,75,232,83,227,84,186,77,179,67,184,64,188" href="script.html#F5.48b" title="0-1 MUX with PC and ALUOut as input    0-1 Mux with PC and ALUOut as inputs." target="lower">
+<area shape="rect" alt="Memory" coords="95,188,173,287" href="script.html#F5.48k" title="Memory" target="lower">
+<area shape="poly" alt="OR gate" coords="131,50,145,41,166,40,161,48,163,58,169,62,149,61,139,55,131,49" href="script.html#F5.48d" title="OR gate" target="lower">
+<area shape="poly" alt="AND gate" coords="182,41,187,50,194,53,206,52,208,31,186,31,182,36,182,39,180,42" href="script.html#F5.48e" title="AND gate" target="lower">
+<area shape="rect" alt="Instruction registers" coords="206,164,269,289" href="script.html#F5.48f" title="Instruction registers" target="lower">
+<area shape="rect" alt="Memory data register" coords="214,309,258,364" href="script.html#F5.48g" title="Memory data register" target="lower">
+<area shape="poly" alt="Control" coords="315,54,327,32,337,31,349,50,355,78,353,102,347,123,335,135,323,127,311,102,312,71,319,49,326,33" href="script.html#F5.48h" title="Control" target="lower">
+<area shape="poly" alt="0-1 Mux with Instruction [20-16] and Instruction [15-11] as inputs" coords="319,236,325,228,330,228,335,234,336,278,329,281,321,279,320,235,315,236" href="script.html#F5.48i" title="0-1 Mux with Instruction [20-16] and Instruction [15-11] as inputs" target="lower">
+<area shape="poly" alt="0-1 Mux with Instruction [20-16] and Instruction [15-11] as inputs" coords="327,290,331,285,337,284,343,288,343,294,342,333,338,336,334,336,328,334,326,329,326,287,331,283,332,283" href="script.html#F5.48j" title="0-1 Mux with Instruction [20-16] and Instruction [15-11] as inputs" target="lower">
+<area shape="rect" alt="Registers" coords="361,189,430,287" href="script.html#F5.48k" title="Registers" target="lower">
+<area shape="poly" alt="Sign Extend" coords="368,348,376,318,387,313,395,320,402,344,399,367,389,380,380,381,369,346,360,347" href="script.html#F5.48l" title="Sign Extend" target="lower">
+<area shape="poly" alt="    Shift left 2 with sign-extended value as input" coords="427,345,435,328,445,327,454,337,454,353,446,369,432,362,428,346,423,347" href="script.html#F5.48m" title="
+
+Shift left 2 with sign-extended value as input" target="lower">
+<area shape="rect" alt="A" coords="453,203,471,231" href="script.html#F5.48n" title="A" target="lower">
+<area shape="rect" alt="B" coords="453,236,469,265" href="script.html#F5.48o" title="B" target="lower">
+<area shape="poly" alt="    0-1 Mux with PC and adder output as inputs" coords="509,195,515,184,521,183,526,190,527,231,517,237,510,228,510,191" href="script.html#F5.48p" title="
+
+0-1 Mux with PC and adder output as inputs" target="lower">
+<area shape="poly" alt="0-1-2-3 MUX" coords="503,255,512,244,521,243,529,250,528,298,520,304,514,304,506,295,506,253" href="script.html#F5.48q" title="0-1-2-3 MUX" target="lower">
+<area shape="poly" alt="ALU" coords="546,226,547,190,600,219,600,251,547,277,548,239,557,232,545,226" href="script.html#F5.48s" title="ALU" target="lower">
+<area shape="poly" alt="ALU Control" coords="528,350,534,315,546,309,559,323,562,350,554,375,546,379,531,363,528,341" href="script.html#F5.48r" title="ALU Control" target="lower">
+<area shape="poly" alt="  Shift left 2 with Instruction [25-0] as input" coords="552,157,562,140,570,140,577,151,578,165,572,172,566,176,560,176,553,162,554,153" href="script.html#F5.48t" title="
+Shift left 2 with Instruction [25-0] as input" target="lower">
+<area shape="rect" alt="ALUOut" coords="633,222,670,252" href="script.html#F5.48u" title="ALUOut" target="lower">
+<area shape="poly" alt="0-1 Mux selecting an input for the Cause register" coords="688,289,694,281,700,281,704,288,704,330,699,335,690,335,687,327,687,288" href="script.html#F5.48v" title="0-1 Mux selecting an input for the Cause register" target="lower">
+<area shape="poly" alt="0-1-2-3 Mux selecting an input to be routed to the PC    0-1-2-3 Mux selecting an input to be routed to the PC" coords="697,127,703,115,709,116,715,124,715,176,710,181,703,182,697,173,698,124" href="script.html#F5.48w" title="0-1-2-3 Mux selecting an input to be routed to the PC
+
+0-1-2-3 Mux selecting an input to be routed to the PC" target="lower">
+<area shape="rect" alt="EPC" coords="699,215,721,260" href="script.html#F5.48x" title="EPC" target="lower">
+<area shape="rect" alt="Cause" coords="714,289,750,320" href="script.html#F5.48y" title="Cause" target="lower">
+<area shape="default" nohref>
+</map>
+
+
+</td>
+</tr>
+
+<tr>
+<td HEIGHT="1%">
+<table>
+<tr>
+<td>	<a href="exceptions.htm"onMouseover = "document.bottom_prev.src = activePrev_gif.src"
+	onMouseout = "document.bottom_prev.src = prev_gif.src">
+	<IMG SRC = "../images_system/prev.gif" BORDER=0 NAME = "bottom_prev"></a></td>
+
+<td><a href="F5.50.htm"onMouseover = "document.bottom_next.src = activeNext_gif.src"
+		onMouseout = "document.bottom_next.src = next_gif.src">
+	<IMG SRC = "../images_system/next.gif" BORDER=0 NAME = "bottom_next"></a></td>
+
+<td NOWRAP><a href="F5.48.htm#Top_of_Page"
+onMouseover = "document.totop.src = activeTop_gif.src"
+	onMouseout = "document.totop.src = top_gif.src">
+	<IMG SRC = "../images_system/top.gif" BORDER=0 NAME = "totop"></a></td>
+<td><FONT FACE = "Arial" SIZE = "-2"><B>Chapter 5:  The Processor: Datapath and Control</b>  - 33 of 35</FONT></td></tr>
+</table>
+</td>
+</tr>
+<tr>
+<td></td>
+</tr>
+</table>
+
+</FONT>
+</body>
+</HTML>

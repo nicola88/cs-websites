@@ -1,0 +1,132 @@
+<HTML>
+<HEAD>
+	<TITLE>Table of Contents for Chapter 4:  Arithmetic for Computers </TITLE>
+	<SCRIPT SRC = "../slave.js" LANGUAGE = JAVASCRIPT></SCRIPT>
+
+	<SCRIPT LANGUAGE = JAVASCRIPT>
+	 chapter_gif = new Image 
+	 activeChapter_gif = new Image 
+	 greyChapter_gif = new Image 
+	 slide_gif = new Image 
+	 activeSlide_gif = new Image 
+	 greySlide_gif = new Image 
+	 Script_gif = new Image 
+	 activeScript_gif = new Image 
+	 greyScript_gif = new Image 
+	 Frame_gif = new Image 
+	 activeFrame_gif = new Image 
+	 greyFrame_gif = new Image 
+	 prev_gif = new Image 
+	 activePrev_gif = new Image 
+	 greyPrev_gif = new Image 
+	 next_gif = new Image 
+	 activeNext_gif = new Image 
+	 greyNext_gif = new Image 
+	 top_gif = new Image 
+	 activeTop_gif = new Image 
+
+	 chapter_gif.src = "../images_system/chapter.gif" 
+	 activeChapter_gif.src = "../images_system/activeChapter.gif" 
+	 greyChapter_gif.src = "../images_system/greyChapter.gif" 
+	 slide_gif.src = "../images_system/slide.gif" 
+	 activeSlide_gif.src = "../images_system/activeSlide.gif" 
+	 greySlide_gif.src = "../images_system/greySlide.gif" 
+	 Script_gif.src = "../images_system/Script.gif" 
+	 activeScript_gif.src = "../images_system/activeScript.gif" 
+	 greyScript_gif.src = "../images_system/greyScript.gif" 
+	 Frame_gif.src = "../images_system/Frame.gif" 
+	 activeFrame_gif.src = "../images_system/activeFrame.gif" 
+	 greyFrame_gif.src = "../images_system/greyFrame.gif" 
+	 prev_gif.src = "../images_system/prev.gif" 
+	 activePrev_gif.src = "../images_system/activePrev.gif" 
+	 greyPrev_gif.src = "../images_system/greyPrev.gif" 
+	 next_gif.src = "../images_system/next.gif" 
+	 activeNext_gif.src = "../images_system/activeNext.gif" 
+	 greyNext_gif.src = "../images_system/greyNext.gif" 
+	 top_gif.src = "../images_system/top.gif" 
+	 activeTop_gif.src = "../images_system/activeTop.gif" 
+	</SCRIPT>
+
+</HEAD>
+<BODY BACKGROUND = "../images_system/back.gif">
+<!-- (C) 2000 by the Florida State University Department of Computer Science -->
+<A NAME = "Top_of_Page"></A>
+ <table VALIGN=TOP BORDER=0>
+ <tr>
+<td><A HREF = "../index.html" onMouseover = "document.chapter.src = activeChapter_gif.src" 
+			onMouseout ="document.chapter.src = chapter_gif.src" TARGET = "_top">
+
+				<img SRC="../images_system/chapter.gif" BORDER = 0 NAME = "chapter"></A></td>
+<td><IMG SRC = "../images_system/greySlide.gif" ALT = "Slide Index"></td>
+<SCRIPT LANGUAGE = JAVASCRIPT>
+ document.writeln ('<td><A HREF ="https://www.cs.fsu.edu/~hawkes/cda3101lects/chap4/'&#32;+&#32;change_frames()&#32;+&#32;'" TARGET ="_top"')
+
+			document.writeln ('onMouseover = "document.script.src = active' + script_viewable() + '_gif.src"')
+
+			document.writeln ('onMouseout = "document.script.src = ' + script_viewable() + '_gif.src">')
+
+			document.writeln ('<img SRC="https://www.cs.fsu.edu/~hawkes/cda3101lects/images_system/'&#32;+&#32;script_viewable()&#32;+&#32;'.gif" BORDER = 0 NAME = "script"></A></td>')
+
+			</SCRIPT>
+<td><IMG SRC = "../images_system/greyPrev.gif" ALT = "Previous"></td>
+<td><IMG SRC = "../images_system/greyNext.gif" ALT = "Next"></td>
+</tr>
+ </table>
+ <table COLS=1 WIDTH="100%" BORDER=0>
+<tr VALIGN=TOP>
+<td>
+<FONT FACE = "Arial">
+<H2>Chapter 4:  Arithmetic for Computers</H2>
+	<UL><A HREF = "intro.htm">1: Concepts Introduced in Chapter 4</A></UL>
+	<UL><A HREF = "numbers.html">2: Binary Numbers</A></UL>
+	<UL><A HREF = "binary.html">3: Binary Representations</A></UL>
+	<UL><A HREF = "extension.htm">4: Sign and Zero Extension</A></UL>
+	<UL><A HREF = "negation.html">5: Two's Complement Negation</A></UL>
+	<UL><A HREF = "convert.html">6: Bases That Are a Power of Two</A></UL>
+	<UL><A HREF = "convertex.html">7: Examples of Converting between Bases</A></UL>
+	<UL><A HREF = "F4.3.html">8: 4.3: Binary addition, showing carries from right to left.</A></UL>
+	<UL><A HREF = "subtraction.html">9: Subtraction by Negating and Adding</A></UL>
+	<UL><A HREF = "overflow.html">10: Detecting Overflow </A></UL>
+	<UL><A HREF = "fp.html">11: Floating-Point Values</A></UL>
+	<UL><A HREF = "normalized.html">12: Normalized Floating-Point Values</A></UL>
+	<UL><A HREF = "ieeefpstandard.html">13: IEEE Floating-Point Standard</A></UL>
+	<UL><A HREF = "ieeefpstandard2.html">14: Interpreting the IEEE FPS</A></UL>
+	<UL><A HREF = "ieeefpsex.html">15: Example of Representing a Value in IEEE FPS</A></UL>
+	<UL><A HREF = "ieeefpsex2.html">16: Example of Determining What Value an IEEE FPS Pattern Represents</A></UL>
+	<UL><A HREF = "largest.html">17: What is the Largest Representable IEEE FPS Value?</A></UL>
+	<UL><A HREF = "booleanalgebra.html">18: Boolean Algebra</A></UL>
+	<UL><A HREF = "F4.8.html">19: Figure 4.8: Four hardware building blocks used to construct an arithmetic unit.</A></UL>
+	<UL><A HREF = "boolex.html">20: Writing A Logic Equation from a Truth Table</A></UL>
+	<UL><A HREF = "F4.9.html">21: Figure 4.9: The 1-bit logical unit for AND and OR.</A></UL>
+	<UL><A HREF = "F4.10.html">22: Figure 4.10: A 1-bit adder.</A></UL>
+	<UL><A HREF = "F4.11.html">23: Figure 4.11: Input and output specification for a 1-bit adder.</A></UL>
+	<UL><A HREF = "F4.17.htm">24: Figure 4.17: (Top) A 1-bit ALU that performs AND, OR, and addition on a and b or not(b), and (bottom) a 1-bit ALU for the most significant bit.</A></UL>
+	<UL><A HREF = "F4.19.htm">25: Figure 4.19: The final 32-bit ALU.</A></UL>
+	<UL><A HREF = "carrylookahead.html">26: Carry-Lookahead AdderF</A></UL>
+	<UL><A HREF = "F4.22.html">27: Figure 4.22: A plumbing analogy for carry lookahead for 1 bit, 2 bits, and 4 bits using water, pipes, and valves.</A></UL>
+	<UL><A HREF = "carrylookahead2.html">28: script.html#carrylookahead2 Carry-Lookahead Adder (cont.)</A></UL>
+	<UL><A HREF = "F4.24.html">29: Figure 4.24: Four 4-bit ALUs using carry lookahead to form a 16-bit adder.</A></UL>
+	<UL><A HREF = "mult.htm">30: Integer Multiplication</A></UL>
+	<UL><A HREF = "F4.32.html">31: Figure 4.32: The third multiplication algorithm.</A></UL>
+	<UL><A HREF = "F4.33.html">32: Figure 4.33: Multiply example using third algorithm in Figure 4.32.</A></UL>
+	<UL><A HREF = "booths.html">33: Booth's Algorithm for Multiplication</A></UL>
+	<UL><A HREF = "div.html">34: Integer Division</A></UL>
+	<UL><A HREF = "F4.40.html">35: Figure 4.40: The third division algorithm has just two steps.</A></UL>
+	<UL><A HREF = "F4.42.html">36: Figure 4.42: Division example using third algorithm in Figure 4.40.</A></UL>
+	<UL><A HREF = "multdivform.html">37: General Forms of a MIPS Integer Multiply or Divide Instruction</A></UL>
+	<UL><A HREF = "problems.htm">38: Fallacies</A></UL>
+</FONT>
+</td></tr>
+<tr><td>
+<TABLE><tr>
+<td><IMG SRC = "../images_system/greyPrev.gif" ALT = "Previous"></td>
+<td><IMG SRC = "../images_system/greyNext.gif" ALT = "Next"></td>
+
+<td NOWRAP><a href="toc.html#Top_of_Page"
+onMouseover = "document.totop.src = activeTop_gif.src"
+	onMouseout = "document.totop.src = top_gif.src">
+	<IMG SRC = "../images_system/top.gif" BORDER=0 NAME = "totop"></a></td>
+</tr></TABLE></td></tr>
+</table>
+<BODY>
+</HTML>

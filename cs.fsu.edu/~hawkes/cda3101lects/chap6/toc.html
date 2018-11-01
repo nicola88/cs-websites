@@ -1,0 +1,182 @@
+<HTML>
+<HEAD>
+	<TITLE>Table of Contents for Chapter 6:  Enhancing Performance with Pipelining </TITLE>
+	<SCRIPT SRC = "../slave.js" LANGUAGE = JAVASCRIPT></SCRIPT>
+
+	<SCRIPT LANGUAGE = JAVASCRIPT>
+	 chapter_gif = new Image 
+	 activeChapter_gif = new Image 
+	 greyChapter_gif = new Image 
+	 slide_gif = new Image 
+	 activeSlide_gif = new Image 
+	 greySlide_gif = new Image 
+	 Script_gif = new Image 
+	 activeScript_gif = new Image 
+	 greyScript_gif = new Image 
+	 Frame_gif = new Image 
+	 activeFrame_gif = new Image 
+	 greyFrame_gif = new Image 
+	 prev_gif = new Image 
+	 activePrev_gif = new Image 
+	 greyPrev_gif = new Image 
+	 next_gif = new Image 
+	 activeNext_gif = new Image 
+	 greyNext_gif = new Image 
+	 top_gif = new Image 
+	 activeTop_gif = new Image 
+
+	 chapter_gif.src = "../images_system/chapter.gif" 
+	 activeChapter_gif.src = "../images_system/activeChapter.gif" 
+	 greyChapter_gif.src = "../images_system/greyChapter.gif" 
+	 slide_gif.src = "../images_system/slide.gif" 
+	 activeSlide_gif.src = "../images_system/activeSlide.gif" 
+	 greySlide_gif.src = "../images_system/greySlide.gif" 
+	 Script_gif.src = "../images_system/Script.gif" 
+	 activeScript_gif.src = "../images_system/activeScript.gif" 
+	 greyScript_gif.src = "../images_system/greyScript.gif" 
+	 Frame_gif.src = "../images_system/Frame.gif" 
+	 activeFrame_gif.src = "../images_system/activeFrame.gif" 
+	 greyFrame_gif.src = "../images_system/greyFrame.gif" 
+	 prev_gif.src = "../images_system/prev.gif" 
+	 activePrev_gif.src = "../images_system/activePrev.gif" 
+	 greyPrev_gif.src = "../images_system/greyPrev.gif" 
+	 next_gif.src = "../images_system/next.gif" 
+	 activeNext_gif.src = "../images_system/activeNext.gif" 
+	 greyNext_gif.src = "../images_system/greyNext.gif" 
+	 top_gif.src = "../images_system/top.gif" 
+	 activeTop_gif.src = "../images_system/activeTop.gif" 
+	</SCRIPT>
+
+</HEAD>
+<BODY BACKGROUND = "../images_system/back.gif">
+<!-- (C) 2000 by the Florida State University Department of Computer Science -->
+<A NAME = "Top_of_Page"></A>
+ <table VALIGN=TOP BORDER=0>
+ <tr>
+<td><A HREF = "../index.html" onMouseover = "document.chapter.src = activeChapter_gif.src" 
+			onMouseout ="document.chapter.src = chapter_gif.src" TARGET = "_top">
+
+				<img SRC="../images_system/chapter.gif" BORDER = 0 NAME = "chapter"></A></td>
+<td><IMG SRC = "../images_system/greySlide.gif" ALT = "Slide Index"></td>
+<SCRIPT LANGUAGE = JAVASCRIPT>
+ document.writeln ('<td><A HREF ="https://www.cs.fsu.edu/~hawkes/cda3101lects/chap6/'&#32;+&#32;change_frames()&#32;+&#32;'" TARGET ="_top"')
+
+			document.writeln ('onMouseover = "document.script.src = active' + script_viewable() + '_gif.src"')
+
+			document.writeln ('onMouseout = "document.script.src = ' + script_viewable() + '_gif.src">')
+
+			document.writeln ('<img SRC="https://www.cs.fsu.edu/~hawkes/cda3101lects/images_system/'&#32;+&#32;script_viewable()&#32;+&#32;'.gif" BORDER = 0 NAME = "script"></A></td>')
+
+			</SCRIPT>
+<td><IMG SRC = "../images_system/greyPrev.gif" ALT = "Previous"></td>
+<td><IMG SRC = "../images_system/greyNext.gif" ALT = "Next"></td>
+</tr>
+ </table>
+ <table COLS=1 WIDTH="100%" BORDER=0>
+<tr VALIGN=TOP>
+<td>
+<FONT FACE = "Arial">
+<H2>Chapter 6:  Enhancing Performance with Pipelining</H2>
+	<UL><A HREF = "intro.htm">1: Concepts Introduced in Chapter 6</A></UL>
+	<UL><A HREF = "F6.1.html">2: Figure 6.1: The laundry analogy for pipelining.</A></UL>
+	<UL><A HREF = "pipelining.htm">3: Pipelining</A></UL>
+	<UL><A HREF = "speedup.html">4: Speedup from Pipelining</A></UL>
+	<UL><A HREF = "F6.2.html">5: Figure 6.2: Total time for eight instructions calculated from the time for each component.</A></UL>
+	<UL><A HREF = "F6.3.html">6: Figure 6.3: Single-cycle, nonpipelined execution in top vs. pipelined execution in bottom.</A></UL>
+	<UL><A HREF = "mipsdesign.htm">7: MIPS Designed for Pipelining</A></UL>
+	<UL><A HREF = "terms.htm">8: Pipeline Terms</A></UL>
+	<UL><A HREF = "structural.html">9: Structural Hazards</A></UL>
+	<UL><A HREF = "control.htm">10: Control Hazards</A></UL>
+	<UL><A HREF = "F6.4.html">11: Figure 6.4: Pipeline showing stalling on every conditional branch as solution to control hazards.</A></UL>
+	<UL><A HREF = "F6.5.html">12: Figure 6.5: Predicting that branches are not taken as a solution to the control hazard.</A></UL>
+	<UL><A HREF = "likely.html">13: Branch Prediction by the Compiler</A></UL>
+	<UL><A HREF = "F6.6.html">14: Figure 6.6: Pipeline delayed branch as solution to control hazard.</A></UL>
+	<UL><A HREF = "data.html">15: Data Hazards</A></UL>
+	<UL><A HREF = "F6.8.html">16: Figure 6.8: Graphical representation of forwarding.</A></UL>
+	<UL><A HREF = "F6.9.html">17: Figure 6.9: We need a stall even with forwarding when an R-format instruction following a load tries to use the data.</A></UL>
+	<UL><A HREF = "tradpipediagram.html">18: Figure 6.9 Shown in a Traditional Pipeline Diagram</A></UL>
+	<UL><A HREF = "expipediagram.html">19: An Example Pipeline Diagram</A></UL>
+	<UL><A HREF = "sched.html">20: Instruction Scheduling</A></UL>
+	<UL><A HREF = "F6.10.html">21: Figure 6.10: The single-cycle datapath from Chapter 5 (similar to Figure 5.17 on page 358).</A></UL>
+	<UL><A HREF = "F6.11.html">22: Figure 6.11: Instructions being executed in the single-cycle datapath in Figure 6.10, assuming pipelined execution. </A></UL>
+	<UL><A HREF = "F6.12.html">23: Figure 6.12: The pipelined version of the datapath in Figure 6.10.</A></UL>
+	<UL><A HREF = "F6.13.html">24: Figure 6.13: IF and ID: first and second pipe stages of an instruction, with the active portions of the datapath in Figure 6.12 highlighted.</A></UL>
+	<UL><A HREF = "F6.14.html">25: Figure 6.14: EX: the third pipe stage of a load instruction, highlighting the portions of the datapath in Figure 6.12 used in this pipe stage.</A></UL>
+	<UL><A HREF = "F6.15.html">26: Figure 6.15: MEM and WB: the fourth and fifth pipe stages of a load instruction, highlighting the portions of the datapath in Figure 6.12 used in this pipe stage.</A></UL>
+	<UL><A HREF = "F6.16.html">27: Figure 6.16: EX: the third pipe stage of a store instruction.</A></UL>
+	<UL><A HREF = "F6.17.html">28: Figure 6.17: MEM and WB: the fourth and fifth pipe stages of store instruction.</A></UL>
+	<UL><A HREF = "F6.18.html">29: Figure 6.18: The corrected pipelined datapath to properly handle the load instruction.</A></UL>
+	<UL><A HREF = "F6.19.html">30: Figure 6.19: The portion of the datapath in Figure 6.18 that is used in all five stages of a load instruction. </A></UL>
+	<UL><A HREF = "F6.20.html">31: Figure 6.20: Multiple-clock-cycle pipeline diagram of two instructions.</A></UL>
+	<UL><A HREF = "F6.21.html">32: Figure 6.21: Traditional multiple-clock-cycle pipeline diagram of two instructions in Figure 6.20. </A></UL>
+	<UL><A HREF = "F6.22.html">33: Figure 6.22: Single-cycle pipeline diagrams for clock cycles 1 (top diagram) and 2 (bottom diagram). </A></UL>
+	<UL><A HREF = "F6.23.html">34: Figure 6.23: Single-cycle pipeline diagrams for clock cycles 3 (top diagram) and 4 (bottom diagram). </A></UL>
+	<UL><A HREF = "F6.24.html">35: Figure 6.24: Single-cycle pipeline diagrams for clock cycles 5 (top diagram) and 6 (bottom diagram). </A></UL>
+	<UL><A HREF = "F6.28.html">36: Figure 6.28: The values of the control lines are the same as in Figure 5.20 on page 361, but they have been shuffled into three groups corresponding to the last three pipeline stages.</A></UL>
+	<UL><A HREF = "F6.29.html">37: Figure 6.29: The control lines for the final three stages. </A></UL>
+	<UL><A HREF = "F6.30.html">38: Figure 6.30: The pipelined datapath of Figure 6.19, with the control signals connected to the control portions of the pipelined register. </A></UL>
+	<UL><A HREF = "F6.31.html">39: Figure 6.31: Clock cycles 1 and 2.</A></UL>
+	<UL><A HREF = "F6.32.html">40: Figure 6.32: Clock cycles 3 and 4.</A></UL>
+	<UL><A HREF = "F6.33.html">41: Figure 6.33: Clock cycles 5 and 6.</A></UL>
+	<UL><A HREF = "F6.34.html">42: Figure 6.34: Clock cycles 7 and 8.</A></UL>
+	<UL><A HREF = "F6.35.html">43: Figure 6.35: Clock cycle 9.</A></UL>
+	<UL><A HREF = "F6.36.html">44: Figure 6.36: Pipelined dependencies in a five-instruction sequence using simplified datapaths to show the dependencies.</A></UL>
+	<UL><A HREF = "F6.37.html">45: Figure 6.37: The dependencies between the pipeline registers move forward in time, so ...</A></UL>
+	<UL><A HREF = "F6.38.html">46: Figure 6.38: On the top are the ALU and pipeline registers before adding forwarding. On the bottom, the multiplexors have been expanded to add the forwarding paths, and we show the forwarding unit.</A></UL>
+	<UL><A HREF = "F6.39.html">47: Figure 6.39: The control values for the forwarding multiplexors in Figure 6.38.</A></UL>
+	<UL><A HREF = "forwardlogic.html">48: Forwarding Logic</A></UL>
+	<UL><A HREF = "F6.40.html">49: Figure 6.40: The datapath modified to resolve hazards via forwarding. </A></UL>
+	<UL><A HREF = "F6.41.html">50: Figure 6.41: Clock cycles 3 and 4 of the instruction sequence in the example on page 485.</A></UL>
+	<UL><A HREF = "F6.42.html">51: Figure 6.42: Clock cycles 5 and 6 of the instruction sequence in the example on page 485.</A></UL>
+	<UL><A HREF = "F6.43.html">52: Figure 6.43: A close-up of the datapath in Figure 6.38 on page 482 shows a 2:1 multiplexor, which has been added to select the signed immediate as an ALU input.</A></UL>
+	<UL><A HREF = "F6.44.html">53: Figure 6.44: A pipelined sequence of instructions.</A></UL>
+	<UL><A HREF = "hazardlogic.html">54: Hazard Logic</A></UL>
+	<UL><A HREF = "F6.45.html">55: Figure 6.45: The way stalls are really inserted into the pipeline.</A></UL>
+	<UL><A HREF = "F6.46.html">56: Figure 6.46: Pipelined control overview, showing the two multiplexors for forwarding, the hazard detection unit, and the forwarding unit.</A></UL>
+	<UL><A HREF = "F6.47.html">57: Figure 6.47: Clock cycles 2 and 3 of the instruction sequence in the example on page 485 with a load replacing sub.</A></UL>
+	<UL><A HREF = "F6.48.html">58: Figure 6.48: Clock cycles 4 and 5 of the instruction sequence in the example on page 485 with a load replacing sub.</A></UL>
+	<UL><A HREF = "F6.49.html">59: Figure 6.49: Clock cycles 6 and 7 of the instruction sequence in the example on page 485 with a load replacing sub.</A></UL>
+	<UL><A HREF = "F6.50.html">60: Figure 6.50: The impact of the pipeline on the branch instruction.</A></UL>
+	<UL><A HREF = "F6.51.html">61: Figure 6.51: Datapath for branch, including hardware to flush the instruction that follows the branch.</A></UL>
+	<UL><A HREF = "F6.52.html">62: Figure 6.52: The ID stage of clock cycle 3 determines that a branch must be taken, so it selects 72 as the next PC address and zeros the instruction fetched for the next clock cycle.</A></UL>
+	<UL><A HREF = "cmpbeqex.html">63: Branch Preceded by a Comparison</A></UL>
+	<UL><A HREF = "bpb.html">64: 1-bit Branch Prediction Buffer</A></UL>
+	<UL><A HREF = "bpbex.html">65: 1-bit Branch Prediction Buffer Example</A></UL>
+	<UL><A HREF = "F6.53.html">66: Figure 6.53: The states in a 2-bit prediction scheme.</A></UL>
+	<UL><A HREF = "F6.54.html">67: Figure 6.54: Scheduling the branch delay slot.</A></UL>
+	<UL><A HREF = "exception.htm">68: Handling Exceptions</A></UL>
+	<UL><A HREF = "F6.55.html">69: Figure 6.55: The datapath with controls to handle exceptions.</A></UL>
+	<UL><A HREF = "F6.56.html">70: Figure 6.56: Event in the result of an exception due to arithmetic overflow in the add instruction. </A></UL>
+	<UL><A HREF = "precise.htm">71: Precise Exceptions</A></UL>
+	<UL><A HREF = "faster.htm">72: Faster Scalar Processors</A></UL>
+	<UL><A HREF = "superpipeline.html">73: Superpipeline Example</A></UL>
+	<UL><A HREF = "F6.57.html">74: Figure 6.57: Superscalar pipeline in operation.</A></UL>
+	<UL><A HREF = "F6.58.html">75: Figure 6.58: A superscalar datapath.</A></UL>
+	<UL><A HREF = "F6.59.html">76: The Scheduled Code As It Would Look on a Superscalar MIPS</A></UL>
+	<UL><A HREF = "unroll.html">77: Loop Unrolling</A></UL>
+	<UL><A HREF = "unrolled.html">78: Example on Page 513 after Loop Unrolling</A></UL>
+	<UL><A HREF = "adjustoffsets.html">79: Example on Page 513 after Adjusting Offsets</A></UL>
+	<UL><A HREF = "renameregs.html">80: Example on Page 513 after Renaming Registers</A></UL>
+	<UL><A HREF = "avoidhazards.html">81: Example on Page 513 after Avoiding Load Hazards</A></UL>
+	<UL><A HREF = "F6.60.html">82: The Unrolled and Scheduled Code of Figure 6.59 As It Would Look on a Superscalar MIPS.</A></UL>
+	<UL><A HREF = "F6.61.html">83: The Three Primary Units of a Dynamically Scheduled Pipeline.</A></UL>
+	<UL><A HREF = "F6.65.html">84: Figure 6.65: The final datapath and control for this chapter.</A></UL>
+	<UL><A HREF = "problems.htm">85: Fallacies and Pitfalls</A></UL>
+	<UL><A HREF = "F6.64.html">86: Figure 6.64: The depth of pipelining versus the speedup obtained.</A></UL>
+	<UL><A HREF = "F6.66.html">87: Figure 6.66: The performance consequences of simple (single-cycle) datapath and multicycle datapath from Chapter 5 and the pipelined execution model in Chapter 6.</A></UL>
+	<UL><A HREF = "F6.67.html">88: Figure 6.67: The basic relationship between the datapaths in Figure 6.66.</A></UL>
+</FONT>
+</td></tr>
+<tr><td>
+<TABLE><tr>
+<td><IMG SRC = "../images_system/greyPrev.gif" ALT = "Previous"></td>
+<td><IMG SRC = "../images_system/greyNext.gif" ALT = "Next"></td>
+
+<td NOWRAP><a href="toc.html#Top_of_Page"
+onMouseover = "document.totop.src = activeTop_gif.src"
+	onMouseout = "document.totop.src = top_gif.src">
+	<IMG SRC = "../images_system/top.gif" BORDER=0 NAME = "totop"></a></td>
+</tr></TABLE></td></tr>
+</table>
+<BODY>
+</HTML>

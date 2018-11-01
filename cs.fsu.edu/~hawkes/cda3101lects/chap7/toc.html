@@ -1,0 +1,161 @@
+<HTML>
+<HEAD>
+	<TITLE>Table of Contents for Chapter 7:  Large and Fast: Exploiting Memory Hierarchy </TITLE>
+	<SCRIPT SRC = "../slave.js" LANGUAGE = JAVASCRIPT></SCRIPT>
+
+	<SCRIPT LANGUAGE = JAVASCRIPT>
+	 chapter_gif = new Image 
+	 activeChapter_gif = new Image 
+	 greyChapter_gif = new Image 
+	 slide_gif = new Image 
+	 activeSlide_gif = new Image 
+	 greySlide_gif = new Image 
+	 Script_gif = new Image 
+	 activeScript_gif = new Image 
+	 greyScript_gif = new Image 
+	 Frame_gif = new Image 
+	 activeFrame_gif = new Image 
+	 greyFrame_gif = new Image 
+	 prev_gif = new Image 
+	 activePrev_gif = new Image 
+	 greyPrev_gif = new Image 
+	 next_gif = new Image 
+	 activeNext_gif = new Image 
+	 greyNext_gif = new Image 
+	 top_gif = new Image 
+	 activeTop_gif = new Image 
+
+	 chapter_gif.src = "../images_system/chapter.gif" 
+	 activeChapter_gif.src = "../images_system/activeChapter.gif" 
+	 greyChapter_gif.src = "../images_system/greyChapter.gif" 
+	 slide_gif.src = "../images_system/slide.gif" 
+	 activeSlide_gif.src = "../images_system/activeSlide.gif" 
+	 greySlide_gif.src = "../images_system/greySlide.gif" 
+	 Script_gif.src = "../images_system/Script.gif" 
+	 activeScript_gif.src = "../images_system/activeScript.gif" 
+	 greyScript_gif.src = "../images_system/greyScript.gif" 
+	 Frame_gif.src = "../images_system/Frame.gif" 
+	 activeFrame_gif.src = "../images_system/activeFrame.gif" 
+	 greyFrame_gif.src = "../images_system/greyFrame.gif" 
+	 prev_gif.src = "../images_system/prev.gif" 
+	 activePrev_gif.src = "../images_system/activePrev.gif" 
+	 greyPrev_gif.src = "../images_system/greyPrev.gif" 
+	 next_gif.src = "../images_system/next.gif" 
+	 activeNext_gif.src = "../images_system/activeNext.gif" 
+	 greyNext_gif.src = "../images_system/greyNext.gif" 
+	 top_gif.src = "../images_system/top.gif" 
+	 activeTop_gif.src = "../images_system/activeTop.gif" 
+	</SCRIPT>
+
+</HEAD>
+<BODY BACKGROUND = "../images_system/back.gif">
+<!-- (C) 2000 by the Florida State University Department of Computer Science -->
+<A NAME = "Top_of_Page"></A>
+ <table VALIGN=TOP BORDER=0>
+ <tr>
+<td><A HREF = "../index.html" onMouseover = "document.chapter.src = activeChapter_gif.src" 
+			onMouseout ="document.chapter.src = chapter_gif.src" TARGET = "_top">
+
+				<img SRC="../images_system/chapter.gif" BORDER = 0 NAME = "chapter"></A></td>
+<td><IMG SRC = "../images_system/greySlide.gif" ALT = "Slide Index"></td>
+<SCRIPT LANGUAGE = JAVASCRIPT>
+ document.writeln ('<td><A HREF ="https://www.cs.fsu.edu/~hawkes/cda3101lects/chap7/'&#32;+&#32;change_frames()&#32;+&#32;'" TARGET ="_top"')
+
+			document.writeln ('onMouseover = "document.script.src = active' + script_viewable() + '_gif.src"')
+
+			document.writeln ('onMouseout = "document.script.src = ' + script_viewable() + '_gif.src">')
+
+			document.writeln ('<img SRC="https://www.cs.fsu.edu/~hawkes/cda3101lects/images_system/'&#32;+&#32;script_viewable()&#32;+&#32;'.gif" BORDER = 0 NAME = "script"></A></td>')
+
+			</SCRIPT>
+<td><IMG SRC = "../images_system/greyPrev.gif" ALT = "Previous"></td>
+<td><IMG SRC = "../images_system/greyNext.gif" ALT = "Next"></td>
+</tr>
+ </table>
+ <table COLS=1 WIDTH="100%" BORDER=0>
+<tr VALIGN=TOP>
+<td>
+<FONT FACE = "Arial">
+<H2>Chapter 7:  Large and Fast: Exploiting Memory Hierarchy</H2>
+	<UL><A HREF = "intro.htm">1: Concepts Introduced in Chapter 7</A></UL>
+	<UL><A HREF = "locality.htm">2: Principle of Locality</A></UL>
+	<UL><A HREF = "hierarchy.htm">3: Memory Hierarchy</A></UL>
+	<UL><A HREF = "F7.1.html">4: Figure 7.1: The basic structure of a memory hierarchy.</A></UL>
+	<UL><A HREF = "mem_access_cost.html">5: Table at the Bottom of Page 541</A></UL>
+	<UL><A HREF = "components.htm">6: Components of a Memory Hierarchy</A></UL>
+	<UL><A HREF = "F7.2.html">7: Figure 7.2: Every pair of levels in the memory hierarchy can be thought of as having an upper and lower level.</A></UL>
+	<UL><A HREF = "terms.htm">8: Memory Hierarchy Terms</A></UL>
+	<UL><A HREF = "F7.3.html">9: Figure 7.3: This diagram shows the structure of a memory hierarchy: as the distance from the CPU increases, so does the size.</A></UL>
+	<UL><A HREF = "questions.htm">10: Memory Hierarchy Questions</A></UL>
+	<UL><A HREF = "cacheterms.htm">11: Cache Terms</A></UL>
+	<UL><A HREF = "address.html">12: Physical Address</A></UL>
+	<UL><A HREF = "cacheorg.htm">13: Cache Organizations</A></UL>
+	<UL><A HREF = "F7.5.html">14: Figure 7.5: A direct mapped cache with eight entries showing the addresses of memory words between 0 and 31 that map to the same cache locations.</A></UL>
+	<UL><A HREF = "cacheaccessex.html">15: Table at Bottom of Page 547</A></UL>
+	<UL><A HREF = "F7.6.htm">16: Figure 7.6: The cache contents are shown after each reference request that misses with the index and tag fields shown in binary.</A></UL>
+	<UL><A HREF = "F7.7.html">17: Figure 7.7: For this cache, the lower portion of the address is used to select a cache entry consisting of a data word and a tag.</A></UL>
+	<UL><A HREF = "misssteps.htm">18: Steps to Be Taken on an Instruction Cache Miss</A></UL>
+	<UL><A HREF = "overlap.html">19: Cache Misses Can Be Overlapped with Other Pipeline Stalls</A></UL>
+	<UL><A HREF = "separate.html">20: Pipelined Machines Use Separate Caches</A></UL>
+	<UL><A HREF = "sched.html">21: Instruction Scheduling Is More Effective on Machines with Nonblocking Data Caches</A></UL>
+	<UL><A HREF = "F7.9.html">22: Figure 7.9: Instruction and data miss rates for the DECStation 3100 when executing two different programs.</A></UL>
+	<UL><A HREF = "write.htm">23: Write Policy</A></UL>
+	<UL><A HREF = "writemiss.htm">24: Write Miss Policy</A></UL>
+	<UL><A HREF = "F7.10.html">25: Figure 7.10: A 64 KB cache using four-word (16 byte) blocks.</A></UL>
+	<UL><A HREF = "spatialex.html">26: Larger Block Size Example</A></UL>
+	<UL><A HREF = "F7.11.html">27: Figure 7.11: The miss rates for gcc and spice with a cache like that in the DecStation 3100 with a block size of either one word or four words.</A></UL>
+	<UL><A HREF = "F7.12.html">28: Figure 7.12: Miss rate versus block size.</A></UL>
+	<UL><A HREF = "memterms.htm">29: Main Memory Terms</A></UL>
+	<UL><A HREF = "F7.13.html">30: Figure 7.13: The primary method of achieving higher memory bandwidth is to increase the physical or logical width of the memory system.</A></UL>
+	<UL><A HREF = "dramex.htm">31: DRAM Examples</A></UL>
+	<UL><A HREF = "RAMorg.html">32: DRAM Organization</A></UL>
+	<UL><A HREF = "F7.14.html">33: Figure 7.14: DRAM sizes increase by multiples of four approximately once every three years.</A></UL>
+	<UL><A HREF = "cacheimpact.htm">34: Cache Impact on Performance</A></UL>
+	<UL><A HREF = "F7.15.html">35: Figure 7.15: The location of a memory block whose address is 12 in a cache with eight blocks varies for direct-mapped, set-associative, and fully associative placement.</A></UL>
+	<UL><A HREF = "F7.16.html">36: Figure 7.16: An eight-block cache configured as direct mapped, two-way set associative, four-way set associative, and fully associative.</A></UL>
+	<UL><A HREF = "F7.19.html">37: Figure 7.19: The implementation of a four-way set-associative cache requires four comparators and a 4-to-1 multiplexor.</A></UL>
+	<UL><A HREF = "replace.htm">38: Block Replacement</A></UL>
+	<UL><A HREF = "assocex.html">39: Set Associativity Example</A></UL>
+	<UL><A HREF = "writethruex.html">40: Write-Through, No Write Allocate Example</A></UL>
+	<UL><A HREF = "writebackex.html">41: Write-Back, Write Allocate Example</A></UL>
+	<UL><A HREF = "secondary.htm">42: Secondary Caches</A></UL>
+	<UL><A HREF = "avgmemaccesstime.html">43: Average Memory Access Time</A></UL>
+	<UL><A HREF = "improve.htm">44: Techniques for Improving Cache Performance</A></UL>
+	<UL><A HREF = "overlay.htm">45: Overlays</A></UL>
+	<UL><A HREF = "virtualmemory.htm">46: Virtual Memory</A></UL>
+	<UL><A HREF = "virtualterms.htm">47: Virtual Memory Terms</A></UL>
+	<UL><A HREF = "F7.20.html">48: Figure 7.20: In virtual memory, blocks of memory are mapped from one set of addresses, called virtual addresses, to another set called physical addresses.</A></UL>
+	<UL><A HREF = "F7.21.html">49: Figure 7.21: Mapping from a virtual to a physical address.</A></UL>
+	<UL><A HREF = "mem_access_cost.html">50: Table at Bottom of Page 541 Again</A></UL>
+	<UL><A HREF = "virtualdesign.htm">51: Designing Virtual Memory Systems</A></UL>
+	<UL><A HREF = "pagetables.htm">52: Page Tables</A></UL>
+	<UL><A HREF = "F7.22.html">53: Figure 7.22: The page table is indexed with the virtual page number to obtain the corresponding portion of the physical address.</A></UL>
+	<UL><A HREF = "F7.23.html">54: Figure 7.23: The page table maps each page in virtual memory to either a page in physical memory or a page stored on disk, which is the next level in the hierarchy.</A></UL>
+	<UL><A HREF = "tlb.htm">55: Translation Lookaside Buffers</A></UL>
+	<UL><A HREF = "F7.24.html">56: Figure 7.24: The TLB acts as a cache on the page table for the entries that map to physical pages only.</A></UL>
+	<UL><A HREF = "F7.27.html">57: Figure 7.27: The possible combinations of events in the TLB, virtual memory system, and cache.</A></UL>
+	<UL><A HREF = "tlbpagetableex.html">58: TLB and Page Table Example</A></UL>
+	<UL><A HREF = "fastaddrtrans.html">59: Fast Address Translation</A></UL>
+	<UL><A HREF = "processprotection.htm">60: Process Protection</A></UL>
+	<UL><A HREF = "multiprogramming.htm">61: Support for Multiprogramming</A></UL>
+	<UL><A HREF = "reducepagefaults.htm">62: Techniques to Reduce the Number of Page Faults</A></UL>
+	<UL><A HREF = "F7.28.html">63: Figure 7.28: The key quantitative design parameters that characterize the three major memory hierarchies in a machine.</A></UL>
+	<UL><A HREF = "categorizemisses.htm">64: Categorizing Misses</A></UL>
+	<UL><A HREF = "F7.30.html">65: Figure 7.30: The miss rate can be broken into the three sources of misses.</A></UL>
+	<UL><A HREF = "F7.31.html">66: Figure 7.31: Memory hierarchy design challenges.</A></UL>
+	<UL><A HREF = "problems.htm">67: Fallacies and Pitfalls</A></UL>
+</FONT>
+</td></tr>
+<tr><td>
+<TABLE><tr>
+<td><IMG SRC = "../images_system/greyPrev.gif" ALT = "Previous"></td>
+<td><IMG SRC = "../images_system/greyNext.gif" ALT = "Next"></td>
+
+<td NOWRAP><a href="toc.html#Top_of_Page"
+onMouseover = "document.totop.src = activeTop_gif.src"
+	onMouseout = "document.totop.src = top_gif.src">
+	<IMG SRC = "../images_system/top.gif" BORDER=0 NAME = "totop"></a></td>
+</tr></TABLE></td></tr>
+</table>
+<BODY>
+</HTML>

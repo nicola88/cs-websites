@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /new/wp-admin/
+
+Sitemap: https://www.cs.fsu.edu/sitemap.xml

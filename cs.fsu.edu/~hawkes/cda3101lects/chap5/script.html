@@ -1,0 +1,1426 @@
+<HTML>
+<HEAD>
+</HEAD>
+<BODY>
+<BIG>
+<H1>Chapter 1</H1>
+
+<A NAME="intro">
+<H3>
+see Concepts Introduced in Chapter 5
+</H3>
+In this chapter we will go over some of the details for the implementation
+of a single cycle and multiple cycle processors for a subset of the MIPS
+instructions.
+We will investigate the construction of the datapath and control (control
+being accomplished with both finite state machines and microprogramming).
+We will also go over how exceptions and interrupts are handled by a
+processor.
+
+<A NAME="subset">
+<H3>
+see Subset of MIPS Instruction Set
+</H3>
+We will look at the implementation of a processor that implements a
+subset of the MIPS instruction set.
+Note that there are no typically long running instructions, such as
+integer multiply and divide or floating-point instructions.
+We just don't have time to go over everything.
+
+<A NAME="F5.1">
+<H3>
+see Figure 5.1: An abstract view of the implementation of the MIPS
+subset showing the major functional units and the major connections
+between them.
+</H3>
+Several points should be observed:
+<OL>
+<LI>
+Separate instruction and data memory.
+<LI>
+PC is used to determine where to fetch the next instruction from the
+instruction memory.
+<LI>
+The register operands used by an instruction are specified by fields of
+that instruction.
+<LI>
+ALU is used to calculate an arithmetic result, compute a memory address,
+or perform a comparison for a branch.
+<LI>
+The result of an arithmetic/logical instruction is written back into
+the register file.
+<LI>
+Details about the implementation of a branch instruction are missing
+(no update of the PC).
+</OL>
+
+<A NAME="logic">
+<H3>
+see Logic Elements
+</H3>
+There are two different types of logic elements we will be using:
+<OL>
+<LI>
+<em>combinational</em> - Outputs depend only on the current inputs.
+This includes the ALU; given same set of inputs, it always produces
+the same output because no internal storage.
+<LI>
+<em>state</em> - Has some internal storage, has at least two inputs
+(the data value to be written and the clock which controls when
+the data value is to be stored) and one output (the value written
+in the previous clock).
+State elements include registers and memory.
+State elements allow values to be stored across cycles.
+</OL>
+
+<A NAME="signals">
+<H3>
+see Types of Signals
+</H3>
+Three general types of signals (clock is when to do something,
+control is whether or not we should do it, data is the actual
+data to be stored or manipulated).
+Note <em>asserted</em> does not mean high voltage.
+It means logically true.
+
+<A NAME="F5.2">
+<H3>
+see Figure 5.2: Combinational logic, state elements, and the clock
+are closely related.
+</H3>
+The <em>clocking methodology</em> defines when signals can be read or
+written.
+This text assumes an <em>edge triggered</em> clocking methodology,
+which means that state elements update their internal storage only
+on a clock edge.
+Combinational logic has its inputs coming from a set of state
+elements (e.g. register) and its outputs written to a set of state
+elements (e.g. register).
+The clock is another signal to these elements that periodically
+changes between high and low signals.
+The clock cycle time or period is the amount of time taken from
+one edge to the same edge (e.g. rising edge to next rising edge).
+The clock cycle time is broken into periods when the clock is
+high and low (two phase is common).
+There is a certain small window of time during which the inputs
+to a state element must have a stable value.
+The clock edge makes it appear instantaneous, but it isn't.
+
+<A NAME="F5.3">
+<H3>
+see Figure 5.3: An edge-triggered methodology allows a state
+element to be read and written in the same clock cycle without
+creating a race that could lead to indeterminate data values.
+</H3>
+So a state element can be read, its value sent through combinational
+logic, and the new value be written back to the state element in a
+single clock cycle.
+Also, data can be written at the end of the previous clock cycle into
+a state element and read at the beginning of the next cycle from the
+same state element.
+
+<A NAME="implement">
+<H3>
+see Implementing an Instruction Set
+</H3>
+We will look at both implementing the datapath and control of a
+our subset of the MIPS processor.
+First, we will examine an implementation that allows each instruction to
+complete in a single long clock cycle.
+Thus, all instructions take the same length of time.
+This is inefficient because some instructions take longer than others.
+We will next look at multiple cycle instructions, which is more
+efficient.
+In the next chapter, we will examine overlapping different instructions
+in a multicycle implementation, which is called pipelining.
+
+<A NAME="F5.4">
+<H3>
+see Figure 5.4: Two state elements are needed to store and access
+instructions, and an adder is needed to compute the next instruction
+address.
+</H3>
+<OL>
+<LI>
+Memory is needed to store instructions.
+Today most machines have a separate fast memory areas for instructions
+and data.
+Note with instructions, no processor write access is required.
+Note that instructions are at some point written to instruction memory
+(e.g. load time).
+<LI>
+The PC (program counter) is a 32-bit register used to hold the address
+of the current instruction.
+<LI>
+The adder is used to increment the PC to the next instruction.
+</OL>
+
+<A NAME="F5.5">
+<H3>
+see Figure 5.5: A portion of the datapath used for fetching instructions
+and incrementing the program counter.
+</H3>
+The value in the PC is presented to the memory system, which will fetch
+the instruction.
+The value in the PC along with a value of 4 is input to the adder so we
+can prepare to fetch the next instruction.
+A value of 4 is used since memory is byte addressable and each instruction
+is 4 bytes long.
+
+<A NAME="F5.6">
+<H3>
+see Figure 5.6: The two elements needed to implement R-format ALU
+operations are the register file and the ALU.
+</H3>
+For the R-type instructions (<code><strong>add</strong></code>,
+<code><strong>sub</strong></code>, <code><strong>and</strong></code>,
+<code><strong>or</strong></code>, and <code><strong>slt</strong></code>)
+they all read two registers and update a register as a result.
+The registers are stored in a structure called a <em>register file</em>,
+which can be read or updated by specifying the appropriate register
+number.
+There are two read input ports since we could read two registers in one
+instruction and one write input port specifying the register number
+since at most one register will be updated.
+There are three inputs that are 5 bits wide, which allows one of 32 registers
+to be specified.
+There is also one input data port that will contain the data to be
+written.
+There are two output ports containing the values of the registers specified
+to be read.
+These three ports are 32 bits wide since they contain data.
+Values are always read, but a write may not always occur.
+Thus, we need a write control signal.
+<br><br>
+The ALU takes two 32-bit inputs and generates one 32-bit output.
+The control signal is 3-bits wide in this implementation to specify the
+appropriate operation to be performed.
+Note that though there are 9 different instructions, some ALU operations
+(e.g. add) will be used for several instructions.
+The zero output will be used on a beq instruction.
+
+<A NAME="F5.7">
+<H3>
+see Figure 5.7: The datapath for R-type instructions.
+</H3>
+Note that the registers are specified from the fields of the instruction.
+The outputs of the register file are input to the ALU.
+The output of the ALU is input to the register file.
+
+<A NAME="F5.8">
+<H3>
+see Figure 5.8: The two units needed to implement loads and stores,
+in addition to the register file and ALU of Figure 5.6,
+are the data memory unit and the sign-extension unit.
+</H3>
+Note loads read from memory and stores write to memory.
+So, we need both read and write signals (could read, write, or neither
+when instruction does not reference memory), but never both at once.
+Need a 32-bit address and data input ports (data for stores) and a 32-bit
+output port for loads.
+Also, need to sign extend a 16-bit offset value to 32 bits before it is
+input to the ALU.
+Thus, the offset can be positive or negative (often negative offset from
+the frame pointer).
+
+<A NAME="F5.9">
+<H3>
+see Figure 5.9: The datapath for a load or store that does a register
+access, followed by a memory address calculation, then a read or write
+from memory, and a write into the register file if the instruction is a
+load.
+</H3>
+The <code><strong>lw</strong></code> and <code><strong>sw</strong></code>
+each compute an address by adding an offset to the value in a register.
+Thus, they need to reference the register file and the ALU to perform
+the addition.
+Note the value of one register is added to the sign extended offset
+value in the instruction.
+On a store the data from the other register is sent to memory.
+On a load the data read from memory is placed in the register file
+at the location specified in the second register.
+
+<A NAME="F5.10">
+<H3>
+see Figure 5.10: The datapath for a branch uses an ALU for evaluation
+of the branch condition and a separate adder for computing the branch
+target as the sum of the incremented PC and the sign-extended lower 16
+bits of the instruction (the branch displacement), shifted left 2 bits.
+</H3>
+The <code><strong>beq</strong></code> instruction will cause a transfer of
+control if the two specified registers have equivalent values.
+The target of the branch is stored in the instruction as a displacement
+from the instruction following the branch (the PC was already incremented
+at the point it is referenced).
+The displacement value is sign extended (to allow backward branches) and
+left shifted by 2 since all instructions are aligned on 4 byte boundaries.
+The ALU provides an output (the zero signal) indicating whether the comparison
+result was equality.
+Other control logic (a multiplexor) uses the ALU result to determine whether
+the branch target should be assigned to the PC.
+<br><br>
+The <code><strong>j</strong></code> instruction takes the lower 26 bits, left
+shifts by 2, to produce the new value to be assigned to the PC.
+The top 4 bits of the PC are unaffected.
+This still leaves 2**26 possible addresses of instructions in the text
+segment or over 67 million instructions.
+
+<br><br>
+We will first look at creating a datapath to process these instructions
+in a single long clock cycle.
+Certain elements will have to be duplicated, such as memory for both
+data and instructions (i.e. split caches).
+A functional unit will have to be duplicated since the signals continue
+to pass through the combinational logic during the clock cycle.
+
+<A NAME="F5.14">
+<H3>
+see Figure 5.14: How the ALU control bits are
+set depending on the ALUOp control bits and the different function
+codes for the R-type instruction.
+</H3>
+Now we come to the real challenge, specifying the control.
+The ALU will perform one of 5 functions (specified by three control
+lines).
+The ALUOp is a 2-bit control field.
+A 00 indicates add for loads and stores, a 01 is a subtract for
+branches (to see if two registers are equal), and a 10 indicates to
+use the funct field.
+Note the <em>XXXXXX</em> indicates that these bits are ignored.
+<br><br>
+The output of the ALU control unit is a 3-bit field that is fed into
+the ALU to select the operation to be performed.
+Note that (<code><strong>lw</strong></code>, <code><strong>sw</strong></code>,
+and add) and (branch equal and subtract) results in the same ALU control input
+signals.
+
+<A NAME="F5.15">
+<H3>
+see Figure 5.15: The truth table for the three ALU control bits
+(called Operation).
+</H3>
+Creating a truth table is a nice intermediate step in designing the
+logic for the ALU control unit.
+Note that many of the bit combinations are now ignored.
+For instance, a 1X indicates that if the first bit is a 1, then it does
+not matter what the second bit is.
+<br><br>
+Once the truth table is constructed, it can be automatically optimized
+(e.g. Karnaugh maps) and turned into gates.
+Optimization takes care of the X (don't cares).
+
+<A NAME="instformats">
+<H3>
+see MIPS Instruction Formats
+</H3>
+<OL>
+<LI>
+<em>rd</em> is the dest register.
+<em>funct</em> is the ALU function.
+The <em>shamt</em> field is used for shifting (it doesn't make sense to shift
+more than 31 positions for a 32 bit value, so only need 5 bits).
+<LI>
+<em>rt</em> is the dest register for loads and the source register containing
+the value to be stored for stores.
+<em>rs</em> is the base address register for the displacement addressing mode.
+<em>address</em> is the displacement in bytes.
+<LI>
+<em>rs</em> and <em>rt</em> are the registers to be compared for equality.
+<em>address</em> is the displacement in instructions that will be added to the
+PC.
+<LI>
+Note that the most significant 4 PC bits are unchanged for a jump.
+The least significant two bits are always zero.
+The 26 bits in the middle come from the address field.
+</OL>
+So, the opcode, 16-bit offset, and various registers to be read are
+always in the same place.
+This simplifies the decoding of an instruction.
+
+<A NAME="F5.18">
+<H3>
+see Figure 5.18: The effect of each of the seven control signals.
+</H3>
+Note the RegDst signal identifies one of two registers to be written
+(rt for loads, rd for others) and the RegWrite indicates whether one
+of these registers should be written (no for <code><strong>beq</strong></code>
+instruction).
+<br><br>
+Six of these can be set based on the opcode alone.
+Only the PCsrc is different.
+It should be set if the instruction is a <code><strong>beq</strong></code> and
+<em>Zero</em> output of the ALU (used for the equality test) is asserted.
+
+<A NAME="F5.20">
+<H3>
+see Figure 5.20: The setting of the control lines is completely
+determined by the opcode fields of the instruction.
+</H3>
+This table shows how each of the control lines should be set based
+on the type of instruction to be performed (i.e. the opcode).
+So the inputs are the opcode bits and the outputs are the control signals.
+The RegDst and MemtoReg have no effect for the
+<code><strong>sw</strong></code> and <code><strong>beq</strong></code>
+since the RegWrite signal is deasserted.
+Note the only control lines not determined by the type of instruction
+is the zero output of the ALU, which is used to determine whether or
+not a branch is taken, and the output of the ALU control, which uses the
+funct field.
+This truth table can be used to automatically construct a PLA
+(Programmable Logic Array), which consists of an array of AND gates
+followed by an array of OR gates.
+This approach implements a sum of products, where the
+<code><strong>and</strong></code> gates for a set of products and the
+<code><strong>or</strong></code> gates form the sum of those products.
+
+<A NAME="F5.29">
+<H3>
+see Figure 5.29: The simple control and datapath are extended to handle
+the jump instruction.
+</H3>
+Click on the names of individual elements within the figure to have the
+script frame automatically scrolled to an explanation of that element.
+<br><br>
+<em>Summary of figure</em>.
+This figure shows the design of a simple control and datapath within a 
+processor to support single cycle execution of nine MIPS instructions
+(<code><strong>lw</strong></code>, <code><strong>sw</strong></code>,
+<code><strong>add</strong></code>, <code><strong>sub</strong></code>,
+<code><strong>and</strong></code>, <code><strong>or</strong></code>,
+<code><strong>slt</strong></code>, <code><strong>beq</strong></code>,
+<code><strong>j</strong></code>).
+You should read the explanation in Sections 5.2 and 5.3 before attempting
+to understand this figure.
+<br><br>
+<A NAME="F5.29a">
+<em>PC</em>.
+The PC (program counter) is a 32-bit register used to hold the address
+of the current instruction.
+<br><br>
+<A NAME="F5.29b">
+<em>Instruction memory</em>.
+Memory is needed to store instructions.
+Note with instruction memory, no processor write access is shown.
+Instructions are at some point written to instruction memory
+(e.g. load time), which will be described in more detail in Chapter 7.
+The input to the instruction memory is the 32-bit address from the PC.
+The output is a 32-bit instruction at that address.
+<br><br>
+<A NAME="F5.29c">
+<em>Adder with PC and 4 as input</em>.
+This adder adds 4 to the value of the PC.
+Each instruction on the MIPS is 4 bytes and the machine is byte addressable.
+Unless the instruction is a taken transfer of control, the address of the
+next instruction will be 4 bytes after the beginning of the current
+instruction.
+<br><br>
+<A NAME="F5.29d">
+<em>Shift left 2 with Instruction [25-0] as input</em>.
+The format for the jump instruction (as shown in Figure 5.28) has
+a 26-bit address in the least significant bits of the instruction.
+This field contains a word address.
+It needs to be converted to a byte address, so we left shift the address
+by 2.
+This has the effect of placing zeroes in the two least significant bits.
+Remember that all MIPS instructions are 4 bytes long.
+They are also aligned on a 4 byte boundary.
+In other words, the address of each instruction is an integer multiple of
+4, which means that the two least significant bits of these addresses are
+always zero.
+<br><br>
+<A NAME="F5.29e">
+<em>0-1 Mux with Instruction [20-16] and Instruction [15-11] as inputs</em>.
+This multiplexor indicates which register is to be written to the register
+file.
+For R-type instructions (<code><strong>add</strong></code>,
+<code><strong>sub</strong></code>, <code><strong>and</strong></code>,
+<code><strong>or</strong></code>, and <code><strong>slt</strong></code>) the
+<em>rd</em> field in bits [15-11] of the instruction indicates the register
+destination.
+For the <code><strong>lw</strong></code> instruction, the destination register
+is in the <em>rt</em> field, which is in bits [20-16].
+The multiplexor is controlled by the <em>RegDst</em> signal, which uses the
+instruction opcode to determine which field should be selected.
+<br><br>
+<A NAME="F5.29f">
+<em>Control</em>.
+The input to the control unit is the 6-bit opcode field from the instruction.
+Almost every control signal is asserted or deasserted based on the opcode
+field only.
+These control signals are used to select the values that are output from each
+multiplexor.
+They are also used to indicate how the data memory is to be accessed.
+<br><br>
+<A NAME="F5.29g">
+<em>Registers</em>.
+The register file contains the 32 MIPS general-purpose (integer/address)
+registers.
+One can view the register file as an array of registers.
+An R-type instruction uses two register values as input and one register
+as output.
+Thus, there are two register read data ports and one register write data port.
+Each of these data ports are 32 bits in width since registers contain
+32 bits each.
+Besides the write data port, there are also 3 other inputs to the register
+file.
+Two of these inputs specify which two registers to be read and one specifies
+the register to be written.
+Each of these inputs are 5 bits wide, which allows one of 32 registers to
+be specified.
+Two values are read from register file on every cycle, even though sometimes
+one or both of these values may not be used.
+However, we don't want a write into the register file to occur on some
+instructions (<code><strong>sw</strong></code> and
+<code><strong>beq</strong></code>).
+The <em>RegWrite</em> signal controls whether the data received in the write
+data port will be written into the Write register.
+<br><br>
+<A NAME="F5.29h">
+<em>Sign Extend</em>.
+Sign extension is required for all instructions using the I-format, which
+includes loads, stores, and branches.
+The value being extended is the bits in the <em>address</em> field (the
+least significant 16 bits of the instruction).
+The output of the sign extension will eventually be input to some type of
+adder, which needs two 32-bit values as input.
+For loads and stores, we can have a negative displacement from the register
+value.
+For instance, negative displacements are often used when accessing local
+values from a stack pointer.
+Backward branches, such as those found in loops, will need a negative
+displacement from the program counter.
+<br><br>
+<A NAME="F5.29i">
+<em>0-1 Mux with Read data port 2 and sign extended value as inputs</em>.
+This multiplexor controls which one of two values is the second input
+value to the ALU.
+For R-type instructions it will be the value from Read data port 2 of
+the register file.
+For I-type instructions it will be the value from the sign-extension
+unit.
+<br><br>
+<A NAME="F5.29j">
+<em>Shift left 2 with sign-extended value as input</em>.
+A branch instruction contains an offset in instructions, not bytes.
+This offset needs to be added to the PC+4 value, which is a byte
+address.
+Thus, we need to convert the instruction offset to a byte offset.
+This is accomplished by left shifting the value by 2 since each
+instruction is 4 bytes in length.
+<br><br>
+<A NAME="F5.29k">
+<em>ALU Control</em>.
+The ALU control unit decides which type of result will be output
+from the ALU.
+One input to the ALU control unit is the <em>ALUOp</em>, which is a 2-bit control
+signal indicating a 00 (add for loads and stores), a 01 (subtract for
+branches), and a 10 (use the <em>funct</em> field).
+Another input is the <em>funct</em> field.
+Remember that for R-type instructions, the <em>opcode</em> field is always
+zero and the <em>funct</em> field is used to determine the type of operation
+to perform.
+The output of the ALU control unit is a 3-bit field that is fed into the
+ALU to select the operation to be performed.
+While the number of bits used for the encoding of the <em>ALUOp</em> and
+<em>ALU Control</em> output signals is determined by the number of operations
+it controls, the encoding of these signals is really arbitrary.
+<br><br>
+<A NAME="F5.29l">
+<em>ALU</em>.
+The <em>ALU</em> is the arithmetic/logic unit.
+It is used to perform all operations for R-type instructions, 
+performs addition for loads and stores, and performs a subtraction
+for branches.
+The two input values are the value of the register specified by the
+<em>rs</em> field and either the value of the register specified by the
+<em>rt</em> field or the sign-extended value.
+The result that is output from the ALU is selected by the <em>ALU Control</em>
+signal.
+Remember that the ALU always performs an AND, OR, ADD.
+The value selected for the <em>ALU result</em> from among these operations
+(and the LESS operation) depends on the type of instruction being executed.
+The other output is the <em>Zero</em> signal, which is asserted when the two
+input values are identical.
+<br><br>
+<A NAME="F5.29m">
+<em>Adder with PC+4 and Shift Left 2 as inputs</em>.
+This adder is used to calculated the target address of a branch.
+One input is the PC+4, which is used instead of just PC since PC+4
+could be calculated in parallel with loading the instruction from
+the instruction memory.
+The other input is the sign-extended value left shifted by two, which
+represents the offset of the target address from the PC+4 address.
+Note that the value was sign extended instead of zero extended since
+the offset could be negative (branch could be backwards).
+The ALU is not used to perform this addition since it in parallel 
+detects if the values of the two specified registers are equal.
+<br><br>
+<A NAME="F5.29n">
+<em>AND gate with Branch and Zero signals as input</em>.
+The PC should only be updated with the calculated branch target when
+the instruction was a branch (<em>branch</em> asserted) and the two registers
+specified in the <code><strong>beq</strong></code> instruction have the same
+value (<em>zero</em> asserted).
+<br><br>
+<A NAME="F5.29o">
+<em>Data memory</em>.
+Data memory is needed since all the data values cannot fit in a limited
+number of registers.
+The 32-bit address of the memory to be accessed is input to the data memory.
+If the instruction was a store, then the value to be written is obtained
+from the <em>Write data</em> input port.
+If the instruction is a load, then the value to be read is written to the
+<em>Read data</em> port.
+There are two signals (<em>MemRead</em> and <em>MemWrite</em>) that are input
+to the data memory rather than just a single 1-bit signal.
+Access to data memory is sometimes expensive and may cause exceptions.
+Thus, data memory should only be accessed on a load or a store.  
+If neither signal is asserted, then the data memory is not accessed during
+that cycle.
+<br><br>
+<A NAME="F5.29p">
+<em>0-1 Mux with PC+4 and adder output as inputs</em>.
+The next instruction to be fetched can be the next sequential instruction
+(PC+4) or the branch target (PC+4 + sign-extended offset<<2).
+The branch target is only selected when the instruction is a
+<code><strong>beq</strong></code>
+and the two register values compared were found to be equal.
+<br><br>
+<A NAME="F5.29q">
+<em>1-0 Mux with Jump address and 0-1 Mux output as inputs</em>.
+This multiplexor chooses between the <em>jump address</em> and the output
+of the previous multiplexor.
+The <em>jump address</em> is calculated by concatenating the 28-bit address
+left shifted by 2 address field with the 4 most significant bits of the PC.
+These 4 MS bits of the PC are assumed to never change.
+So there can be at most 2^26 (over 67 million) instructions in a program,
+which is almost always enough.
+The value selected is controlled by the <em>Jump</em> signal, which is only
+asserted when executing a <code><strong>j</strong></code> instruction.
+Remember that unlike branch instructions, jump instructions unconditionally
+transfer control to its specified target.
+Note that this multiplexor could have been combined with the previous
+multiplexor.
+<br><br>
+<A NAME="F5.29r">
+<em>1-0 Mux with Read data and ALU result as inputs</em>.
+This multiplexor selects whether the Read data or the ALU result will
+be sent to the register file.
+The <em>MemtoReg</em> is asserted on a load (selects the Read data input)
+and is deasserted on an R-type instruction (selects the ALU result).
+If a <code><strong>sw</strong></code>, <code><strong>beq</strong></code>, or
+<code><strong>j</strong></code> instruction is executing,
+then it does not matter whether the <em>MemtoReg</em> signal is asserted
+or deasserted since the <em>RegWrite</em> signal will be deasserted.
+
+<!--
+<A NAME="rsteps">
+<H3>
+see Steps for an R-type Instruction
+</H3>
+
+<A NAME="loadsteps">
+<H3>
+see Steps for a Load Instruction
+</H3>
+The steps for a store are similar, except for the last two steps.
+
+<A NAME="branchsteps">
+<H3>
+see Steps for a Branch Instruction
+</H3>
+
+<A NAME="jumpsteps">
+<H3>
+see Steps for a Jump Instruction
+</H3>
+<br><br>
+Note with a single cycle for entire instructions implementation, there
+are not really distinct steps.
+The signals will stabilize at the end of the clock period.
+-->
+
+<A NAME="multicycle">
+<H3>
+see Advantages of a Multicycle Implementation
+</H3>
+The main advantage is performance.
+Some instructions require fewer steps (cycles) than other instructions.
+For the single cycle implementation, the cycle time is determined by
+the longest instruction.
+If we were implementing long running instructions, such as multiplies,
+divides, or floating-point operations, then the cycle time would be
+significantly increased.
+So the total time executed by a program can be reduced.
+
+<A NAME="F5.34a">
+<H3>
+see Figure 5.34 (top portion): The action caused by the setting of each control
+signal in Figure 5.33 on page 383.
+</H3>
+The 1-bit control signals are used when 2 possible actions are needed.
+
+<A NAME="F5.34b">
+<H3>
+see Figure 5.34 (bottom portion): The action caused by the setting of each
+control signal in Figure 5.33 on page 383.
+</H3>
+The 2-bit control signals are used when 3 or 4 actions are required.
+
+<A NAME="steps">
+<H3>
+see Multicycle Implementation Steps of Execution
+</H3>
+The execution of an instruction will take at most 5 steps (clock cycles).
+Branches and jumps complete in 3 steps, R-type and
+<code><strong>sw</strong></code>
+instructions complete in 4 steps, and <code><strong>lw</strong></code>
+instructions complete in 5 steps.
+Note that all actions within a single step are performed in parallel.
+
+<!--
+<A NAME="instfetch">
+<H3>
+see Instruction Fetch Step
+</H3>
+We go ahead and increment the PC since we may have to eventually
+fetch the next sequential instruction and the ALU is now available.
+Note the incremented PC is not seen until the next cycle.
+
+<A NAME="decode">
+<H3>
+see Instruction Decode and Register Fetch Step
+</H3>
+Will read the registers specified by <em>rs</em> and <em>rt</em> even though
+we don't know whether or not we will use them.
+A and B are just names for the contents of these two registers.
+Will compute the branch target address with the ALU in case the
+instruction is a branch.
+Because the ALU will be used in later steps, the target address is
+saved in <em>ALUOut</em>.
+
+<br><br>
+Note one of the next 4 steps is done depending upon the opcode examined in
+the instruction decode step.
+
+<A NAME="address">
+<H3>
+see Memory Address Computation Step
+</H3>
+
+<A NAME="alu">
+<H3>
+see Arithmetic-Logical Instruction (R-type) Step
+</H3>
+
+<A NAME="branch">
+<H3>
+see Branch Completion Step
+</H3>
+Note the PC may be written this step and was written during the
+decode step as well.
+
+<A NAME="jump">
+<H3>
+see Jump Completion Step
+</H3>
+
+<br><br>
+Note one of the next 2 steps is done depending upon the opcode examined in
+the instruction decode step.
+
+<A NAME="load">
+<H3>
+see Load Step
+</H3>
+Note that the IRWrite signal was not asserted.
+So the value loaded from memory will not be placed in the IR.
+
+<A NAME="store">
+<H3>
+see Store Step
+</H3>
+
+<A NAME="rtypecomplete">
+<H3>
+see R-type Instruction Completion Step
+</H3>
+
+<A NAME="memreadcomplete">
+<H3>
+see Memory Read Completion Step
+</H3>
+-->
+
+<A NAME="F5.35">
+<H3>
+see F5.35: Summary of the steps taken to execute any instruction class.
+</H3>
+Click in a table entry within the table to have the
+script frame automatically scrolled to an explanation of that step.
+<br><br>
+<em>Summary of table</em>.
+This table shows the actions taken at the different steps of each
+type of instruction.
+These actions are illustrated as effects on registers, memory,
+internal registers, etc.
+This figure illustrates that classes of instructions can
+require different number of cycles to complete.
+<br><br>
+<A NAME="F5.35a">
+<em>Step 1</em>.
+Step 1 always fetches an instruction from memory and stores the instruction
+in the instruction register.
+Step 1 also always increments the <em>PC</em> to point to the next
+sequential instruction.
+Sometimes the <em>PC</em> will be updated with a different value in a later
+cycle of the instruction's execution.
+However, at this point the processor does not know the type of instruction
+and the <em>PC</em> is incremented in case the next sequential address will
+be needed.
+<br><br>
+<A NAME="F5.35b">
+<em>Step 2</em>.
+Step 2 always reads the values of two source registers from the register
+file specified by the <em>rs</em> and <em>rt</em> fields and store these
+values in the internal registers <em>A</em> and <em>B</em>, respectively.
+Step 2 also always assigns to the <em>ALUOut</em> the sum of the
+<em>PC</em> and the sign-extended least significant 16 bits of the
+instruction register that is left shifted by 2.
+Thus, the <em>ALUOut</em> contains the branch target address if the
+instruction was a branch.
+Step 2 determines the type of instruction and and the remaining steps that
+are taken depend on the instruction type.
+<br><br>
+<A NAME="F5.35c">
+<em>Step 3 for the R-type instructions</em>.
+This step performs the arithmetic operation on the values contained in
+the internal <em>A</em> and <em>B</em> registers.
+The result is placed in the internal <em>ALUOut</em> register.
+<br><br>
+<A NAME="F5.35d">
+<em>Step 3 for load or store instructions</em>.
+This step sign-extends the 16 least significant bits of the instruction
+register, adds that result to the value in the internal <em>A</em> register
+and stores the result in the internal <em>ALUOut</em> register.
+This result is the address of the data to be dereferenced in memory.
+<br><br>
+<A NAME="F5.35e">
+<em>Step 3 for branch instructions</em>.
+This step compares the values in the <em>A</em> and <em>B</em> registers
+and assigns the value of the <em>ALUOut</em> register to the <em>PC</em>
+only if the two values are equal.
+Note that there would be an <code><strong>!=</strong></code> comparison if
+the branch was a <code><strong>bne</strong></code> instead of a
+<code><strong>beq</strong></code> instruction.
+<br><br>
+<A NAME="F5.35f">
+<em>Step 3 for jump instructions</em>.
+This step left shifts by 2 the 26 least significant bits in the
+instruction register, concatenates it with the 4 most significant
+bits of the <em>PC</em>, and assigns the result to the <em>PC</em>.
+<br><br>
+<A NAME="F5.35g">
+<em>Step 4 for the R-type instructions</em>.
+This step assigns the value in the <em>ALUOut</em> internal register
+to register in the register file specified by the <em>rd</em> field,
+which is in bits [15-11] of the instruction register.
+<br><br>
+<A NAME="F5.35h">
+<em>Step 4 for load instructions</em>.
+This step loads the value from memory at the address specified in
+the internal <em>ALUOut</em> register and copies the value into the
+internal <em>MDR</em> register.
+<br><br>
+<A NAME="F5.35i">
+<em>Step 4 for store instructions</em>.
+This step assigns the value in the internal <em>B</em> register and
+stores the value into memory at the address specified in
+the internal <em>ALUOut</em> register.
+<br><br>
+<A NAME="F5.35j">
+<em>Step 5 for load instructions</em>.
+This step copies the value in the internal <em>MDR</em> register to the
+register in the register file specified by the <em>rt</em> field,
+which is in bits [20-16] of the instruction register.
+
+<A NAME="multicyclecontrol">
+<H3>
+see Multicycle Control
+</H3>
+Now we can design the control for the multicycle implementation.
+
+<A NAME="fsm">
+<H3>
+see Finite State Machine for Multicycle Control
+</H3>
+This looks a lot like a finite automata.
+However, we also have to specify the output, since we are specifying
+more than a recognizer.
+Each state in the finite state machine takes a single clock cycle.
+Another name for this would be hardwired control.
+
+<A NAME="FC.7">
+<H3>
+see Figure C.7: The control unit for the MIPS will consist of some
+control logic and a register to hold the states.
+</H3>
+The logic determines the signals to assert and the next state.
+Appendix C goes into more detail.
+
+<A NAME="FC.8">
+<H3>
+see Figure C.8: The logic equations for the control unit shown in a
+shorthand form.
+</H3>
+The control signals to be asserted or deasserted depend only on what state
+the machine is in.
+The nextstate signals depend both on the current state and the opcode of
+the instruction.
+
+<A NAME="microprogramming">
+<H3>
+see Microprogramming for Multicycle Control
+</H3>
+Microprogramming used to be the dominant method of specifying control.
+We will discuss later why it is no longer being used in recently designed
+machines.
+The dispatch is like a case statement in a high level language.
+The control is like control at the macroinstruction level.
+Typically, this is accomplished by using the opcode of the macroinstruction
+as the target of a microinstruction address, which is a portion of a table
+with each entry containing the address of a microroutine to implement the
+microinstruction.
+The set of microinstructions implementing a macroinstruction is a
+microroutine.
+The set of all microinstructions is called a microprogram.
+
+<A NAME="exceptions">
+<H3>
+see Exceptions and Interrupts
+</H3>
+The hardest part of implementing control is dealing with <em>exceptions</em>
+and <em>interrupts</em>.
+An exception or interrupt causes a change to supervisor mode to permit
+actions not allowed in user mode.
+Control transfers to a location in the O.S. code, so this mode is safe
+since the O.S. is considered safe for that mode.
+The address of the exception causing instruction is saved so it can be
+restarted later.
+
+<A NAME="F5.48">
+<H3>
+see Figure 5.48: The multicycle datapath with the addition needed to
+implement exceptions.
+</H3>
+Click in a element within the figure to have the
+script frame automatically scrolled to an explanation of that element.
+<br><br>
+<em>Summary of figure</em>.
+This figure shows the design of a simple control and datapath within a 
+processor to support multicycle execution of nine MIPS instructions
+(<code><strong>lw</strong></code>, <code><strong>sw</strong></code>,
+<code><strong>add</strong></code>, <code><strong>sub</strong></code>,
+<code><strong>and</strong></code>, <code><strong>or</strong></code>,
+<code><strong>slt</strong></code>, <code><strong>beq</strong></code>,
+<code><strong>j</strong></code>).
+You should read the explanation in Sections 5.4 before attempting
+to understand this figure.
+The main differences between the multicycle implementation and the
+single cycle implementation are (a) a single memory for both instructions
+and data, (b) the elimination of two adders since this work is now done
+by the ALU, (c) internal registers to save state about an instruction
+between cycles.
+In fact, the existence of temporary registers gives a clue where
+data is stored at the end of one cycle and is read at the beginning of
+the next cycle.
+The multicycle implementation requires more complicated control since
+different control signals need to be asserted in the different cycles
+of an instruction.
+More details about the control for a multicycle implementation is described
+in Figure 5.50.
+<br><br>
+<A NAME="F5.48a">
+<em>PC</em>.
+The PC (program counter) is a 32-bit register used to hold the address
+of the current instruction.
+<br><br>
+<A NAME="F5.48b">
+<em>0-1 Mux with PC and ALUOut as inputs</em>.
+This multiplexer selects between the PC and the output of the ALU for
+the address to access memory.
+<br><br>
+<A NAME="F5.48c">
+<em>Memory</em>.
+There is only a single memory in the multicycle implementation.
+One input to the memory unit is the 32-bit address from the multiplexor
+output.
+If the instruction was a store, then the <em>MemWrite</em> signal is asserted
+and the value to be written is obtained from the <em>Write data</em> input
+port.
+If the instruction is a load or the instruction needs to be fetched, then the
+<em>MemRead</em> signal is asserted and the value to be read is written to the
+<em>MemData</em> port.
+<br><br>
+<A NAME="F5.48d">
+<em>OR gate</em>.
+This gate is used to determine if the PC should be updated during this cycle.
+The possible reasons for updating the PC include incrementing its value by 4
+to point to the next sequential instruction, performing an unconditional jump,
+or having a conditional branch be taken.
+<br><br>
+<A NAME="F5.48e">
+<em>AND gate</em>.
+This gate is used to determine if the PC should be updated due to a conditional
+branch being taken.
+A conditional branch is only take when both the <em>PCWriteCond</em> is
+asserted (due to the <code><strong>beq</strong></code> conditional branch
+instruction being executed in a specific cycle) and the <em>Zero</em> signal
+asserted (due to two registers having the same value).
+<br><br>
+<A NAME="F5.48f">
+<em>Instruction register</em>.
+The <em>instruction register</em> is an internal register that contains the
+bits of the instruction fetched from memory.
+It is only updated when the <em>IRWrite</em> signal is asserted.
+<br><br>
+<A NAME="F5.48g">
+<em>Memory data register</em>.
+The <em>memory data register</em> is an internal register that contains the
+data fetched from memory.
+There is no control signal into this unit, so the value in the register
+must be used on succeeding cycle or it will be overwritten.
+<br><br>
+<A NAME="F5.48h">
+<em>Control</em>.
+The input to the control unit is the 6-bit opcode field from the instruction.
+The criteria for asserting or deasserting every control signal is based on
+the opcode field.
+These control signals are used to select the values that are output from each
+multiplexor.
+What is not shown in this figure is that control signals are not asserted
+or deasserted based on the <em>opcode</em> field alone.
+The relative cycle for the instruction also plays an important role.
+How this can be accomplished is described in a later figure.
+<br><br>
+<A NAME="F5.48i">
+<em>0-1 Mux with Instruction [20-16] and Instruction [15-11] as inputs</em>.
+This multiplexor indicates which register is to be written to the register
+file.
+For R-type instructions (<code><strong>add</strong></code>,
+<code><strong>sub</strong></code>, <code><strong>and</strong></code>,
+<code><strong>or</strong></code>,
+and <code><strong>slt</strong></code>) the <em>rd</em>
+field in bits [15-11] of the instruction indicates the register destination.
+For the <code><strong>lw</strong></code> instruction, the destination register
+is in the <em>rt</em> field, which is in bits [20-16].
+The multiplexor is controlled by the <em>RegDst</em> signal, which uses the
+instruction opcode to determine which field should be selected.
+<br><br>
+<A NAME="F5.48j">
+<em>0-1 Mux with Memory data register and ALUOut as inputs</em>.
+This multiplexor indicates which value is to be written to the register
+file.
+One input can come from the <em>Memory data register</em>, which obtained
+its value as the result of a load from memory.
+The other input is from the <em>ALUOut</em>, which is the result of an
+R-type (<code><strong>and</strong></code>, <code><strong>or</strong></code>,
+<code><strong>add</strong></code>, <code><strong>sub</strong></code>, or
+<code><strong>slt</strong></code>) instruction.
+This multiplexor is controlled by the <em>MemtoReg</em> signal.
+<br><br>
+<A NAME="F5.48k">
+<em>Registers</em>.
+The register file contains the 32 MIPS general-purpose (integer/address)
+registers.
+One can view the register file as an array of registers.
+An R-type instruction uses two register values as input and one register
+as output.
+Thus, there are two register read data ports and one register write data port.
+Each of these data ports are 32 bits in width since registers contain
+32 bits each.
+Besides the write data port, there are also 3 other inputs to the register
+file.
+Two of these inputs specify which two registers to be read and one specifies
+the register to be written.
+Each of these inputs are 5 bits wide, which allows one of 32 registers to
+be specified.
+Two values are read from register file on every cycle, even though sometimes
+one or both of these values may not be used.
+However, we don't want a write into the register file to occur on some
+instructions (<code><strong>sw</strong></code> and
+<code><strong>beq</strong></code>).
+The <em>RegWrite</em> signal controls whether the data received in the write
+data port will be written into the Write register.
+<br><br>
+<A NAME="F5.48l">
+<em>Sign Extend</em>.
+Sign extension is required for all instructions using the I-format, which
+includes loads, stores, and branches.
+The value being extended is the bits in the <em>address</em> field (the
+least significant 16 bits of the instruction).
+The output of the sign extension will eventually be input to some type of
+adder, which needs two 32-bit values as input.
+For loads and stores, we can have a negative displacement from the register
+value.
+For instance, negative displacements are often used when accessing local
+values from a stack pointer.
+Backward branches, such as those found in loops, will need a negative
+displacement from the program counter.
+<br><br>
+<A NAME="F5.48m">
+<em>Shift left 2 with sign-extended value as input</em>. 
+A branch instruction contains an offset in instructions, not bytes.
+This offset needs to be added to the PC+4 value, which is a byte
+address.
+Thus, we need to convert the instruction offset to a byte offset.
+This is accomplished by left shifting the value by 2 since each
+instruction is 4 bytes in length.
+<br><br>
+<A NAME="F5.48n">
+<em>A</em>.
+This is an internal register that contains the value of the register
+loaded from the register file that is referred to by the <em>rs</em> field.
+This register is used to keep this value between two consecutive clock cycles.
+<br><br>
+<A NAME="F5.48o">
+<em>B</em>.
+This is an internal register that contains the value of the register
+loaded from the register file that is referred to by the <em>rt</em> field.
+This register is used to keep this value between two consecutive clock cycles.
+<br><br>
+<A NAME="F5.48p">
+<em>0-1 Mux with PC and adder output as inputs</em>.
+The next instruction to be fetched can be the next sequential instruction
+(PC+4) or a branch target (PC+4 + sign-extended offset << 2).
+In either case the PC must at some point be incremented.
+Most instructions eventually perform some type of operation on the register
+specified by the <em>rs</em> field.
+The <em>ALUSrcA</em> signal decides if the first input to the ALU will
+come from the PC or the register file.
+<br><br>
+<A NAME="F5.48q">
+<em>0-1-2-3 Mux</em>.
+This multiplexor decides whether the input is from the second register value
+obtained from the register file (e.g. for R-type instructions), a constant
+of 4 to increment the PC to point to the next sequential instruction, the
+sign-extended value used as an offset from a register in a displacement
+address for loads and stores, or the left-shifted by 2 sign-extended value,
+which is used as an offset for branches.
+The <em>ALUSrcB</em> 2-bit signal is used to select from among these 4 possible
+inputs.
+<br><br>
+<A NAME="F5.48r">
+<em>ALU Control</em>.
+The ALU control unit decides which type of result will be output
+from the ALU.
+One input to the ALU control unit is the <em>ALUOp</em>, which is a 2-bit
+control signal indicating a 00 (add for loads and stores), a 01 (subtract for
+branches), and a 10 (use the <em>funct</em> field).
+Another input is the <em>funct</em> field.
+Remember that for R-type instructions, the <em>opcode</em> field is always
+zero and the <em>funct</em> field is used to determine the type of operation
+to perform.
+The output of the ALU control unit is a 3-bit field that is fed into the
+ALU to select the operation to be performed.
+While the number of bits used for the encoding of the <em>ALUOp</em> and
+<em>ALU Control</em> output signals is determined by the number of operations
+it controls, the encoding of these signals is really arbitrary.
+<br><br>
+<A NAME="F5.48s">
+<em>ALU</em>.
+The <em>ALU</em> is the arithmetic/logic unit.
+It is used to perform all operations for R-type instructions, 
+performs addition for loads and stores, and performs a subtraction
+for branches.
+The two input values are the value of the register specified by the
+<em>rs</em> field and either the value of the register specified by the
+<em>rt</em> field or the sign-extended value.
+The result that is output from the ALU is selected by the <em>ALU Control</em>
+signal.
+Remember that the ALU always performs an AND, OR, ADD.
+The value selected for the <em>ALU result</em> from among these operations
+(and the LESS operation) depends on the type of instruction being executed.
+The other output is the <em>Zero</em> signal, which is asserted when the two
+input values are identical.
+<br><br>
+<A NAME="F5.48t">
+<em>Shift left 2 with Instruction [25-0] as input</em>.
+The format for the jump instruction (as shown in Figure 5.28) has
+a 26-bit address in the least significant bits of the instruction.
+This field contains a word address.
+It needs to be converted to a byte address, so we left shift the address
+by 2.
+This has the effect of placing zeroes in the two least significant bits.
+Remember that all MIPS instructions are 4 bytes long.
+They are also aligned on a 4 byte boundary.
+In other words, the address of each instruction is an integer multiple of
+4, which means that the two least significant bits of these addresses are
+always zero.
+<br><br>
+<A NAME="F5.48u">
+<em>ALUOut</em>.
+This is an internal register to hold the output of the ALU between
+clock cycles.
+<br><br>
+<A NAME="F5.48v">
+<em>0-1 Mux selecting an input for the Cause register</em>.
+This multiplexor selects an input for the <em>Cause</em> internal register,
+which depends on the <em>IntCause</em> signal indicating the type of exception.
+<br><br>
+<A NAME="F5.48w">
+<em>0-1-2-3 Mux selecting an input to be routed to the PC</em>.
+The next instruction to be fetched can be the next sequential instruction
+(PC+4), the branch target (PC+4 + sign-extended_offset<<2), the jump target
+(PC[31-28] | jump_address <<2), or the address for the exception handling
+routine.
+The branch target is only selected when the instruction is a
+<code><strong>beq</strong></code>
+and the two register values compared were found to be equal.
+The <em>jump address</em> is calculated by concatenating the 28-bit address
+left shifted by 2 address field with the 4 most significant bits of the PC.
+These 4 MS bits of the PC are assumed to never change.
+So there can be at most 2^26 (over 67 million) instructions in a program,
+which is almost always enough.
+The value selected is controlled by the <em>PCSource</em> signal, which is a
+2-bit signal that indicates one of 3 values.
+The exception handler address is set when an exception occurs.
+<br><br>
+<A NAME="F5.48x">
+<em>EPC</em>.
+This is an internal register that contains the address of the instruction
+that caused the exception.
+The reason this is needed in case the operating system can handle the
+exception without aborting the program and it needs to transfer control
+back to the program.
+<br><br>
+<A NAME="F5.48y">
+<em>Cause</em>.
+This is an internal register that contains a code indicating the cause of
+the exception.
+The exception handling code looks at the cause register to decide which portion
+of the exception handler should be used to handle the exception.
+
+<A NAME="F5.50">
+<H3>
+see Figure 5.50: This shows the finite state machine with the additions
+to handle exception detection.
+</H3>
+Click in a state (bubble) within the figure to have the
+script frame automatically scrolled to an explanation of that state.
+<br><br>
+<em>Summary of figure</em>.
+This figure shows the representation for a finite state machine to control
+the datapath of the multicycle implementation (Figure 5.33).
+Each bubble represents a state.
+The arcs represent transitions between states.
+When there is more than one transition from a state, the transition is
+labeled to indicate on what condition that transition is made.
+Within each state are the signals that are asserted or deasserted (assigned a
+particular set of values for multibit signals).
+Note that all paths eventually lead back to the start state (state 0) to
+allow the next instruction to be executed.
+<br><br>
+<A NAME="F5.50a">
+<em>State 0</em>.
+This is the start state.
+The <em>MemRead</em> is asserted so a read can occur from memory.
+The <em>ALUSrcA</em> is deasserted so that the <em>PC</em> is input to the
+<em>ALU</em> so it can be incremented to contain the address of the next
+sequential instruction.
+The <em>IorD</em> is deasserted so the address used to access memory
+comes from the <em>PC</em>.
+The <em>IRWrite</em> is asserted so the instruction register will be updated
+with the value read from memory.
+The <em>ALUSrcB</em> is set so the second input to the <em>ALU</em> is the
+value 4 so the <em>PC</em> can be incremented to the next sequential
+instruction.
+The <em>PCWrite</em> is asserted so the PC will be updated with the address
+of the next sequential instruction.
+The <em>PCSource</em> is set so the value assigned to the <em>PC</em> is the
+immediate output of the <em>ALU</em>.
+The next state is always state 1 since the type of instruction has yet to
+be determined.
+<br><br>
+<A NAME="F5.50b">
+<em>State 1</em>.
+The <em>ALUSrcA</em> is set so the first input to the <em>ALU</em> comes from
+the <em>PC</em>.
+The <em>ALUSrcB</em> is set so the second input to the <em>ALU</em> comes from
+sign-extended, left-shifted by 2, 16-bit <em>address</em> field of the
+instruction.
+The <em>ALUOp</em> is set so the <em>ALU</em> performs an addition.
+Thus, the branch target address is calculated and the <em>ALU result</em>
+is stored in the <em>ALUOut</em> register.
+The next state is determined by the <em>opcode</em> field of the instruction.
+<br><br>
+<A NAME="F5.50c">
+<em>State 2</em>.
+This state is used for load and store instructions.
+The <em>ALUSrcA</em> signal is asserted so the first input to the <em>ALU</em>
+comes from the value of the internal <em>A</em> register.
+The <em>ALUSrcB</em> signal is set so that the second input to the <em>ALU</em>
+comes from the 16-bit sign-extended value.
+The <em>ALUOp</em> is set so an addition is performed by the <em>ALU</em>.
+The <em>ALU Result</em> is the address to access memory and is placed in the
+<em>ALUOut</em> internal register.
+The next state depends on whether the <em>opcode</em> indicates if the
+instruction was a load or a store.
+<br><br>
+<A NAME="F5.50d">
+<em>State 3</em>.
+This state is used for load instructions.
+The <em>MemRead</em> signal is asserted so a value can be loaded from memory.
+The <em>IorD</em> is asserted so the address to access memory comes from the
+<em>ALUOut</em> internal register.
+The value loaded from memory is stored in the <em>MDR</em> internal register.
+<br><br>
+<A NAME="F5.50e">
+<em>State 4</em>.
+This state is used for load instructions.
+The <em>RegDst</em> is deasserted so that the specified register to update
+comes from bits [20-16] (field <em>rt</em>) of the instruction register.
+The <em>RegWrite</em> signal is asserted so the register file will be updated.
+The <em>MemtoReg</em> signal is asserted so the value to be stored in the
+specified register comes from the <em>MDR</em> internal register.
+<br><br>
+<A NAME="F5.50f">
+<em>State 5</em>.
+This state is used for store instructions.
+The <em>MemWrite</em> signal is asserted so that memory will be updated.
+The <em>IorD</em> is asserted so the address to access memory comes from the
+<em>ALUOut</em> internal register.
+This value is stored in memory during this cycle.
+<br><br>
+<A NAME="F5.50g">
+<em>State 6</em>.
+This state is used for R-type instructions.
+The <em>ALUSrcA</em> signal is asserted so the first <em>ALU</em> input comes
+from the <em>A</em> internal register.
+The <em>ALUSrcB</em> signal is set so that the second <em>ALU</em> input comes
+from the <em>B</em> internal register.
+The <em>ALUOp</em> signal is set so that the operation performed by the 
+<em>ALU</em> is determined by examining bits [5-0] (the <em>funct</em> field)
+of the instruction register.
+The <em>ALU Result</em> is stored in the <em>ALUOut</em> internal register.
+<br><br>
+<A NAME="F5.50h">
+<em>State 7</em>.
+This state is used for R-type instructions.
+The <em>RegDst</em> signal is asserted so that the register updated in the
+register file is specified by bits [15-11] (field <em>rd</em>) of the
+instruction register.
+The <em>RegWrite</em> signal is asserted so that the register file will
+be updated.
+The <em>MemtoReg</em> signal is deasserted so that the value to store in the
+register file comes from the <em>ALUOut</em> internal register.
+<br><br>
+<A NAME="F5.50i">
+<em>State 8</em>.
+This state is used for branch instructions.
+The <em>ALUSrcA</em> signal is asserted so that the first input to the
+<em>ALU</em> is from the <em>A</em> internal register.
+The <em>ALUSrcB</em> signal is set so that the second input to the <em>ALU</em>
+is from the <em>B</em> internal register.
+The <em>ALUOp</em> signal is set so that the <em>ALU</em> performs a
+subtraction and compares the two values to see if they are equal.
+The <em>PCWriteCond</em> signal is asserted so that the <em>Zero</em> signal
+be considered in which value to assign to the <em>PC</em>.
+The <em>PCSource</em> signal is set so that the value in the <em>ALUOut</em>
+internal register is the one that is routed to the <em>PC</em>.
+The <em>PC</em> will only be updated if the <em>Zero</em> gets asserted as a
+result of the <em>ALU</em> operation.
+<br><br>
+<A NAME="F5.50j">
+<em>State 9</em>.
+This state is used for jump instructions.
+The <em>PCWrite</em> signal is asserted since the <em>PC</em> needs to be
+updated.
+The <em>PCSource</em> signal is set so that the <em>Jump address</em> is routed
+to the <em>PC</em>.
+The <em>PC</em> gets updated with the jump target address.
+<br><br>
+<A NAME="F5.50k">
+<em>State 10</em>.
+This state is used when an undefined instruction is encountered.
+The <em>IntCause</em> signal is deasserted to indicate the cause of the
+exception.
+The <em>CauseWrite</em> signal is asserted so the <em>Cause</em> register will
+get updated.
+The <em>ALUSrcA</em> signal is deasserted so the first input to the
+<em>ALU</em> will come from the <em>PC</em>.
+The <em>ALUSrcB</em> is set so that 4 is the second <em>ALU</em> input.
+The <em>ALUOp</em> signal is set so that a subtraction occurs.
+Remember for the multicycle implementation, the <em>PC</em> has already been
+incremented by 4.
+So the processor needs to subtract 4 to get the address of the instruction that
+caused the exception.
+The <em>EPCWrite</em> signal is asserted so the <em>EPC</em> register will be
+updated.
+The <em>EPC</em> will hold the return address.
+The <em>PCWrite</em> signal is asserted to cause the <em>PC</em> to be updated.
+The <em>PCSource</em> signal is set so that the address for the exception
+handling routine will be routed to the <em>PC</em>.
+<br><br>
+<A NAME="F5.50l">
+<em>State 11</em>.
+This state is used when an arithmetic overflow occurs.
+The <em>IntCause</em> signal is asserted to indicate the cause of the exception.
+The <em>CauseWrite</em> signal is asserted so the <em>Cause</em> register will
+get updated.
+The <em>ALUSrcA</em> signal is deasserted so the first input to the
+<em>ALU</em> will come from the <em>PC</em>.
+The <em>ALUSrcB</em> is set so that 4 is the second <em>ALU</em> input.
+The <em>ALUOp</em> signal is set so that a subtraction occurs.
+Remember for the multicycle implementation, the <em>PC</em> has already been
+incremented by 4.
+So the processor needs to subtract 4 to get the address of the instruction that
+caused the exception.
+The <em>EPCWrite</em> signal is asserted so the <em>EPC</em> register will be
+updated.
+The <em>EPC</em> will hold the return address.
+The <em>PCWrite</em> signal is asserted to cause the <em>PC</em> to be updated.
+The <em>PCSource</em> signal is set so that the address for the exception
+handling
+routine will be routed to the <em>PC</em>.
+
+<!--
+.lp
+\fBshow Figure 5.50: This shows the finite state machine with the additions
+to handle exception detection.\fP
+[Keep Figure 5.48 at the same time and go through the signals.]
+Can see that state 10 can be entered when there is an undefined opcode.
+Can see that state 11 can be entered when there is an arithmetic overflow.
+All signals asserted are the same in this implementation, except the IntCause.
+-->
+
+<A NAME="problems">
+<H3>
+see Fallacies and Pitfalls
+</H3>
+<OL>
+<LI>
+<em>Pitfall: Microcode implementing a complex instruction may not be
+faster than a sequence using simpler instructions.</em>
+Almost all machines used to be microcoded.
+Now few machines are designed today with control implemented via
+microprogramming.
+The introduction of caches no longer caused the microcode to have a
+fetch performance advantage (microcode and cache both have same fetch time).
+An optimizing compiler can exploit instructions generated at a similar
+level to microcode.
+Microcoded machines tend to be slower than hardwired machines.
+Also CAD programs can automate most of the process of control, so there
+is little advantage to using microcode.
+Will understand this more when we go over pipelining.
+<LI>
+<em>Fallacy: If there is space in the control store, new instructions
+are free of cost.</em>
+One has to consider the design cost for these new instructions.
+Also, upward compatibility of executables would make the manufacturer
+keep these instructions even when you need the extra space for other
+purposes.
+</OL>
+</BIG>
+</BODY>
+</HTML>
