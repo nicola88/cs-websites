@@ -1,0 +1,95 @@
+/* Century Schoolbook font is very similar to Computer Modern Math: cmmi */
+.MATH    { font-family: "Century Schoolbook", serif; }
+.MATH I  { font-family: "Century Schoolbook", serif; font-shape: italic }
+.BOLDMATH { font-family: "Century Schoolbook", serif; font-weight: bold }
+
+/* implement both fixed-size and relative sizes */
+
+body
+{ font: normal .80em arial, sans-serif;
+  font-size: 14px;
+  background: #F6F4F0 url(http://markburgess.org/os/pattern.png);
+  color: #47433F;}
+
+p{   font-size: 14px; }
+
+blocktext
+{ 
+   font-size: 14px;
+ }
+img
+{ border: 0;}
+
+h1, h2, h3, h4, h5, h6 
+{ color: #362C20;
+  padding: 0 0 5px 0;}
+
+h1, h4
+{ font: normal 175% "lucida sans unicode", arial;
+  margin: 0 0 15px 0;
+  padding: 15px 20px 5px 0;}
+
+h2, h5
+{ color: #B60000;
+  padding: 10px 0 15px 0;
+  font: normal 120% arial;}
+
+h3, h6
+{ color: #888;
+  font: italic 95% arial;
+  padding: 0 0 15px 0;}
+
+h4, h6
+{ color: #B60000;}
+
+h5
+{ color: #362C20;}
+
+a, a:hover
+{ outline: none;
+  text-decoration: underline;
+  color: #A4AA04;}
+
+
+
+a:hover
+{ text-decoration: none;}
+
+.left
+{ float: left;
+  width: auto;
+  margin-right: 10px;}
+
+.right
+{ float: right; 
+  width: auto;
+  margin-left: 10px;}
+
+.center
+{ display: block;
+  text-align: center;
+  margin: 20px auto;}
+
+blockquote
+{ margin: 20px 0; 
+  padding: 10px 20px 0 20px;
+  border: 1px solid #E5E5DB;
+  background: #FFF;}
+
+
+
+ul li
+{ list-style-type: circle;
+  padding: 5px;}
+
+ol li
+{ padding: 5px;}
+
+
+
+/* mathematics styles */
+DIV.displaymath		{ }	/* math displays */
+TD.eqno			{ }	/* equation-number cells */
+
+
+/* document-specific styles come next */
