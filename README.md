@@ -10,7 +10,7 @@ wget --reject pdf \
      --html-extension \
      --convert-links \
      --restrict-file-names=windows \
-     --domains site_domain> \
+     --domains site_domain \
      --no-parent site_url
 ```
 
@@ -43,3 +43,9 @@ How to Design Programs, Second Edition - Matthias Felleisen, Robert Bruce Findle
 Last update: 2018-11-01
 
 OpenSSL Cookbook / A Short Guide to the Most Frequently Used OpenSSL Features and Commands - Ivan Ristić
+
+## debian-handbook.info/browse/stable/
+
+Last update: 2018-11-23
+
+The Debian Administrator's Handbook
