@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen" />
+        <title>minihaskell at the Programming languages Zoo</title>
+        <meta name="viewport" content="width=device-width">
+
+    </head>
+    <body>
+
+    <header>
+      <div class="container">
+        <h1>The Programming Languages Zoo</h1>
+        <h2>A potpourri of programming languages</h2>
+      </div>
+     <div id="navbar" class="container">
+      &gt; <a href="../index.html">home</a> &gt; minihaskell
+    </div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43528302-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+      <h2>minihaskell</h2>
+
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/minihaskell">source</a>]
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/minihaskell/example.minihaskell">example</a>]
+
+      <p>A lazy functional language with following features:</p>
+
+<ul>
+  <li>integers with arithmetical operations <code class="highlighter-rouge">*</code>, <code class="highlighter-rouge">+</code>, <code class="highlighter-rouge">-</code>, <code class="highlighter-rouge">/</code>, <code class="highlighter-rouge">%</code></li>
+  <li>booleans with conditional statements and comparison <code class="highlighter-rouge">=</code>, <code class="highlighter-rouge">&lt;</code> of integers</li>
+  <li>ordered pairs</li>
+  <li>lists</li>
+  <li>functions</li>
+  <li>general recursion (fixpoint operator)</li>
+</ul>
+
+<h4 id="examples">Examples</h4>
+
+<p>The file primes.minhs defines the infinite list of prime numbers. You
+can load it and try it as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ ./minihaskell.byte prime.minhs 
+val not : bool -&gt; bool
+val div : int -&gt; int -&gt; int
+val mod : int -&gt; int -&gt; int
+val notmultiple : int -&gt; int -&gt; bool
+val map : (int -&gt; int) -&gt; int list -&gt; int list
+val filter : (int -&gt; bool) -&gt; int list -&gt; int list
+val nth : int list -&gt; int -&gt; int
+val nat : int list
+val nat2 : int list
+val sieve : int list -&gt; int list
+val primes : int list
+MiniHaskell. Press Ctrl-D to exit.
+MiniHaskell&gt; primes
+- : int list = 2 :: 3 :: 5 :: 7 :: 11 :: 13 :: 17 :: 19 :: 23 ::
+  29 :: 31 :: 37 :: 41 :: 43 :: 47 :: 53 :: 59 :: 61 :: 67 :: 71
+  :: 73 :: 79 :: 83 :: 89 :: 97 :: 101 :: 103 :: 107 :: 109 :: 113
+  :: 127 :: 131 :: 137 :: 139 :: 149 :: 151 :: 157 :: 163 :: 167
+  :: 173 :: 179 :: 181 :: 191 :: 193 :: 197 :: 199 :: 211 :: 223
+  :: 227 :: 229 :: 233 :: 239 :: 241 :: 251 :: 257 :: 263 :: 269
+  :: 271 :: 277 :: 281 :: 283 :: 293 :: 307 :: 311 :: 313 :: 317
+  :: 331 :: 337 :: 347 :: 349 :: 353 :: 359 :: 367 :: 373 :: 379
+  :: 383 :: 389 :: 397 :: 401 :: 409 :: 419 :: 421 :: 431 :: 433
+  :: 439 :: 443 :: 449 :: 457 :: 461 :: 463 :: 467 :: 479 :: 487
+  :: 491 :: 499 :: 503 :: 509 :: 521 :: 523 :: ... :: ...
+MiniHaskell&gt; 
+Good bye.
+</code></pre></div></div>
+
+      </section>
+    </div>
+    </body>
+</html>

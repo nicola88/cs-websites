@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen" />
+        <title>miniml at the Programming languages Zoo</title>
+        <meta name="viewport" content="width=device-width">
+
+    </head>
+    <body>
+
+    <header>
+      <div class="container">
+        <h1>The Programming Languages Zoo</h1>
+        <h2>A potpourri of programming languages</h2>
+      </div>
+     <div id="navbar" class="container">
+      &gt; <a href="../index.html">home</a> &gt; miniml
+    </div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43528302-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+      <h2>miniml</h2>
+
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/miniml">source</a>]
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/miniml/example.miniml">example</a>]
+
+      <p>An implementation of an eager statically typed functional language with
+a compiler and an abstract machine.</p>
+
+<p>The language has the following constructs:</p>
+
+<ul>
+  <li>Integers with arithmetic operations <code class="highlighter-rouge">+</code>, <code class="highlighter-rouge">-</code> and <code class="highlighter-rouge">*</code>. (There is no
+division because the language has no exceptions.)</li>
+  <li>Booleans with conditional statement and comparison of integers
+<code class="highlighter-rouge">=</code> and <code class="highlighter-rouge">&lt;</code>.</li>
+  <li>
+    <p>Recursive functions and function application. The expression</p>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  fun f (x : t) : s is e
+</code></pre></div>    </div>
+
+    <p>denotes a function of type <code class="highlighter-rouge">t -&gt; s</code> which maps <code class="highlighter-rouge">x</code> to <code class="highlighter-rouge">e</code>. In <code class="highlighter-rouge">e</code>
+the function refers to itself as <code class="highlighter-rouge">f</code>.</p>
+  </li>
+  <li>
+    <p>Toplevel definitions</p>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  let x = e
+</code></pre></div>    </div>
+
+    <p>There are no local definitions.</p>
+  </li>
+</ul>
+
+<p>Example interaction, see also the file <code class="highlighter-rouge">example.miniml</code>:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>MiniML. Press Ctrl-D to exit.
+MiniML&gt; 3 + (if 5 &lt; 6 then 10 else 100) ;;
+- : int = 13
+MiniML&gt; let x = 14 ;;
+x : int = 14
+MiniML&gt; let fact = fun f (n : int) : int is if n = 0 then 1 else n * f (n-1) ;;
+fact : int -&gt; int = &lt;fun&gt;
+MiniML&gt; fact 10 ;;
+- : int = 3628800
+MiniML&gt;
+Good bye.
+</code></pre></div></div>
+
+      </section>
+    </div>
+    </body>
+</html>

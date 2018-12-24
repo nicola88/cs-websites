@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen" />
+        <title>miniprolog at the Programming languages Zoo</title>
+        <meta name="viewport" content="width=device-width">
+
+    </head>
+    <body>
+
+    <header>
+      <div class="container">
+        <h1>The Programming Languages Zoo</h1>
+        <h2>A potpourri of programming languages</h2>
+      </div>
+     <div id="navbar" class="container">
+      &gt; <a href="../index.html">home</a> &gt; miniprolog
+    </div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43528302-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+      <h2>miniprolog</h2>
+
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/miniprolog">source</a>]
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/miniprolog/example.miniprolog">example</a>]
+
+      <p>Miniprolog is a minimalist prolog interpeter. It does not contain cuts, arithmetic, lists,
+or equality – just basic Horn clauses.</p>
+
+<p>The terms of the language consist of:</p>
+
+<ul>
+  <li>constants, which are strings of alphanumeric characters, starting
+with a lower case letter.</li>
+  <li>variables, which are strings of alphanumeric characters, starting
+with a upper case letter.</li>
+  <li>composite terms of the form <code class="highlighter-rouge">f(t1, ..., tn)</code> where <code class="highlighter-rouge">f</code> is a constant
+and <code class="highlighter-rouge">t1</code>, …, <code class="highlighter-rouge">tn</code> are terms.</li>
+</ul>
+
+<p>Examples of terms are: <code class="highlighter-rouge">x</code>, <code class="highlighter-rouge">y</code>, <code class="highlighter-rouge">X</code>, <code class="highlighter-rouge">A</code>, <code class="highlighter-rouge">son(abel, adam)</code>, <code class="highlighter-rouge">less(X, plus(X, one))</code>.</p>
+
+<p>You may type in assertions and queries. An atomic assertion is written
+as a term followed by a period,</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>assertion.
+</code></pre></div></div>
+
+<p>an inference rule (complex assertion) is written as</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>goal :- subgoal1, ..., subgoalN.
+</code></pre></div></div>
+
+<p>where <code class="highlighter-rouge">assertion</code>, <code class="highlighter-rouge">goal</code>, <code class="highlighter-rouge">subgoal1</code>, …, <code class="highlighter-rouge">subgoalN</code> are terms. A query is written as
+(including the “<code class="highlighter-rouge">?-</code>”)</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>?- query.
+</code></pre></div></div>
+
+<p>where query is a term. You may type assertions and queries at the
+command line or place them in a file. See the enclosed examples.</p>
+
+<p>Sample session, see also the file <code class="highlighter-rouge">example.miniprolog</code>.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>miniProlog -- programming languages zoo
+Type Ctrl-D to exit
+miniProlog&gt; it_is_raining.
+miniProlog&gt; no_umbrella.
+miniProlog&gt; i_am_wet :- it_is_raining, no_umbrella.
+miniProlog&gt; ?- i_am_wet.
+Yes
+miniProlog&gt; ?- i_am_dry.
+No
+miniProlog&gt; child(luke, vader).
+miniProlog&gt; child(leia, vader).
+miniProlog&gt; ?- child(X, vader).
+X = luke
+more? (y/n) [y] y
+X = leia
+more? (y/n) [y] y
+No
+miniProlog&gt; sibling(X,Y) :- child(X,Z), child(Y,Z).
+miniProlog&gt; ?- sibling(A,B).
+A = luke
+B = luke
+more? (y/n) [y] y
+A = luke
+B = leia
+more? (y/n) [y] y
+A = leia
+B = luke
+more? (y/n) [y] y
+A = leia
+B = leia
+more? (y/n) [y] y
+No
+miniProlog&gt; 
+</code></pre></div></div>
+
+      </section>
+    </div>
+    </body>
+</html>

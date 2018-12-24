@@ -49,3 +49,9 @@ OpenSSL Cookbook / A Short Guide to the Most Frequently Used OpenSSL Features an
 Last update: 2018-11-23
 
 The Debian Administrator's Handbook
+
+## plzoo.andrej.com/
+
+Last update: 2018-12-24
+
+The Programming Languages Zoo - A potpourri of programming languages

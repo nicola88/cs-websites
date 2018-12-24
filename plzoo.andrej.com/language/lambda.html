@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen" />
+        <title>lambda at the Programming languages Zoo</title>
+        <meta name="viewport" content="width=device-width">
+
+    </head>
+    <body>
+
+    <header>
+      <div class="container">
+        <h1>The Programming Languages Zoo</h1>
+        <h2>A potpourri of programming languages</h2>
+      </div>
+     <div id="navbar" class="container">
+      &gt; <a href="../index.html">home</a> &gt; lambda
+    </div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43528302-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+      <h2>lambda</h2>
+
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/lambda">source</a>]
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/lambda/example.lambda">example</a>]
+
+      <p>An implementation of the untyped λ-calculus.</p>
+
+<p>The λ-calculus is an equational theory and so does not by itself enforce a notion of
+computation. There are several strategies for normalizing redices, which in <code class="highlighter-rouge">lambda</code> can
+be controlled with directives:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">#eager</code> - reduce arguments of applications</li>
+  <li><code class="highlighter-rouge">#lazy</code> - do not reduce arguments of applications</li>
+  <li><code class="highlighter-rouge">#deep</code> - reduce inside abstractions</li>
+  <li><code class="highlighter-rouge">#shallow</code> - do not reduce inside abstractions</li>
+</ul>
+
+<p>We can combine these to get various reduction strategies:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: right"> </th>
+      <th style="text-align: center"><code class="highlighter-rouge">#eager</code></th>
+      <th style="text-align: center"><code class="highlighter-rouge">#lazy</code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: right"><code class="highlighter-rouge">#shallow</code></td>
+      <td style="text-align: center">weak normal form</td>
+      <td style="text-align: center">weak head normal form</td>
+    </tr>
+    <tr>
+      <td style="text-align: right"><code class="highlighter-rouge">#deep</code></td>
+      <td style="text-align: center">normal form</td>
+      <td style="text-align: center">head normal form</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>In terms of programming language terminology, weak normal form corresponds approximately
+to call by value and the weak head normal form to call by name.</p>
+
+<h5 id="example-interaction">Example interaction</h5>
+
+<p>The file <code class="highlighter-rouge">example.lambda</code> contains an example session which defines booleans, numbers, and
+lists. You can use it as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ ./lambda.native -l example.lambda 
+pair is defined.
+first is defined.
+second is defined.
+K is defined.
+true is defined.
+false is defined.
+if is defined.
+and is defined.
+or is defined.
+not is defined.
+fix is defined.
+error is a constant.
+nil is defined.
+cons is defined.
+head is defined.
+tail is defined.
+match is defined.
+map is defined.
+fold is defined.
+0 is defined.
+1 is defined.
+2 is defined.
+3 is defined.
+4 is defined.
+5 is defined.
+6 is defined.
+7 is defined.
+8 is defined.
+9 is defined.
+10 is defined.
+succ is defined.
++ is defined.
+* is defined.
+** is defined.
+iszero is defined.
+pred is defined.
+== is defined.
+fact is defined.
+&lt;= is defined.
+&gt;= is defined.
+&lt; is defined.
+&gt; is defined.
+mu is defined.
+/ is defined.
+| is defined.
+all is defined.
+prime is defined.
+lambda -- programming languages zoo
+Type Ctrl-D to exit
+lambda&gt; prime 3
+λ x _ . x
+lambda&gt; prime 4
+λ _ y . y
+lambda&gt; prime 5
+λ x _ . x
+lambda&gt; prime 6
+λ _ y . y
+lambda&gt; prime 7
+λ x _ . x
+lambda&gt; + 2 3
+λ f x . 2 f (3 f x)
+lambda&gt; :eager
+I will evaluate eagerly.
+lambda&gt; :deep
+I will evaluate deeply.
+lambda&gt; + 2 3
+λ f x . f (f (f (f (f x))))
+lambda&gt; :lazy
+I will evaluate lazily.
+lambda&gt; + 2 3
+λ f x . f (f (3 f x))
+</code></pre></div></div>
+
+      </section>
+    </div>
+    </body>
+</html>

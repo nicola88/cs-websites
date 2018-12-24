@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen" />
+        <title>levy at the Programming languages Zoo</title>
+        <meta name="viewport" content="width=device-width">
+
+    </head>
+    <body>
+
+    <header>
+      <div class="container">
+        <h1>The Programming Languages Zoo</h1>
+        <h2>A potpourri of programming languages</h2>
+      </div>
+     <div id="navbar" class="container">
+      &gt; <a href="../index.html">home</a> &gt; levy
+    </div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43528302-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+      <h2>levy</h2>
+
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/levy">source</a>]
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/levy/example.levy">example</a>]
+
+      <p>An implementation of <a href="http://plzoo.andrej.com/language/&lt;a&#32;href=&quot;http://www.cs.bham.ac.uk/~pbl/&quot;">Paul Levy’s</a> <a href="http://www.cs.bham.ac.uk/~pbl/cbpv.html">call-by-push-value</a>
+language. The language has the following constructs:</p>
+<ul>
+  <li>integers with arithmetical operations <code class="highlighter-rouge">*</code>, <code class="highlighter-rouge">+</code>, <code class="highlighter-rouge">-</code>`</li>
+  <li>booleans with conditional statements and comparison <code class="highlighter-rouge">=</code>, <code class="highlighter-rouge">&lt;</code> of integers</li>
+  <li>functions</li>
+  <li>general recursion (fixpoint operator)</li>
+  <li>call-by-push-value features: <code class="highlighter-rouge">return</code>, <code class="highlighter-rouge">thunk</code>, <code class="highlighter-rouge">force</code>, sequencing, and <code class="highlighter-rouge">let</code> binding</li>
+</ul>
+
+<p>Call-by-push-value is very precise about what gets evaluated when and can express both
+call-by-value and call-by-name.</p>
+
+<h4 id="example-interaction">Example interaction</h4>
+
+<p>The file <code class="highlighter-rouge">example.levy</code> defines a number of examples, including the factorial
+function. You can load it and try it as follows:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ -l ./levy.native example.levy
+return (4) : F int
+return (6) : F int
+return (-2) : F int
+return (5) : F int
+return (1) : F int
+&lt;fun&gt; : int -&gt; F int
+&lt;fun&gt; : int -&gt; F int
+&lt;fun&gt; : int -&gt; F int
+return (42) : F int
+val x : U (F int) = &lt;thunk&gt;
+return (1) : F int
+return (64) : F int
+return (64) : F int
+val a : int = 5
+val b : int = 15
+val c : U (F int) = &lt;thunk&gt;
+val fact : U int -&gt; F int = &lt;thunk&gt;
+return (5040) : F int
+levy -- programming languages zoo
+Type Ctrl-D to exit
+</code></pre></div></div>
+
+      </section>
+    </div>
+    </body>
+</html>

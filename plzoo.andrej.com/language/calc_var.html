@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen" />
+        <title>calc_var at the Programming languages Zoo</title>
+        <meta name="viewport" content="width=device-width">
+
+    </head>
+    <body>
+
+    <header>
+      <div class="container">
+        <h1>The Programming Languages Zoo</h1>
+        <h2>A potpourri of programming languages</h2>
+      </div>
+     <div id="navbar" class="container">
+      &gt; <a href="../index.html">home</a> &gt; calc_var
+    </div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43528302-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+      <h2>calc_var</h2>
+
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/calc_var">source</a>]
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/calc_var/example.calc_var">example</a>]
+
+      <p>A simple arithmetic calculator with variables. It handles addition, subtraction,
+negation, multiplication and division of integers.</p>
+
+<p>The language is interactive, it cannot load files. Example interaction:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>calc_var -- programming languages zoo
+Type Ctrl-D to exit
+calc_var&gt; 2+2
+4
+calc_var&gt; x=10
+calc_var&gt; y=x+20
+calc_var&gt; 3 * x + 7
+37
+calc_var&gt; z
+Error: unknown variable z
+calc_var&gt; x=20
+calc_var&gt; x + y
+50
+calc_var&gt; x / 0
+Error: division by zero
+</code></pre></div></div>
+
+      </section>
+    </div>
+    </body>
+</html>

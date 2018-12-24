@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+
+        <title>The Programming Languages Zoo</title>
+        <meta name="viewport" content="width=device-width">
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43528302-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+    </head>
+    <body>
+
+    <header>
+      <div class="container">
+        <h1>The Programming Languages Zoo</h1>
+        <h2>A potpourri of programming languages</h2>
+      </div>
+      <div id="navbar" class="container">
+        &gt; <a href="index.html">home</a>
+        
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+      <h2 id="how-to-contribute">How to contribute</h2>
+
+<p>The source code adheres to standards that keep it uniform and demonstrate (what we beleive
+to be) good programming practice. We kindly ask that all contributions to the repository
+follow the established pattern, and follow these guidelines:</p>
+
+<ol>
+  <li>The name of the language should also be a valid OCaml module name.</li>
+  <li>The language source code for language <code class="highlighter-rouge">lang</code> resides in <code class="highlighter-rouge">src/lang</code>.</li>
+  <li>If the language is an extension of <code class="highlighter-rouge">lang</code> with feature <code class="highlighter-rouge">X</code>, call it <code class="highlighter-rouge">lang_X</code>.</li>
+  <li>Language <code class="highlighter-rouge">lang</code> should have a file <code class="highlighter-rouge">src/lang/example.lang</code> which shows how it is used.</li>
+  <li>Language <code class="highlighter-rouge">lang</code> should have a file <code class="highlighter-rouge">src/lang/README.markdown</code> which explains briefly what the language is about. You can also put examples in this file, but note that the web page will already link to <code class="highlighter-rouge">src/lang/example.lang</code> so there is no point in just copying that to the <code class="highlighter-rouge">README.markdown</code> file.</li>
+  <li>Instead of making one language with many features, make several languages each demonstrating a feature.</li>
+  <li>Use interfaces <code class="highlighter-rouge">.mli</code> files and comment all entries in the interface using the ocamldoc
+format <code class="highlighter-rouge">(** ... *)</code>.</li>
+  <li>
+    <p>The main program should use the <code class="highlighter-rouge">Zoo.Main</code> functor:</p>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code> module MyLanguage = Zoo.Main(struct .... end) ;;
+ MyLanguage.main() ;;
+</code></pre></div>    </div>
+
+    <p>This will give your language line-editing capabilities (if <code class="highlighter-rouge">rlwrap</code> is installed)
+ and a uniform user interface.</p>
+  </li>
+  <li>Do not use <code class="highlighter-rouge">open</code> to open modules, there are
+<a href="https://realworldocaml.org/v1/en/html/files-modules-and-programs.html">better solutions</a>
+(the best one is to just not look for any shortcuts).</li>
+</ol>
+
+<p>Remember: these are <em>guidelines</em> that can be broken for a good enough reason.</p>
+
+      </section>
+    </div>
+    </body>
+</html>

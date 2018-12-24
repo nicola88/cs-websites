@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <link rel="stylesheet" type="text/css" href="../stylesheets/stylesheet.css" media="screen" />
+        <title>comm at the Programming languages Zoo</title>
+        <meta name="viewport" content="width=device-width">
+
+    </head>
+    <body>
+
+    <header>
+      <div class="container">
+        <h1>The Programming Languages Zoo</h1>
+        <h2>A potpourri of programming languages</h2>
+      </div>
+     <div id="navbar" class="container">
+      &gt; <a href="../index.html">home</a> &gt; comm
+    </div>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43528302-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+      <h2>comm</h2>
+
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/comm">source</a>]
+      [<a href="https://github.com/andrejbauer/plzoo/tree/master/src/comm/example.comm">example</a>]
+
+      <p>A simple procedural langauge with integer arithmetic, local variables, conditional
+statements, <code class="highlighter-rouge">while</code> loops and printing. Programs are compiled to simple (simulated)
+machine code.</p>
+
+<h4 id="abstract-syntax">Abstract syntax</h4>
+
+<p>Integer expression <code class="highlighter-rouge">e</code>:</p>
+
+<ul>
+  <li>variable (a string of letters)</li>
+  <li>integer constant</li>
+  <li>addition <code class="highlighter-rouge">e₁ + e₂</code></li>
+  <li>subtraction <code class="highlighter-rouge">e₁ - e₂</code></li>
+  <li>multiplication <code class="highlighter-rouge">e₁ * e₂</code></li>
+  <li>integer division <code class="highlighter-rouge">e₁ / e₂</code></li>
+  <li>remainder <code class="highlighter-rouge">e₁ % e₂</code></li>
+</ul>
+
+<p>Boolean expression <code class="highlighter-rouge">b</code>:</p>
+
+<ul>
+  <li>boolean constants <code class="highlighter-rouge">true</code> and <code class="highlighter-rouge">false</code></li>
+  <li>conjunction <code class="highlighter-rouge">b₁ and b₂</code></li>
+  <li>disjunction <code class="highlighter-rouge">b₁ or b₂</code></li>
+  <li>negation <code class="highlighter-rouge">not b</code></li>
+</ul>
+
+<p>Command <code class="highlighter-rouge">c</code>:</p>
+
+<ul>
+  <li>no operation <code class="highlighter-rouge">skip</code></li>
+  <li>local variable declaration <code class="highlighter-rouge">new x := e in c</code></li>
+  <li>print expression <code class="highlighter-rouge">print e</code></li>
+  <li>assign a varible <code class="highlighter-rouge">x := e</code></li>
+  <li>sequence commands <code class="highlighter-rouge">c₁ ; c₂</code></li>
+  <li>loop <code class="highlighter-rouge">while b do c done</code></li>
+  <li>conditional statement <code class="highlighter-rouge">if b then c₁ else c₂ end</code></li>
+</ul>
+
+<h4 id="compilation-to-machine-code">Compilation to machine code</h4>
+
+<p>The language is compiled to simplified machine code. Use the <code class="highlighter-rouge">--code</code> command-line option
+to see the compiled code.</p>
+
+<p>The underlying machine has a fixed amount of RAM (configurable <code class="highlighter-rouge">--ram</code> command-line
+option), a program, the program counter, and a stack pointer. The stack grows downards,
+from the top of RAM towards the bottom.</p>
+
+
+      </section>
+    </div>
+    </body>
+</html>

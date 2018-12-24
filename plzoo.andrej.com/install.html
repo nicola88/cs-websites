@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+
+        <title>The Programming Languages Zoo</title>
+        <meta name="viewport" content="width=device-width">
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-43528302-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+    </head>
+    <body>
+
+    <header>
+      <div class="container">
+        <h1>The Programming Languages Zoo</h1>
+        <h2>A potpourri of programming languages</h2>
+      </div>
+      <div id="navbar" class="container">
+        &gt; <a href="index.html">home</a>
+        
+        &gt; installation
+        
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+      <p>The zoo is available as a <a href="https://github.com/andrejbauer/plzoo">GitHub project</a>. Here
+are detailed installation instructions.</p>
+
+<h2 id="prerequisites">Prerequisites</h2>
+
+<p>To compile the code you will need:</p>
+
+<ul>
+  <li><a href="https://www.gnu.org/software/make/">GNU Make</a>, which you probably have already</li>
+  <li><a href="http://www.ocaml.org/">OCaml</a> programming language, version 4 or later,</li>
+  <li><a href="http://gallium.inria.fr/~fpottier/menhir/">menhir</a> parser generator.</li>
+</ul>
+
+<p>A good way to get started with OCaml is to use the OCaml pagackage manager
+<a href="http://opam.ocaml.org/">OPAM</a>, through which menhir is available. Both OCaml and OPAM are
+available through package managers on Linux and OS X, see instruction on the <a href="http://opam.ocaml.org/doc/Install.html">OPAM web
+site</a>.</p>
+
+<h3 id="recommended-ledit-or-rlwrap">Recommended: <code class="highlighter-rouge">ledit</code> or <code class="highlighter-rouge">rlwrap</code></h3>
+
+<p>It is recommended that you install <a href="http://pauillac.inria.fr/~ddr/ledit/">ledit</a> or
+<a href="https://github.com/hanslub42/rlwrap">rlwrap</a> command-line editing wrappers. Check your
+package manager, it probably knows about them. They will be detected and automatically
+used by the toplevel interactive loop.</p>
+
+<h2 id="learning-ocaml">Learning OCaml</h2>
+
+<p>The languages are implemented in OCaml. If you are not familiar with OCaml, we highly
+recommend that you look at the
+<a href="https://ocaml.org/learn/">excellent resources for learning OCaml</a>.</p>
+
+<h2 id="obtaining-the-source-code">Obtaining the source code</h2>
+
+<p>Get the source from GitHub:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone git@github.com:andrejbauer/plzoo.git
+</code></pre></div></div>
+
+<p>or via the HTTP protocol</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/andrejbauer/plzoo.git
+</code></pre></div></div>
+
+<p>If you do not use GitHub (why not?!) you can directly download a <a href="https://github.com/andrejbauer/plzoo/archive/master.zip">ZIP archive</a>.</p>
+
+<h2 id="compilation">Compilation</h2>
+
+<p>To compile all the languages run:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make all
+</code></pre></div></div>
+
+<p>You can also compile a single language with</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make lang
+</code></pre></div></div>
+
+<p>where typing just <code class="highlighter-rouge">make</code> will show you the available languages. The compilation procedure
+will create native code executables. To generate bytecode use the <code class="highlighter-rouge">BUILD=byte</code> option:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make BUILD=byte ...
+</code></pre></div></div>
+
+<p>There is <code class="highlighter-rouge">make clean</code> if you want to clean up.</p>
+
+
+      </section>
+    </div>
+    </body>
+</html>
